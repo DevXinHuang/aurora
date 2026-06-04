@@ -1,0 +1,47 @@
+{
+  "path": "A: full PICASO",
+  "proposal_framing": "radius-valley planet typing with broad reflected-light wavelength coverage",
+  "thermal_source": "picaso",
+  "atmosphere_source": "picaso",
+  "proposal_reference": "/Users/xin/Documents/Documents/College/aurora/docs/project_context/proposal/Daniel_Huang_AABC_Grant_Proposal_final.txt",
+  "wavelength_grid": {
+    "min_um": 0.3,
+    "max_um": 2.5,
+    "n_points": 2201,
+    "spacing_um": 0.001
+  },
+  "requested_inputs": {
+    "metallicity_x_solar": 10.0,
+    "chem_log_mh": 1.0,
+    "chem_c_o": 1.0,
+    "fsed": 3.0,
+    "cloud_model": "virga",
+    "cloud_cover_note": "fully cloudy Path A generated cloud model",
+    "semi_major_au": 1.0,
+    "phase_deg": 60.0,
+    "kzz_cgs": 100000000000.0,
+    "star_teff_k": 5778.0,
+    "star_radius_rsun": 1.0,
+    "gravity_m_s2": 25.0,
+    "radius_rearth": 1.5,
+    "teff_k_for_tint": 1000.0
+  },
+  "derived": {
+    "radius_rjup": 0.13382126671515693,
+    "gravity_cgs": 2500.0,
+    "logg_cgs": 3.3979400086720375,
+    "mass_kg": 3.4284628770994716e+25,
+    "mass_mearth": 5.740734274382314,
+    "mass_mjup": 0.01806236999357785,
+    "equilibrium_temperature_k": 278.6190681198289
+  },
+  "output_files": {
+    "diagnostic_metrics_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/diagnostic_metrics.csv",
+    "spectrum_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/spectrum.csv",
+    "summary_json": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/summary.json",
+    "spectrum_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/spectrum.png",
+    "diagnostic_reflected_fraction_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/diagnostic_reflected_fraction.png",
+    "cloud_comparison_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/cloud_comparison_spectrum.csv",
+    "cloud_comparison_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/cloud_free_vs_cloudy.png"
+  }
+}

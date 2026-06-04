@@ -1,0 +1,67 @@
+./2_2026_nextstep copy/this_code_worked.ipynb
+./2_2026_nextstep/# %% [markdown].py
+./2_2026_nextstep/debug_import.py
+./2_2026_nextstep/debug_nb.ipynb
+./2_2026_nextstep/repro_picaso_virga.py
+./2_2026_nextstep/test_notebook_imports.py
+./2_2026_nextstep/this_code_worked.ipynb
+./2_2026_nextstep/this_code_worked_debug_run.ipynb
+./2_2026_nextstep_timestep/run_picaso_once.py
+./2_2026_nextstep_timestep/this_code_worked.ipynb
+./2_9_2026/egp_hybrid_phase0.py
+./2_9_2026/gemini.ipynb
+./2_9_2026/this_code_worked.ipynb
+./NGU 12/10_cloudfree_roman_cgi_10percent_phase60 copy 2.ipynb
+./NGU 12/11_roman_target.ipynb
+./NGU 12/8_roman_cgi_10percent_phase60 copy.ipynb
+./NGU 12/9_thermal_flux_scenarios.ipynb
+./NGU 12/roman_cgi_target_runner.ipynb
+./NGU/10_cloudfree_roman_cgi_10percent_phase60 copy 2.ipynb
+./NGU/11_roman_target.ipynb
+./NGU/8_roman_cgi_10percent_phase60 copy.ipynb
+./NGU/9_thermal_flux_scenarios.ipynb
+./NGU/roman_cgi_target_runner.ipynb
+./final_10_17/1_5th_try_withcloud.ipynb
+./final_10_17/2_exoplanet_reflected_thermal_validation.ipynb
+./final_10_17/3cloudfree__roman_cgi_10percent_phase60.ipynb
+./final_10_17/4_simple_exoplanet_analysis.ipynb
+./final_10_17/5_AddingThermalFlux.ipynb
+./final_10_17/5_simple_exoplanet_analysis copy.ipynb
+./final_10_17/6_Reflected_vs_Thermal_Analysis.ipynb
+./final_10_17/7_Virga_Reflected_vs_Thermal_Analysis copy.ipynb
+./final_10_17/8_roman_cgi_10percent_phase60 copy.ipynb
+./final_10_17/9_thermal_flux_scenarios.ipynb
+./final_10_17/no_cloud_no_atmos_roman_cgi_10percent_phase60.ipynb
+./fix_picaso/fix_vscode_picaso.py
+./fix_picaso/picaso_jupyter_test.ipynb
+./fix_picaso/start_picaso_jupyter.sh
+./fix_picaso/test_picaso_env.py
+./fix_picaso/test_picaso_import.py
+./fix_picaso/test_stellar_data.py
+./fix_picaso/verify_picaso_setup.py
+./rst/First_assignmnet/1_first_assignment copy.ipynb
+./rst/First_assignmnet/1_first_assignment.ipynb
+./rst/First_assignmnet/3rd_try.ipynb
+./rst/First_assignmnet/5th_try.ipynb
+./rst/First_assignmnet/5th_try_withcloud.ipynb
+./rst/First_assignmnet/6.ipynb
+./rst/First_assignmnet/7try_to_get_fp_vs_λ.ipynb
+./rst/First_assignmnet/8try_draw_reflt_graph.ipynb
+./rst/First_assignmnet/9justfor_starflux.ipynb
+./rst/First_assignmnet/ai/PICASO_Assignment_Reflected_vs_Thermal.ipynb
+./rst/First_assignmnet/ai/PICASO_Assignment_Solution.ipynb
+./rst/First_assignmnet/bb_diagram copy.ipynb
+./rst/First_assignmnet/bb_diagram.ipynb
+./rst/final1.0.ipynb
+./rst/no_cloud_no_atmos_roman_cgi_10percent_phase60.ipynb
+./rst/og_roman_cgi_10percent_phase60.ipynb
+./rst/roman_cgi_10percent_phase60 copy.ipynb
+./rst/roman_cgi_reflected_vs_thermal.ipynb
+./rst/testing/PICASO_1_GetStarted_executed.ipynb
+./rst/testing/more_test.py
+./rst/testing/test.ipynb
+./rst/testing/test.py
+./rst/testing/test_2.ipynb
+./rst/tried_to_solve/reflected_vs_thermal.ipynb
+./rst/tried_to_solve/roman_cgi_reflected_vs_thermal.ipynb
+./rst/tried_to_solve/roman_reflected_vs_thermal.ipynb

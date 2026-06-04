@@ -1,0 +1,37 @@
+{
+  "path": "A: full PICASO",
+  "thermal_source": "picaso",
+  "atmosphere_source": "picaso",
+  "requested_inputs": {
+    "metallicity_x_solar": 10.0,
+    "chem_log_mh": 1.0,
+    "chem_c_o": 1.0,
+    "fsed": 3.0,
+    "cloud_model": "virga",
+    "cloud_cover_note": "fully cloudy Path A generated cloud model",
+    "semi_major_au": 1.0,
+    "phase_deg": 60.0,
+    "kzz_cgs": 100000000000.0,
+    "star_teff_k": 5778.0,
+    "star_radius_rsun": 1.0,
+    "gravity_m_s2": 25.0,
+    "radius_rearth": 1.5,
+    "teff_k_for_tint": 1000.0
+  },
+  "derived": {
+    "radius_rjup": 0.13382126671515693,
+    "gravity_cgs": 2500.0,
+    "logg_cgs": 3.3979400086720375,
+    "mass_kg": 3.4284628770994716e+25,
+    "mass_mearth": 5.740734274382314,
+    "mass_mjup": 0.01806236999357785,
+    "equilibrium_temperature_k": 278.6190681198289
+  },
+  "output_files": {
+    "band_metrics_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_first_order/band_metrics.csv",
+    "spectrum_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_first_order/spectrum.csv",
+    "summary_json": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_first_order/summary.json",
+    "spectrum_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_first_order/spectrum.png",
+    "band_reflected_fraction_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_first_order/band_reflected_fraction.png"
+  }
+}

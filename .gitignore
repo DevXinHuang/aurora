@@ -1,0 +1,41 @@
+# ---- OS / Editor ----
+.DS_Store
+.Spotlight-V100
+.Trashes
+.idea/
+.vscode/
+*.code-workspace
+.history/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.env.*
+.venv/
+venv/
+env.bak/
+venv.bak/
+
+# ---- Testing / Caches ----
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.ipynb_checkpoints/
+*.log
+
+# ---- Large PICASO data and generated validation outputs ----
+picaso4_reference/
+science_inputs/*
+!science_inputs/README.md
+validation/outputs/
+outputs/docx_rendered/
+outputs/
+tmp/
+
+# Download archives should be removed after extraction, but keep them out of git.
+*.tar
+*.tar.gz
+*.zip
