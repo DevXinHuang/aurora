@@ -11,8 +11,16 @@
 #SBATCH --output=roadrunner_egp/aurora_subneptune_grid/logs/%x_%A_%a.out
 #SBATCH --error=roadrunner_egp/aurora_subneptune_grid/logs/%x_%A_%a.err
 
-# Full grid after validation:
-# #SBATCH --array=0-460799
+# Full grid: submit in batches to stay within Slurm MaxArraySize.
+# Check your limit:  scontrol show config | grep MaxArraySize
+#
+# Example batched submission (from repo root):
+#   for start in $(seq 0 1000 460799); do
+#     end=$((start + 999))
+#     [ $end -gt 460799 ] && end=460799
+#     sbatch --array=${start}-${end}%100 \
+#       roadrunner_egp/aurora_subneptune_grid/slurm/run_aurora_subneptune_grid.slurm
+#   done
 
 set -euo pipefail
 

@@ -19,11 +19,25 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate picaso4
 source env/activate_roadrunner_picaso4.sh
 
-python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
-  --config roadrunner_egp/aurora_subneptune_grid/params/smoke_test.yaml \
-  --out roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv
+# Only task 0 generates the manifest; others wait for it
+MANIFEST="roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv"
+if [ "${SLURM_ARRAY_TASK_ID}" -eq 0 ]; then
+  python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
+    --config roadrunner_egp/aurora_subneptune_grid/params/smoke_test.yaml \
+    --out "$MANIFEST"
+else
+  # Wait for task 0 to create the manifest (max 60s)
+  for i in $(seq 1 60); do
+    [ -f "$MANIFEST" ] && break
+    sleep 1
+  done
+  if [ ! -f "$MANIFEST" ]; then
+    echo "ERROR: Manifest not created by task 0 after 60s" >&2
+    exit 1
+  fi
+fi
 
 python roadrunner_egp/aurora_subneptune_grid/scripts/run_grid_chunk.py \
-  --manifest roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv \
+  --manifest "$MANIFEST" \
   --array-index "${SLURM_ARRAY_TASK_ID}" \
   --model-name smoke_test_aurora_subneptune
