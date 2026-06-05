@@ -63,17 +63,114 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/run_grid_chunk.py \
 
 ## HPC
 
-```bash
-# Submit HPC smoke test
-sbatch roadrunner_egp/aurora_subneptune_grid/slurm/test_aurora_subneptune_grid.slurm
+### Step 1: Smoke test (6 jobs, ~30 min)
 
-# Submit first 100 full-grid jobs
-sbatch roadrunner_egp/aurora_subneptune_grid/slurm/run_aurora_subneptune_grid.slurm
+```bash
+# Pre-generate the smoke manifest
+python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
+  --config roadrunner_egp/aurora_subneptune_grid/params/smoke_test.yaml \
+  --out roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv
+
+# Submit
+sbatch roadrunner_egp/aurora_subneptune_grid/slurm/test_aurora_subneptune_grid.slurm
+```
+
+### Step 2: Validation run (1,152 jobs, ~4 hr each)
+
+A representative subset of the full grid that covers endpoints of every
+parameter axis. Use this to validate timing, memory, and output correctness
+before committing to the full 460,800-row grid.
+
+```bash
+# Pre-generate the validation manifest
+python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
+  --config roadrunner_egp/aurora_subneptune_grid/params/hpc_validation.yaml \
+  --out roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv
+
+# Submit all 1,152 jobs
+sbatch roadrunner_egp/aurora_subneptune_grid/slurm/validation_aurora_subneptune_grid.slurm
+```
+
+### Step 3: Full grid (460,800 jobs, batched)
+
+Slurm's `MaxArraySize` typically caps arrays at ~1,000 tasks. Check your
+cluster's limit, then submit in batches:
+
+```bash
+# Check your limit
+scontrol show config | grep MaxArraySize
+
+# Pre-generate the full manifest (only once)
+python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
+  --config roadrunner_egp/aurora_subneptune_grid/params/aurora_subneptune_v0.yaml \
+  --out roadrunner_egp/aurora_subneptune_grid/manifests/aurora_subneptune_v0_manifest.csv
+
+# Submit in batches of 1,000 with max 100 running concurrently
+for start in $(seq 0 1000 460799); do
+  end=$((start + 999))
+  [ $end -gt 460799 ] && end=460799
+  sbatch --array=${start}-${end}%100 \
+    roadrunner_egp/aurora_subneptune_grid/slurm/run_aurora_subneptune_grid.slurm
+done
 ```
 
 The Slurm templates activate the `picaso4` conda environment, source the Aurora
-runtime paths, and run one manifest row per array task. The full-grid template
-starts with `#SBATCH --array=0-99`; change it to `0-460799` only after validation.
+runtime paths, and run one manifest row per array task. Failed or interrupted
+arrays can be resubmitted safely — existing output files are skipped.
+
+## Customizing The Parameter Space
+
+The parameter grid is defined entirely in a YAML config file under `params/`.
+The grid is the **Cartesian product** of every list — total simulations equals
+the product of all list lengths.
+
+### Where to change things
+
+Edit the YAML config file. Each parameter is a simple list:
+
+```yaml
+# To add or remove values, just edit the list:
+planet_radius_rearth: [1.6, 2.0, 2.5, 3.0]   # 4 values
+gravity_ms2: [5, 10, 15, 25]                   # 4 values
+metallicity_xsolar: [1, 10, 100, 1000]         # 4 values
+c_to_o_xsolar: [0.5, 1.0, 2.0]                # 3 values
+kzz_cm2_s: [1.0e9, 1.0e11]                    # 2 values
+cloud_fraction: [0.0, 1.0]                     # 2 values
+fsed: [0.3, 1, 3, 6, 8]                       # 5 values
+insolation_searth: [0.35, 0.7, 1.0, 1.5]      # 4 values
+phase_deg: [0, 30, 60, 90, 120, 150]           # 6 values
+
+# Stars are a list of {teff_k, radius_rsun} pairs:
+stars:
+  - teff_k: 3000
+    radius_rsun: 0.20
+  - teff_k: 5000
+    radius_rsun: 0.80
+```
+
+### How to verify after editing
+
+```bash
+# Regenerate the manifest and check the count
+python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
+  --config <your_config.yaml> \
+  --out <your_manifest.csv>
+
+# Output tells you: total_rows, duplicate checks, first 5 rows
+```
+
+### Then update the Slurm script
+
+Change `#SBATCH --array=0-N` where N = total_rows − 1, and make sure
+`--model-name` matches the `model_name` in your YAML.
+
+### Available configs
+
+| Config | Rows | Purpose |
+| --- | ---: | --- |
+| `params/smoke_test.yaml` | 6 | Quick plumbing check |
+| `params/hpc_validation.yaml` | 1,152 | Representative HPC validation |
+| `params/aurora_subneptune_v0.yaml` | 460,800 | Full science grid |
 
 ## Inspect And Inventory Outputs
 

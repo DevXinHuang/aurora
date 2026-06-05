@@ -1,0 +1,78 @@
+# ============================================================================
+# HPC Validation Grid — ~1,152 rows
+# ============================================================================
+# A representative subset of the full 460,800-row grid for validating that
+# real PICASO runs complete successfully on the cluster before committing
+# to the full Cartesian product.
+#
+# HOW TO CUSTOMIZE THE PARAMETER SPACE
+# =====================================
+# The grid is the Cartesian product of every list below. The total number
+# of simulations is:
+#
+#   len(stars) × len(planet_radius_rearth) × len(gravity_ms2) × ...
+#
+# To change what gets run, simply edit the lists. For example:
+#
+#   • Add a value:        gravity_ms2: [5, 10, 15, 25]   → 4 values
+#   • Remove a value:     gravity_ms2: [10, 25]           → 2 values
+#   • Single value:       gravity_ms2: [10]               → 1 value (held fixed)
+#
+# Stars are a list of {teff_k, radius_rsun} pairs. Add or remove entries.
+#
+# After editing, regenerate the manifest to see the new row count:
+#
+#   python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
+#     --config roadrunner_egp/aurora_subneptune_grid/params/hpc_validation.yaml \
+#     --out roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv
+#
+# Then update the Slurm --array directive to match: --array=0-<total_rows - 1>
+# ============================================================================
+
+model_name: hpc_validation_aurora_subneptune
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Sub-Neptune Grid"
+notes: >-
+  HPC validation run: representative 1,152-row subset of the full grid.
+  Covers endpoint and midpoint values for each parameter axis.
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA if available"
+  grid_runner: "aurora_grid"
+
+picaso_tint_mode: "equilibrium"
+picaso_tint_fixed_k: 1000.0
+picaso_tint_floor_k: 100.0
+
+# ---- Stars: 3 representative host stars (cool M, solar-like K, hot F) ----
+stars:
+  - teff_k: 3000
+    radius_rsun: 0.20
+  - teff_k: 5000
+    radius_rsun: 0.80
+  - teff_k: 7000
+    radius_rsun: 1.70
+
+# ---- Planet: endpoints of each physical axis ----
+planet_radius_rearth: [2.0, 3.0]        # small & large sub-Neptune
+gravity_ms2: [10, 25]                    # low & high surface gravity
+metallicity_xsolar: [10, 1000]           # moderate & extreme metallicity
+c_to_o_xsolar: [0.5, 1.0]               # sub-solar & solar C/O
+
+# ---- Atmosphere ----
+kzz_cm2_s: [1.0e9]                       # fix mixing to reduce grid; add 1e11 if budget allows
+
+# ---- Clouds ----
+cloud_fraction: [0.0, 1.0]               # clear & fully cloudy
+fsed: [1, 6]                             # puffy & compact clouds
+
+# ---- Orbital / viewing ----
+insolation_searth: [0.7, 1.5]            # cool & warm HZ
+phase_deg: [0, 60, 120]                  # near-full, quadrature, crescent
+
+# ---- Output location ----
+output_root: "roadrunner_egp/aurora_subneptune_grid/outputs/hpc_validation_aurora_subneptune"
