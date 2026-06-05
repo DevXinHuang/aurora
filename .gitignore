@@ -24,6 +24,7 @@ venv.bak/
 .ruff_cache/
 .cache/
 .ipynb_checkpoints/
+logs/
 *.log
 
 # ---- Large PICASO data and generated validation outputs ----

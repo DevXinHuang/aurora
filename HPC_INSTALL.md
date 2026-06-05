@@ -14,6 +14,61 @@ git clone https://github.com/DevXinHuang/aurora.git
 cd aurora
 ```
 
+If GitHub asks for credentials on HPC, the easiest long-term fix is to use an
+SSH key on the HPC account and clone with:
+
+```bash
+git clone git@github.com:DevXinHuang/aurora.git
+```
+
+## Daily Git Workflow With Codex
+
+This is the recommended edit/run loop:
+
+1. Codex edits the local Aurora repo and commits/pushes changes to GitHub.
+2. You pull the latest code on HPC.
+3. You run the job from VS Code Remote-SSH or the HPC terminal.
+4. You paste the terminal output, Slurm job id, or log file contents back to Codex.
+5. Codex fixes the next issue locally, then the loop repeats.
+
+On HPC, use:
+
+```bash
+cd ~/Documents/aurora
+git status --short
+git pull --ff-only origin main
+```
+
+If `git status --short` shows local edits on HPC, do not overwrite them blindly.
+For temporary notebook/output edits, stash them first:
+
+```bash
+git stash push -u -m "hpc scratch before pull"
+git pull --ff-only origin main
+```
+
+Then run a quick environment check:
+
+```bash
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate picaso4
+source env/activate_roadrunner_picaso4.sh
+python - <<'PY'
+from roadrunner.system import summarize_slgrid_inventory
+print(summarize_slgrid_inventory())
+PY
+```
+
+Once that works, submit the smoke-test Slurm template:
+
+```bash
+sbatch jobs/aurora_smoke.slurm
+squeue -u "$USER"
+```
+
+Check the output path printed by Slurm, usually under `logs/`, and send Codex
+the relevant `.out` / `.err` text when a run fails.
+
 ## 2. Start An Interactive Compute Session
 
 On the login node, the prompt may look like this:
