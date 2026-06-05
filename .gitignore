@@ -36,6 +36,17 @@ outputs/docx_rendered/
 outputs/
 tmp/
 
+# ---- Aurora sub-Neptune grid generated outputs ----
+!roadrunner_egp/aurora_subneptune_grid/outputs/
+roadrunner_egp/aurora_subneptune_grid/outputs/*
+!roadrunner_egp/aurora_subneptune_grid/outputs/.gitkeep
+!roadrunner_egp/aurora_subneptune_grid/logs/
+roadrunner_egp/aurora_subneptune_grid/logs/*
+!roadrunner_egp/aurora_subneptune_grid/logs/.gitkeep
+roadrunner_egp/aurora_subneptune_grid/manifests/*.csv
+*.nc
+*.tmp.nc
+
 # Download archives should be removed after extraction, but keep them out of git.
 *.tar
 *.tar.gz

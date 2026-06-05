@@ -1,0 +1,32 @@
+model_name: smoke_test_aurora_subneptune
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Sub-Neptune Grid"
+notes: "Tiny smoke test before running on HPC."
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA if available"
+  grid_runner: "aurora_grid"
+
+picaso_tint_mode: "equilibrium"
+picaso_tint_fixed_k: 1000.0
+picaso_tint_floor_k: 100.0
+
+stars:
+  - teff_k: 5000
+    radius_rsun: 0.80
+
+planet_radius_rearth: [2.0]
+gravity_ms2: [10]
+metallicity_xsolar: [100]
+c_to_o_xsolar: [1.0]
+kzz_cm2_s: [1.0e9]
+cloud_fraction: [0.0, 1.0]
+fsed: [3]
+insolation_searth: [1.0]
+phase_deg: [0, 60, 90]
+
+output_root: "roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune"

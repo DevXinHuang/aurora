@@ -1,0 +1,40 @@
+model_name: aurora_subneptune_v0
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Sub-Neptune Grid"
+notes: "First full Cartesian sub-Neptune reflected-light grid for Aurora."
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA if available"
+  grid_runner: "aurora_grid"
+
+picaso_tint_mode: "equilibrium"
+picaso_tint_fixed_k: 1000.0
+picaso_tint_floor_k: 100.0
+
+stars:
+  - teff_k: 3000
+    radius_rsun: 0.20
+  - teff_k: 3500
+    radius_rsun: 0.45
+  - teff_k: 4000
+    radius_rsun: 0.63
+  - teff_k: 5000
+    radius_rsun: 0.80
+  - teff_k: 7000
+    radius_rsun: 1.70
+
+planet_radius_rearth: [1.6, 2.0, 2.5, 3.0]
+gravity_ms2: [5, 10, 15, 25]
+metallicity_xsolar: [1, 10, 100, 1000]
+c_to_o_xsolar: [0.5, 1.0, 2.0]
+kzz_cm2_s: [1.0e9, 1.0e11]
+cloud_fraction: [0.0, 1.0]
+fsed: [0.3, 1, 3, 6, 8]
+insolation_searth: [0.35, 0.7, 1.0, 1.5]
+phase_deg: [0, 30, 60, 90, 120, 150]
+
+output_root: "roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v0"
