@@ -22,6 +22,18 @@ Large local data is intentionally ignored:
 
 Keep those folders on local disk or HPC project storage, then use the activation scripts to point Aurora at them.
 
+## Source Route Quick Reference
+
+Use this table when choosing which atmosphere/thermal source route to run.
+
+| Route | Correct name | Settings | Meaning | Best use |
+| --- | --- | --- | --- | --- |
+| A | Pure PICASO / full PICASO | `thermal_source="picaso"` and `atmosphere_source="picaso"` | PICASO-generated atmosphere plus PICASO reflected light plus PICASO thermal emission. | Fast, flexible parameter exploration without SLGRID files. |
+| B | PICASO atmosphere + EGP thermal | `thermal_source="egp"` and `atmosphere_source="picaso"` | PICASO-generated atmosphere and PICASO reflected light, paired with the matching EGP `*_IRflux.txt` thermal spectrum. | Hybrid tests that use EGP thermal emission while avoiding SLGRID PT/cloud files. |
+| C | SLGRID/EGP legacy hybrid | `thermal_source="egp"` and `atmosphere_source="slgrid"` | SLGRID PT/cloud atmosphere loaded into PICASO for reflected light, paired with EGP thermal emission. | Most physically consistent with the older Roman/RoadRunner workflow. |
+
+`EGP only` is useful as a thermal-emission validation baseline, but it is not a complete reflected-light confusion route by itself because the reflected-light calculation still comes from PICASO.
+
 ## Setup
 
 ```bash

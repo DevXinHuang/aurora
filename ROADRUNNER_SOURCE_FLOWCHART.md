@@ -8,7 +8,7 @@ flowchart TD
 
     B -->|"Best for new no-SLGRID runs"| C["Path A<br/>Full PICASO"]
     B -->|"Use EGP thermal file<br/>but no SLGRID atmosphere"| D["Path B<br/>PICASO atmosphere + EGP thermal"]
-    B -->|"Old/original setup"| E["Path C<br/>SLGRID atmosphere + EGP thermal"]
+    B -->|"Old/original setup"| E["Path C<br/>SLGRID/EGP legacy hybrid"]
 
     C --> C1["Settings:<br/>thermal_source = picaso<br/>atmosphere_source = picaso"]
     C1 --> C2["PICASO generates atmosphere:<br/>Guillot PT + chemistry + clouds"]
@@ -56,7 +56,7 @@ df = evaluate_hybrid_case(
 )
 ```
 
-Use Path C for the original comparison workflow:
+Use Path C for the original comparison workflow. This is the SLGRID/EGP legacy hybrid route, not an EGP-only reflected-light route:
 
 ```python
 df = evaluate_hybrid_case(
@@ -93,3 +93,5 @@ flowchart TD
 `atmosphere_source="slgrid"` reads the precomputed SLGRID PT and cloud files.
 
 `atmosphere_source="picaso"` builds the PT profile, chemistry, and clouds inside PICASO, so it does not use the SLGRID PT/cloud files.
+
+`EGP only` should mean the standalone EGP thermal baseline. It is useful for validation or legacy thermal comparison, but it is not a complete reflected-light confusion route by itself.

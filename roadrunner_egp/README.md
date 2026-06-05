@@ -62,6 +62,16 @@ The workflow now has two separate switches:
 - `atmosphere_source="slgrid"`: read the SLGRID PT/cloud files.
 - `atmosphere_source="picaso"`: do not use SLGRID; build a Guillot PT profile, Visscher chemistry, and Virga clouds inside PICASO.
 
+The route names are:
+
+| Route | Correct name | Settings | Meaning | Best use |
+| --- | --- | --- | --- | --- |
+| A | Pure PICASO / full PICASO | `thermal_source="picaso"`, `atmosphere_source="picaso"` | PICASO-generated atmosphere plus PICASO reflected light plus PICASO thermal emission. | Fast, flexible parameter exploration. |
+| B | PICASO atmosphere + EGP thermal | `thermal_source="egp"`, `atmosphere_source="picaso"` | PICASO-generated atmosphere and PICASO reflected light, paired with EGP thermal emission. | Hybrid tests that keep EGP thermal emission but avoid SLGRID PT/cloud files. |
+| C | SLGRID/EGP legacy hybrid | `thermal_source="egp"`, `atmosphere_source="slgrid"` | SLGRID PT/cloud atmosphere loaded into PICASO for reflected light, paired with EGP thermal emission. | Most physically consistent with the older Roman/RoadRunner workflow. |
+
+`EGP only` is a thermal baseline for validation/comparison, not a complete reflected-light route.
+
 Example full-PICASO run:
 
 ```python

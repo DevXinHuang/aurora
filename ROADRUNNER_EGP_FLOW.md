@@ -19,6 +19,16 @@ For the source-selection flowchart, see:
 
 `ROADRUNNER_SOURCE_FLOWCHART.md`
 
+## Clean Route Summary
+
+| Route | Correct name | Settings | Meaning | Best use |
+| --- | --- | --- | --- | --- |
+| A | Pure PICASO / full PICASO | `thermal_source="picaso"` and `atmosphere_source="picaso"` | PICASO-generated atmosphere plus PICASO reflected light plus PICASO thermal emission. | Fast, flexible parameter exploration. |
+| B | PICASO atmosphere + EGP thermal | `thermal_source="egp"` and `atmosphere_source="picaso"` | PICASO-generated atmosphere and PICASO reflected light, paired with the matching EGP `*_IRflux.txt` thermal spectrum. | Hybrid tests that use EGP thermal emission while avoiding SLGRID PT/cloud files. |
+| C | SLGRID/EGP legacy hybrid | `thermal_source="egp"` and `atmosphere_source="slgrid"` | SLGRID PT/cloud atmosphere loaded into PICASO for reflected light, paired with EGP thermal emission. | Most physically consistent with the older Roman/RoadRunner workflow. |
+
+Naming note: `EGP only` should mean the standalone EGP thermal baseline. It is useful for validation or legacy thermal comparison, but it is not a complete reflected-light confusion route by itself.
+
 ## Use PICASO4
 
 ```bash
