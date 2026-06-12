@@ -26,8 +26,16 @@ set -euo pipefail
 
 cd "$SLURM_SUBMIT_DIR"
 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate picaso4
+if ! command -v module >/dev/null 2>&1; then
+  if [ -f /etc/profile.d/modules.sh ]; then
+    source /etc/profile.d/modules.sh
+  fi
+fi
+
+module load micromamba/2.0.2-2
+export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-${HOME}/.local/share/mamba}"
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate picaso4
 source env/activate_roadrunner_picaso4.sh
 
 MANIFEST="roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv"
