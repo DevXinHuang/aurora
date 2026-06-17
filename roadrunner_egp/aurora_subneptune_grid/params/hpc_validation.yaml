@@ -50,8 +50,8 @@ picaso_tint_floor_k: 100.0
 
 # ---- Stars: 3 representative host stars (cool M, solar-like K, hot F) ----
 stars:
-  - teff_k: 3000
-    radius_rsun: 0.20
+  - teff_k: 3500 #6_12 foudn out picaso only do 3500 and up, so 3000 is out
+    radius_rsun: 0.45 
   - teff_k: 5000
     radius_rsun: 0.80
   - teff_k: 7000
@@ -60,7 +60,7 @@ stars:
 # ---- Planet: endpoints of each physical axis ----
 planet_radius_rearth: [2.0, 3.0]        # small & large sub-Neptune
 gravity_ms2: [10, 25]                    # low & high surface gravity
-metallicity_xsolar: [10, 1000]           # moderate & extreme metallicity
+metallicity_xsolar: [1, 10, 100]           # moderate & extreme metallicity 1000 is not supported by PICASO 2121 chemistry
 c_to_o_xsolar: [0.5, 1.0]               # sub-solar & solar C/O
 
 # ---- Atmosphere ----

@@ -107,7 +107,13 @@ def _build_generated_picaso_atmosphere(
     """
     teq = equilibrium_temperature(sys)
     case.guillot_pt(Teq=teq, T_int=sys.teff_k, nlevel=ATM_NLAYERS)
-    case.chemeq_visscher(c_o=sys.chem_c_o, log_mh=sys.chem_log_mh)
+    # PICASO4 2121 chemistry expects absolute C/O, not C/O relative to solar.
+    # Our system value is x-solar (e.g. 0.5, 1.0, 2.0), so convert to absolute by
+    # multiplying by the solar C/O ratio used in PICASO 2121 (≈ 0.55).
+    case.chemeq_visscher_2121(
+        cto_absolute=sys.chem_c_o * 0.55,
+        log_mh=sys.chem_log_mh,
+    )
 
     model = normalize_cloud_model(cloud_model or sys.cloud_model)
     if model == "none":
