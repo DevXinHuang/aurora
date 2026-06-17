@@ -16,8 +16,8 @@ picaso_tint_fixed_k: 1000.0
 picaso_tint_floor_k: 100.0
 
 stars:
-  - teff_k: 3000
-    radius_rsun: 0.20
+  #- teff_k: 3000
+   # radius_rsun: 0.20 --- IGNORE ---
   - teff_k: 3500
     radius_rsun: 0.45
   - teff_k: 4000
@@ -29,7 +29,7 @@ stars:
 
 planet_radius_rearth: [1.6, 2.0, 2.5, 3.0]
 gravity_ms2: [5, 10, 15, 25]
-metallicity_xsolar: [1, 10, 100, 1000]
+metallicity_xsolar: [1, 10, 100]
 c_to_o_xsolar: [0.5, 1.0, 2.0]
 kzz_cm2_s: [1.0e9, 1.0e11]
 cloud_fraction: [0.0, 1.0]
