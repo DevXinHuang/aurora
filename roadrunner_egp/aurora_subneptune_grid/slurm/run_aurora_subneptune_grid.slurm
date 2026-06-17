@@ -26,7 +26,7 @@ set -euo pipefail
 
 cd "$SLURM_SUBMIT_DIR"
 
-source ~/miniconda3/etc/profile.d/conda.sh
+module load anaconda
 conda activate picaso4
 source env/activate_roadrunner_picaso4.sh
 
