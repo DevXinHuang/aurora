@@ -80,7 +80,12 @@ def manifest_row(ds: xr.Dataset) -> dict[str, Any]:
 
 
 def has_wavelength(ds: xr.Dataset) -> bool:
-    return "wavelength" in ds.coords or "wavelength" in ds.dims
+    """A valid Aurora model-store file must carry numeric wavelength values.
+
+    A bare dimension named "wavelength" is not enough because downstream
+    validation, plotting, and Zarr stacking need the actual coordinate array.
+    """
+    return "wavelength" in ds.coords
 
 
 def has_pressure(ds: xr.Dataset) -> bool:

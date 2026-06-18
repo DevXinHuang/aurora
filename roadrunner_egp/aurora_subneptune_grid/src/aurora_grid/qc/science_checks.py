@@ -70,7 +70,7 @@ def _check_pt(ds: xr.Dataset, flags: list[QCFlag]) -> None:
     if not np.all(np.isfinite(pressure)):
         flags.append(QCFlag("climate", "fail", "pressure contains nonfinite values"))
     if not np.all(pressure > 0):
-        flags.append(QCFlag("climate", "fail", "pressure contains nonpositive values"))
+        flags.append(QCFlag("climate", "fail", "nonpositive pressure values"))
     if not np.all(np.isfinite(temperature)):
         flags.append(QCFlag("climate", "fail", "temperature contains nonfinite values"))
     if not np.all(temperature > 0):
