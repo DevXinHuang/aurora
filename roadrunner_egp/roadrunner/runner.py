@@ -80,6 +80,12 @@ def _load_slgrid_atmosphere(case, sys: SystemParams, verbose: bool = True) -> No
     pt_path, cld_path = resolve_slgrid_files(sys)
     case.atmosphere(filename=pt_path, sep=r"\s+")
 
+    if cld_path is None:
+        if verbose:
+            print(f"✓ Using SLGRID PT:  {os.path.basename(pt_path)}")
+            print("✓ Using SLGRID CLD: none (NC / zero cloud fraction)")
+        return
+
     # Read cloud file manually and normalise column names to lowercase
     # (some SLGRID files use 'Opd' instead of 'opd', which trips PICASO's
     # assertion check).

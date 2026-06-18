@@ -37,9 +37,10 @@ Use this table when choosing which atmosphere/thermal source route to run.
 ## Setup
 
 ```bash
-bash env/create_picaso4_env.sh
-/Users/xin/anaconda3/envs/picaso4/bin/python env/setup_picaso4_reference_data.py
-source env/activate_roadrunner_picaso4.sh
+source env/activate_local_picaso4.sh
+
+# Optional, after manually placing the large data files in picaso4_reference/:
+python env/setup_picaso4_reference_data.py --check-only
 ```
 
 ## Smoke Test
@@ -58,7 +59,8 @@ PY
 ## Validation
 
 ```bash
-/Users/xin/anaconda3/envs/picaso4/bin/python validation/validate_picaso4_against_legacy.py
+source env/activate_local_picaso4.sh
+python validation/validate_picaso4_against_legacy.py
 ```
 
 The validation script compares Aurora's isolated PICASO 4 results against the frozen PICASO 3.4 baseline and writes generated run products under `validation/outputs/`.

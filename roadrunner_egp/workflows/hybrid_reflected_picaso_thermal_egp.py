@@ -185,16 +185,44 @@ def load_egp_irflux_native(
     return wavelengths[order], flux_lambda_per_um[order], file_path.name
 
 
+@lru_cache(maxsize=None)
+def load_egp_irflux_file_native(file_path: str | Path) -> tuple[np.ndarray, np.ndarray, str]:
+    """Load one explicit EGP spectrum on its native grid."""
+    file_path = Path(file_path)
+    wavelengths = []
+    flux_nu = []
+    with file_path.open() as handle:
+        for line in handle:
+            parts = line.split()
+            if len(parts) == 4 and parts[0].isdigit():
+                wavelengths.append(float(parts[1]))
+                flux_nu.append(float(parts[3]))
+
+    if not wavelengths:
+        raise ValueError(f"Could not parse numeric spectrum rows from {file_path}.")
+
+    wavelengths = np.asarray(wavelengths, dtype=float)
+    flux_lambda_per_um = _flux_nu_to_lambda_per_um(wavelengths, np.asarray(flux_nu, dtype=float))
+    order = np.argsort(wavelengths)
+    return wavelengths[order], flux_lambda_per_um[order], file_path.name
+
+
 def egp_thermal_on_grid(
     temperature_k: int | float,
     gravity_code: str = "31",
     lam_grid_um: np.ndarray = LAM_GRID,
+    irflux_file: str | Path | None = None,
 ) -> tuple[np.ndarray, str]:
     """Interpolate one EGP thermal spectrum onto the Roadrunner wavelength grid."""
-    native_wavelength_um, native_flux_lambda_per_um, filename = load_egp_irflux_native(
-        temperature_k=temperature_k,
-        gravity_code=gravity_code,
-    )
+    if irflux_file is None:
+        native_wavelength_um, native_flux_lambda_per_um, filename = load_egp_irflux_native(
+            temperature_k=temperature_k,
+            gravity_code=gravity_code,
+        )
+    else:
+        native_wavelength_um, native_flux_lambda_per_um, filename = load_egp_irflux_file_native(
+            str(irflux_file)
+        )
     interpolated = np.interp(
         np.asarray(lam_grid_um, dtype=float),
         native_wavelength_um,
@@ -304,6 +332,7 @@ def evaluate_hybrid_case(
     thermal_source: str | None = None,
     atmosphere_source: str | None = None,
     cloud_model: str | None = None,
+    thermal_irflux_file: str | Path | None = None,
     selected_bands=None,
 ) -> pd.DataFrame:
     """
@@ -349,6 +378,7 @@ def evaluate_hybrid_case(
             temperature_k=sys_params.teff_k,
             gravity_code=thermal_gravity_code,
             lam_grid_um=lam_grid_um,
+            irflux_file=thermal_irflux_file,
         )
         thermal_label = f"EGP {egp_filename}"
 

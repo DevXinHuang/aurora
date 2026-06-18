@@ -3,7 +3,7 @@
   "proposal_framing": "radius-valley planet typing with broad reflected-light wavelength coverage",
   "thermal_source": "picaso",
   "atmosphere_source": "picaso",
-  "proposal_reference": "/Users/xin/Documents/Documents/College/aurora/docs/project_context/proposal/Daniel_Huang_AABC_Grant_Proposal_final.txt",
+  "proposal_reference": "/Users/dhuang/Documents/daniel/research/aurora/docs/project_context/proposal/Daniel_Huang_AABC_Grant_Proposal_final.txt",
   "wavelength_grid": {
     "min_um": 0.3,
     "max_um": 2.5,
@@ -36,12 +36,12 @@
     "equilibrium_temperature_k": 278.6190681198289
   },
   "output_files": {
-    "diagnostic_metrics_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/diagnostic_metrics.csv",
-    "spectrum_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/spectrum.csv",
-    "summary_json": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/summary.json",
-    "spectrum_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/spectrum.png",
-    "diagnostic_reflected_fraction_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/diagnostic_reflected_fraction.png",
-    "cloud_comparison_csv": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/cloud_comparison_spectrum.csv",
-    "cloud_comparison_png": "/Users/xin/Documents/Documents/College/aurora/roadrunner_egp/results/path_a_proposal_range/cloud_free_vs_cloudy.png"
+    "diagnostic_metrics_csv": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/results/path_a_proposal_range/diagnostic_metrics.csv",
+    "spectrum_csv": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/results/path_a_proposal_range/spectrum.csv",
+    "summary_json": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/results/path_a_proposal_range/summary.json",
+    "spectrum_png": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/results/path_a_proposal_range/spectrum.png",
+    "diagnostic_reflected_fraction_png": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/results/path_a_proposal_range/diagnostic_reflected_fraction.png",
+    "cloud_comparison_csv": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/results/path_a_proposal_range/cloud_comparison_spectrum.csv",
+    "cloud_comparison_png": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/results/path_a_proposal_range/cloud_free_vs_cloudy.png"
   }
 }

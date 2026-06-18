@@ -31,6 +31,8 @@ from .config import (
     FALLBACK_TEFF_MAP,
 )
 
+NO_SLGRID_CLOUD_TOKENS = {"", "none", "clear", "cloudfree", "cloud-free", "nc"}
+
 _SLGRID_NAME_RE = re.compile(
     r"^SLGRID_T(?P<teff>\d+)_g(?P<g>\d+)_m(?P<metal>[+-]\d{3})_CO(?P<co>\d{3})_"
     r"(?P<cloud>.+)\.(?P<ext>pt|cld)$"
@@ -243,28 +245,32 @@ def resolve_slgrid_files(sys: SystemParams):
     teff_key = int(round(sys.teff_k))
     pt_file  = sys.pt_file
     cld_file = sys.cld_file
+    cloudless = isinstance(cld_file, str) and cld_file.strip().lower() in NO_SLGRID_CLOUD_TOKENS
 
     # Step 2 — discovered shared PT/cloud pairing
-    if pt_file is None or cld_file is None:
+    if pt_file is None or (cld_file is None and not cloudless):
         entry = _best_slgrid_entry(teff_key, sys.logg_cgs)
         if entry:
             pt_file = pt_file or entry["pt"]
-            cld_file = cld_file or entry["cld"]
+            if not cloudless:
+                cld_file = cld_file or entry["cld"]
 
     # Step 3 — legacy manual mapping
-    if pt_file is None or cld_file is None:
+    if pt_file is None or (cld_file is None and not cloudless):
         spec = SLGRID_FILES_BY_TEFF.get(teff_key)
         if spec:
             pt_file  = pt_file  or spec.get("pt")
-            cld_file = cld_file or spec.get("cld")
+            if not cloudless:
+                cld_file = cld_file or spec.get("cld")
 
     # Step 4 — fallback temperature mapping
-    if (pt_file is None or cld_file is None) and teff_key in FALLBACK_TEFF_MAP:
+    if (pt_file is None or (cld_file is None and not cloudless)) and teff_key in FALLBACK_TEFF_MAP:
         fb = FALLBACK_TEFF_MAP[teff_key]
         entry = _best_slgrid_entry(fb, sys.logg_cgs)
         if entry:
             pt_file = pt_file or entry["pt"]
-            cld_file = cld_file or entry["cld"]
+            if not cloudless:
+                cld_file = cld_file or entry["cld"]
             print(
                 f"⚠ No SLGRID files for Teff={teff_key}K; "
                 f"falling back to Teff={fb}K files."
@@ -273,16 +279,17 @@ def resolve_slgrid_files(sys: SystemParams):
             spec = SLGRID_FILES_BY_TEFF.get(fb)
             if spec:
                 pt_file  = pt_file  or spec.get("pt")
-                cld_file = cld_file or spec.get("cld")
+                if not cloudless:
+                    cld_file = cld_file or spec.get("cld")
                 print(
                     f"⚠ No SLGRID files for Teff={teff_key}K; "
                     f"falling back to Teff={fb}K files."
                 )
 
     pt_path  = _resolve_slgrid_file(pt_file,  SLGRID_PT_DIR)
-    cld_path = _resolve_slgrid_file(cld_file, SLGRID_CLD_DIR)
+    cld_path = None if cloudless else _resolve_slgrid_file(cld_file, SLGRID_CLD_DIR)
 
-    if not pt_path or not cld_path:
+    if not pt_path or (not cld_path and not cloudless):
         raise FileNotFoundError(
             f"Missing SLGRID PT/CLD file for Teff={teff_key}K. "
             f"Check the shared SLGRID inventory, set "
@@ -291,7 +298,7 @@ def resolve_slgrid_files(sys: SystemParams):
         )
     if not os.path.exists(pt_path):
         raise FileNotFoundError(f"PT file not found: {pt_path}")
-    if not os.path.exists(cld_path):
+    if cld_path is not None and not os.path.exists(cld_path):
         raise FileNotFoundError(f"CLD file not found: {cld_path}")
 
     return pt_path, cld_path
