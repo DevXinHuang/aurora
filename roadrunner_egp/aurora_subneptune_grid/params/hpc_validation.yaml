@@ -1,7 +1,7 @@
 # ============================================================================
-# HPC Validation Grid — ~1,152 rows
+# HPC Validation Grid — 1,728 rows
 # ============================================================================
-# A representative subset of the full 460,800-row grid for validating that
+# A representative subset of the full 276,480-row grid for validating that
 # real PICASO runs complete successfully on the cluster before committing
 # to the full Cartesian product.
 #
@@ -35,7 +35,7 @@ author: "Daniel Huang"
 contact: "Daniel Huang"
 project: "Aurora Sub-Neptune Grid"
 notes: >-
-  HPC validation run: representative 1,152-row subset of the full grid.
+  HPC validation run: representative 1,728-row subset of the full grid.
   Covers endpoint and midpoint values for each parameter axis.
 
 code:
@@ -50,7 +50,7 @@ picaso_tint_floor_k: 100.0
 
 # ---- Stars: 3 representative host stars (cool M, solar-like K, hot F) ----
 stars:
-  - teff_k: 3500 #6_12 foudn out picaso only do 3500 and up, so 3000 is out
+  - teff_k: 3500
     radius_rsun: 0.45 
   - teff_k: 5000
     radius_rsun: 0.80

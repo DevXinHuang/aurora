@@ -148,12 +148,14 @@ def _run_real_picaso_model(row: dict[str, Any]) -> dict[str, Any]:
         virga_fsed=float(row["fsed"]),
     )
 
-    out_ref, out_em = run_picaso_once(
+    out_ref, out_em, case, opacity = run_picaso_once(
         system,
         output_grid,
         atmosphere_source="picaso",
         cloud_model=cloud_model,
         verbose=True,
+        return_case=True,
+        return_opacity=True,
     )
     albedo, fpfs_reflection = _reflected_observables(out_ref, system, output_grid)
     fpfs_emission = _thermal_fpfs(out_em, output_grid)
@@ -162,6 +164,10 @@ def _run_real_picaso_model(row: dict[str, Any]) -> dict[str, Any]:
         "wavelength_um": output_grid,
         "fpfs_reflection": fpfs_reflection,
         "albedo": albedo,
+        "picaso_out_reflected": out_ref,
+        "picaso_out_emission": out_em,
+        "picaso_case": case,
+        "picaso_opacity": opacity,
         "picaso_metadata": {
             "dry_run": False,
             "atmosphere_source": "picaso",

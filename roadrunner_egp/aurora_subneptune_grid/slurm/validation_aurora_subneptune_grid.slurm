@@ -7,11 +7,11 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
 #SBATCH --time=04:00:00
-#SBATCH --array=0-1151
+#SBATCH --array=0-1727
 #SBATCH --output=roadrunner_egp/aurora_subneptune_grid/logs/%x_%A_%a.out
 #SBATCH --error=roadrunner_egp/aurora_subneptune_grid/logs/%x_%A_%a.err
 
-# HPC Validation Run — 1,152 representative models
+# HPC Validation Run — 1,728 representative models
 #
 # Pre-generate the manifest BEFORE submitting this script:
 #

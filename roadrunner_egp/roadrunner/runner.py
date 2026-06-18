@@ -188,6 +188,8 @@ def run_picaso_once(
     atmosphere_source: str | None = None,
     cloud_model: str | None = None,
     verbose: bool = True,
+    return_case: bool = False,
+    return_opacity: bool = False,
 ):
     """
     Run PICASO for both reflected and thermal spectra.
@@ -207,6 +209,10 @@ def run_picaso_once(
     cloud_model : str, optional
         Generated-PICASO cloud model: ``"virga"``, ``"jupiter"``, or
         ``"none"``.
+    return_case : bool, optional
+        Also return the original PICASO inputs object for model preservation.
+    return_opacity : bool, optional
+        Also return the opacity connection for in-memory diagnostics.
 
     Returns
     -------
@@ -259,8 +265,14 @@ def run_picaso_once(
         num_gangle=THERMAL_NUM_GANGLE,
         num_tangle=THERMAL_NUM_TANGLE,
     )
-    out_em = case.spectrum(opa, calculation="thermal", as_dict=True)
+    out_em = case.spectrum(opa, calculation="thermal", as_dict=True, full_output=True)
 
+    if return_case and return_opacity:
+        return out_ref, out_em, case, opa
+    if return_case:
+        return out_ref, out_em, case
+    if return_opacity:
+        return out_ref, out_em, opa
     return out_ref, out_em
 
 

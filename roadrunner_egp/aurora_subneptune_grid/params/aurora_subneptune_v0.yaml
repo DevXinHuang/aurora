@@ -16,8 +16,6 @@ picaso_tint_fixed_k: 1000.0
 picaso_tint_floor_k: 100.0
 
 stars:
-  #- teff_k: 3000
-   # radius_rsun: 0.20 --- IGNORE ---
   - teff_k: 3500
     radius_rsun: 0.45
   - teff_k: 4000

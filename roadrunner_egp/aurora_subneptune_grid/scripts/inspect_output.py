@@ -35,9 +35,10 @@ def main() -> int:
         print("attrs:")
         for key, value in dataset.attrs.items():
             print(f"{key}: {value}")
-        wavelength = dataset["wavelength_um"].values
-        print(f"first_wavelength_um: {float(wavelength[0])}")
-        print(f"last_wavelength_um: {float(wavelength[-1])}")
+        wavelength_name = "wavelength" if "wavelength" in dataset else "wavelength_um"
+        wavelength = dataset[wavelength_name].values
+        print(f"first_{wavelength_name}: {float(wavelength[0])}")
+        print(f"last_{wavelength_name}: {float(wavelength[-1])}")
         if "fpfs_reflection" in dataset:
             values = np.asarray(dataset["fpfs_reflection"].values, dtype=float)
             print(f"fpfs_reflection_min: {float(np.nanmin(values))}")

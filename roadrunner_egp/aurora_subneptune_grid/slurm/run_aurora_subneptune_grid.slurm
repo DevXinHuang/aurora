@@ -15,9 +15,9 @@
 # Check your limit:  scontrol show config | grep MaxArraySize
 #
 # Example batched submission (from repo root):
-#   for start in $(seq 0 1000 460799); do
+#   for start in $(seq 0 1000 276479); do
 #     end=$((start + 999))
-#     [ $end -gt 460799 ] && end=460799
+#     [ $end -gt 276479 ] && end=276479
 #     sbatch --array=${start}-${end}%100 \
 #       roadrunner_egp/aurora_subneptune_grid/slurm/run_aurora_subneptune_grid.slurm
 #   done

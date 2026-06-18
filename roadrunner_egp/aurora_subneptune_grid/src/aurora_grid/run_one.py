@@ -15,7 +15,7 @@ import xarray as xr
 
 from .parameters import resolve_repo_path
 from .picaso_runner import run_picaso_model
-from .xarray_io import build_dataset, write_dataset_atomic
+from .storage.picaso_model_store import build_picaso_model_dataset, save_picaso_model_dataset
 
 
 def run_one(row: dict[str, Any], overwrite: bool = False, dry_run: bool = False) -> dict[str, Any]:
@@ -28,14 +28,18 @@ def run_one(row: dict[str, Any], overwrite: bool = False, dry_run: bool = False)
         }
 
     model_output = run_picaso_model(row, dry_run=dry_run)
-    dataset = build_dataset(model_output, row)
-    write_status = write_dataset_atomic(dataset, output_path, overwrite=overwrite)
+    dataset = build_picaso_model_dataset(model_output, row)
+    write_status = save_picaso_model_dataset(dataset, output_path, overwrite=overwrite)
 
     with xr.open_dataset(output_path) as reopened:
-        if "wavelength_um" not in reopened.dims:
-            raise RuntimeError(f"NetCDF verification failed for {output_path}: missing wavelength_um dimension.")
+        if "wavelength" not in reopened.dims and "wavelength" not in reopened.coords:
+            raise RuntimeError(f"NetCDF verification failed for {output_path}: missing wavelength coordinate.")
+        if "albedo" not in reopened.data_vars:
+            raise RuntimeError(f"NetCDF verification failed for {output_path}: missing albedo.")
+        if "fpfs_reflected" not in reopened.data_vars:
+            raise RuntimeError(f"NetCDF verification failed for {output_path}: missing fpfs_reflected.")
         if "fpfs_reflection" not in reopened.data_vars:
-            raise RuntimeError(f"NetCDF verification failed for {output_path}: missing fpfs_reflection.")
+            raise RuntimeError(f"NetCDF verification failed for {output_path}: missing fpfs_reflection compatibility alias.")
 
     return {
         "status": write_status["status"],
