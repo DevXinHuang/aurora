@@ -5,9 +5,14 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-from . import QCResult
+from . import EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE, QCResult, SEVERITY_ORDER
 from .schema_checks import array_values, manifest_row
 from .science_checks import FNET_IRFNET_THRESHOLD
+
+
+SCHEMA_QC_CHECKS = {"schema"}
+PT_SPECTRUM_CLOUD_QC_CHECKS = {"spectrum", "climate", "chemistry", "cloud"}
+EXACT_PICASO_CLIMATE_QC_CHECKS = {"picaso_diagnostics", "adiabat", "flux_balance", "brightness_temperature"}
 
 
 def _matplotlib():
@@ -45,12 +50,12 @@ def _plot_adiabat(ax, ds: xr.Dataset) -> bool:
     adiabat = array_values(ds, "qc_adiabat")
     dtdp = array_values(ds, "qc_dtdp")
     if adiabat is None or dtdp is None:
-        ax.text(0.5, 0.5, "Adiabat unavailable", ha="center", va="center")
+        _show_exact_diagnostics_unavailable(ax)
         return False
     adiabat = np.ravel(adiabat)
     dtdp = np.ravel(dtdp)
     if adiabat.size != dtdp.size:
-        ax.text(0.5, 0.5, "Adiabat unavailable", ha="center", va="center")
+        _show_exact_diagnostics_unavailable(ax)
         return False
     layers = np.arange(1, adiabat.size + 1)
     ax.plot(dtdp, layers, color="blue", label="model dTdp")
@@ -71,17 +76,17 @@ def _plot_flux_balance(ax, ds: xr.Dataset) -> bool:
     else:
         flux = None
     if flux is None:
-        ax.text(0.5, 0.5, "Flux balance unavailable", ha="center", va="center")
+        _show_exact_diagnostics_unavailable(ax)
         return False
     flux = np.ravel(flux)
     pressure = _pressure_for_values(ds, flux)
     if pressure is None:
-        ax.text(0.5, 0.5, "Flux balance unavailable", ha="center", va="center")
+        _show_exact_diagnostics_unavailable(ax)
         return False
     x = np.where(np.abs(flux) > 0.0, np.abs(flux), np.nan)
     finite = np.isfinite(x) & np.isfinite(pressure) & (x > 0.0) & (pressure > 0.0)
     if not np.any(finite):
-        ax.text(0.5, 0.5, "Flux balance unavailable", ha="center", va="center")
+        _show_exact_diagnostics_unavailable(ax)
         return False
     ax.loglog(x[finite], pressure[finite], color="deeppink", linewidth=1.2)
     ax.axvline(FNET_IRFNET_THRESHOLD, color="cyan", linewidth=1.0, linestyle="--", label=f"threshold {FNET_IRFNET_THRESHOLD:.0e}")
@@ -96,13 +101,13 @@ def _plot_brightness_temperature(ax, ds: xr.Dataset) -> bool:
     brightness = array_values(ds, "qc_brightness_temperature")
     brightness_wavelength = array_values(ds, "qc_brightness_wavelength")
     if brightness is None or brightness_wavelength is None or brightness.size != brightness_wavelength.size:
-        ax.text(0.5, 0.5, "Brightness T unavailable", ha="center", va="center")
+        _show_exact_diagnostics_unavailable(ax)
         return False
     brightness = np.ravel(brightness)
     brightness_wavelength = np.ravel(brightness_wavelength)
     finite = np.isfinite(brightness) & np.isfinite(brightness_wavelength) & (brightness_wavelength > 0.0)
     if not np.any(finite):
-        ax.text(0.5, 0.5, "Brightness T unavailable", ha="center", va="center")
+        _show_exact_diagnostics_unavailable(ax)
         return False
     ax.semilogx(brightness_wavelength[finite], brightness[finite], color="purple", linewidth=1.2)
     temperature = array_values(ds, "temperature")
@@ -116,6 +121,35 @@ def _plot_brightness_temperature(ax, ds: xr.Dataset) -> bool:
     return True
 
 
+def _show_exact_diagnostics_unavailable(ax) -> None:
+    ax.text(
+        0.5,
+        0.5,
+        EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE,
+        ha="center",
+        va="center",
+        fontsize=8,
+        wrap=True,
+        transform=ax.transAxes,
+    )
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+
+def _category_status(qc_result: QCResult, checks: set[str]) -> str:
+    severities = [flag.severity for flag in qc_result.flags if flag.check in checks]
+    if not severities:
+        return "pass"
+    return max(severities, key=lambda severity: SEVERITY_ORDER.get(severity, 0))
+
+
+def _exact_picaso_status(qc_result: QCResult) -> str:
+    for flag in qc_result.flags:
+        if flag.check == "picaso_diagnostics" and flag.message == EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE:
+            return "unavailable"
+    return _category_status(qc_result, EXACT_PICASO_CLIMATE_QC_CHECKS)
+
+
 def _format_number(value: object, fmt: str = ".3g", default: str = "?") -> str:
     try:
         return format(float(value), fmt)
@@ -125,6 +159,11 @@ def _format_number(value: object, fmt: str = ".3g", default: str = "?") -> str:
 
 def _diagnostic_title(ds: xr.Dataset, qc_result: QCResult) -> str:
     row = manifest_row(ds)
+    category_line = (
+        f"Schema QC: {_category_status(qc_result, SCHEMA_QC_CHECKS)} | "
+        f"PT/spectrum/cloud QC: {_category_status(qc_result, PT_SPECTRUM_CLOUD_QC_CHECKS)} | "
+        f"Exact PICASO climate diagnostics: {_exact_picaso_status(qc_result)}"
+    )
     parts = [
         f"T_eq={_format_number(row.get('equilibrium_temperature_k'), '.0f')}K",
         f"g={_format_number(row.get('gravity_ms2'), '.3g')} m/s2",
@@ -138,7 +177,8 @@ def _diagnostic_title(ds: xr.Dataset, qc_result: QCResult) -> str:
     subtitle = " | ".join(flagged[:4])
     if len(flagged) > 4:
         subtitle += f" | +{len(flagged) - 4} more"
-    return "  ".join(parts) + (f"\n! {subtitle}" if subtitle else f"\n{qc_result.status}")
+    detail_line = f"! {subtitle}" if subtitle else qc_result.status
+    return f"{category_line}\n" + "  ".join(parts) + f"\n{detail_line}"
 
 
 def make_qc_plot(ds: xr.Dataset, qc_result: QCResult, out_png: Path | str) -> Path:
@@ -150,16 +190,16 @@ def make_qc_plot(ds: xr.Dataset, qc_result: QCResult, out_png: Path | str) -> Pa
     ax = axes.ravel()
 
     _plot_adiabat(ax[0], ds)
-    ax[0].set_title("Profile slope vs adiabat")
+    ax[0].set_title("Exact PICASO Climate: dT/dp vs Adiabat")
 
     _plot_pt(ax[1], ds)
-    ax[1].set_title("PT Profile")
+    ax[1].set_title("PT/Spectrum/Cloud QC: PT Profile")
 
     _plot_flux_balance(ax[2], ds)
-    ax[2].set_title("Fnet / IR-Fnet")
+    ax[2].set_title("Exact PICASO Climate: Fnet / IR-Fnet")
 
     _plot_brightness_temperature(ax[3], ds)
-    ax[3].set_title("IR Brightness Temperature")
+    ax[3].set_title("Exact PICASO Climate: IR Brightness Temperature")
 
     fig.suptitle(_diagnostic_title(ds, qc_result), fontsize=9, wrap=True)
     fig.savefig(out_png, dpi=120)
@@ -191,7 +231,7 @@ def make_spectrum_plot(ds: xr.Dataset, qc_result: QCResult, out_png: Path | str)
         else:
             ax.text(0.5, 0.5, f"{name} unavailable", ha="center", va="center")
         ax.set_title(title)
-    fig.suptitle(f"{qc_result.run_id or Path(qc_result.file_path).stem}: spectrum")
+    fig.suptitle(f"{qc_result.run_id or Path(qc_result.file_path).stem}: PT/spectrum/cloud QC spectrum")
     fig.savefig(out_png, dpi=150)
     plt.close(fig)
     return out_png

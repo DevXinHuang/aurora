@@ -16,8 +16,15 @@ for path in (GRID_ROOT / "src", ROADRUNNER_ROOT):
         sys.path.insert(0, str(path))
 
 from aurora_grid.io.netcdf_schema import build_aurora_run_dataset
-from aurora_grid.qc import QCResult
-from aurora_grid.qc.plots import _plot_adiabat, _plot_brightness_temperature, _plot_flux_balance, _plot_pt, make_qc_plot
+from aurora_grid.qc import EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE, QCResult
+from aurora_grid.qc.plots import (
+    _diagnostic_title,
+    _plot_adiabat,
+    _plot_brightness_temperature,
+    _plot_flux_balance,
+    _plot_pt,
+    make_qc_plot,
+)
 from aurora_grid.qc.report import flags_to_rows, result_to_row, validate_dataset, write_flags, write_summary
 from aurora_grid.qc.schema_checks import classify_storage, validate_schema
 from aurora_grid.qc.science_checks import validate_science
@@ -257,7 +264,9 @@ def test_new_schema_without_exact_climate_qc_passes_schema_with_warning():
     assert not any(flag.severity == "fail" for flag in schema_flags)
     assert not any(flag.severity == "fail" for flag in result.flags)
     assert any(
-        flag.severity == "warning" and "exact climate QC diagnostics unavailable" in flag.message
+        flag.check == "picaso_diagnostics"
+        and flag.severity == "warning"
+        and flag.message == EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE
         for flag in result.flags
     )
 
@@ -323,6 +332,41 @@ def test_qc_flags_csv_contains_one_row_per_flag_with_plot_paths(tmp_path: Path):
         flag_rows = list(csv.DictReader(handle))
     assert summary_rows[0]["run_id"] == "run-schema-qc"
     assert any(row["check"] == "adiabat" and row["diagnostic_plot_path"] == str(diagnostic_path) for row in flag_rows)
+
+
+def test_missing_exact_picaso_diagnostics_message_reaches_qc_csvs(tmp_path: Path):
+    ds = _new_schema_dataset()
+    result = validate_dataset(ds, tmp_path / "run.nc")
+    summary_path = tmp_path / "qc_summary.csv"
+    flags_path = tmp_path / "qc_flags.csv"
+
+    write_summary([result_to_row(result, ds)], summary_path)
+    write_flags(flags_to_rows(result), flags_path)
+
+    with summary_path.open("r", encoding="utf-8", newline="") as handle:
+        summary_rows = list(csv.DictReader(handle))
+    with flags_path.open("r", encoding="utf-8", newline="") as handle:
+        flag_rows = list(csv.DictReader(handle))
+
+    assert summary_rows[0]["warning_reasons"] == EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE
+    assert any(
+        row["check"] == "picaso_diagnostics"
+        and row["severity"] == "warning"
+        and row["message"] == EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE
+        for row in flag_rows
+    )
+
+
+def test_diagnostic_title_distinguishes_qc_categories():
+    ds = _new_schema_dataset()
+    result = validate_dataset(ds)
+
+    title = _diagnostic_title(ds, result)
+
+    assert "Schema QC: pass" in title
+    assert "PT/spectrum/cloud QC: pass" in title
+    assert "Exact PICASO climate diagnostics: unavailable" in title
+    assert EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE in title
 
 
 def test_browser_triage_discovers_only_safe_plot_paths(tmp_path: Path):

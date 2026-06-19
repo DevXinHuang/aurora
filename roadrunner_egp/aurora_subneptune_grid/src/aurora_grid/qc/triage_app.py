@@ -76,6 +76,22 @@ button { border:2px solid; border-radius:7px; padding:9px 24px; font-weight:700;
 <div id="flash"></div>
 <script>
 let state = { folder: "", models: [], undecided: [], idx: 0, history: [] };
+const CHECK_LABELS = {
+  "check_schema": "Schema QC",
+  "check_spectrum": "PT/spectrum/cloud QC: spectrum",
+  "check_climate": "PT/spectrum/cloud QC: PT profile",
+  "check_chemistry": "PT/spectrum/cloud QC: chemistry",
+  "check_cloud": "PT/spectrum/cloud QC: cloud",
+  "check_picaso_diagnostics": "Exact PICASO climate diagnostics",
+  "check_adiabat": "Exact PICASO climate diagnostics: adiabat",
+  "check_flux_balance": "Exact PICASO climate diagnostics: flux balance",
+  "check_brightness_temperature": "Exact PICASO climate diagnostics: brightness temperature",
+  "check_pass": "Passing runs"
+};
+
+function checkLabel(name) {
+  return CHECK_LABELS[name] || name.replace(/^check_/, "").replaceAll("_", " ");
+}
 
 async function getJSON(url, opts) {
   const response = await fetch(url, opts);
@@ -89,7 +105,7 @@ async function init() {
   links.innerHTML = config.links.map(link => `<a href="${link.url}" target="_blank">${link.label}</a>`).join("");
   const folders = await getJSON("/api/folders");
   const select = document.getElementById("folder");
-  select.innerHTML = folders.map(name => `<option value="${name}">${name}</option>`).join("");
+  select.innerHTML = folders.map(name => `<option value="${name}">${checkLabel(name)}</option>`).join("");
   select.onchange = () => loadFolder(select.value);
   if (folders.length) {
     select.value = folders[0];
@@ -139,7 +155,7 @@ function showCurrent() {
   document.getElementById("empty").style.display = "none";
   image.src = `/api/plot?path=${encodeURIComponent(model.diagnostic_plot_path)}&t=${Date.now()}`;
   const spectrum = model.spectrum_plot_path ? ` | <a href="/api/plot?path=${encodeURIComponent(model.spectrum_plot_path)}" target="_blank">spectrum</a>` : "";
-  document.getElementById("name").innerHTML = `${model.run_id} <span style="color:var(--muted)">(${model.check})</span>${spectrum}`;
+  document.getElementById("name").innerHTML = `${model.run_id} <span style="color:var(--muted)">(${checkLabel(model.check)}; ${model.check})</span>${spectrum}`;
   updateProgress();
 }
 

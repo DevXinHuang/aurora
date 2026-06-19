@@ -8,7 +8,7 @@ import xarray as xr
 
 from aurora_grid.io.netcdf_schema import validate_aurora_netcdf_schema
 
-from . import QCFlag
+from . import EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE, QCFlag
 
 
 REQUIRED_ATTRS = [
@@ -175,19 +175,15 @@ def validate_schema(ds: xr.Dataset, row: dict[str, Any] | None = None) -> list[Q
         for issue in validate_aurora_netcdf_schema(ds):
             severity = "warning" if issue.startswith("WARNING:") else "fail"
             flags.append(QCFlag("schema", severity, issue.split(": ", 1)[-1]))
-        missing_diagnostics = []
-        if not {"qc_adiabat", "qc_dtdp", "qc_adiabat_pressure"}.issubset(ds.data_vars):
-            missing_diagnostics.append("adiabat")
-        if "fnet_irfnet" not in ds.data_vars and "Fnet_IRFnet" not in ds.data_vars and "Fnet/IR-Fnet" not in ds.data_vars:
-            missing_diagnostics.append("flux_balance")
-        if not {"qc_brightness_temperature", "qc_brightness_wavelength"}.issubset(ds.data_vars):
-            missing_diagnostics.append("brightness_temperature")
-        if missing_diagnostics:
+        has_adiabat = {"qc_adiabat", "qc_dtdp", "qc_adiabat_pressure"}.issubset(ds.data_vars)
+        has_flux_balance = "fnet_irfnet" in ds.data_vars or "Fnet_IRFnet" in ds.data_vars or "Fnet/IR-Fnet" in ds.data_vars
+        has_brightness_temperature = {"qc_brightness_temperature", "qc_brightness_wavelength"}.issubset(ds.data_vars)
+        if not (has_adiabat and has_flux_balance and has_brightness_temperature):
             flags.append(
                 QCFlag(
                     "picaso_diagnostics",
                     "warning",
-                    f"exact climate QC diagnostics unavailable: {','.join(missing_diagnostics)}",
+                    EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE,
                 )
             )
         return flags

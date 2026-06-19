@@ -5,6 +5,10 @@ from typing import Any
 
 
 SEVERITY_ORDER = {"info": 0, "warning": 1, "fail": 2, "rerun_recommended": 3}
+EXACT_PICASO_CLIMATE_DIAGNOSTICS_MESSAGE = (
+    "Exact PICASO climate diagnostics unavailable for this run mode; "
+    "no moistgrad, flux-balance, or spectrum_output fields were returned."
+)
 
 
 @dataclass(frozen=True)
