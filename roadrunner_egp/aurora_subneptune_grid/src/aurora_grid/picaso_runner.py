@@ -245,6 +245,9 @@ def _run_real_picaso_climate_model(
             "atmosphere_source": "picaso_climate",
             "thermal_source": "picaso_climate_spectrum_output",
             "cloud_model": cloud_model,
+            "cloud_fraction": system.cloud_fraction,
+            "cloud_hole_fraction": system.cloud_hole_fraction,
+            "native_patchy_cloud_api": "virga(do_holes=True, fhole=cloud_hole_fraction)",
             "chem_log_mh": system.chem_log_mh,
             "chem_c_o_from_picaso_tag": system.chem_c_o,
             "c_to_o_picaso_tag": str(row["c_to_o_picaso_tag"]).zfill(3),
@@ -304,6 +307,8 @@ def _run_real_picaso_model(
     log_mh = math.log10(metallicity_xsolar)
 
     source = normalize_atmosphere_source(atmosphere_source)
+    cloud_fraction = float(row.get("cloud_fraction", 1.0))
+    cloud_hole_fraction = float(row.get("cloud_hole_fraction", 1.0 - cloud_fraction))
     system = SystemParams(
         teff_k=float(row["picaso_tint_k"]),
         logg_cgs=math.log10(float(row["gravity_ms2"]) * 100.0),
@@ -314,6 +319,8 @@ def _run_real_picaso_model(
         rstar_rsun=float(row["star_radius_rsun"]),
         atmosphere_source=source,
         cloud_model=cloud_model,
+        cloud_fraction=cloud_fraction,
+        cloud_hole_fraction=cloud_hole_fraction,
         bond_albedo=0.0,
         chem_c_o=c_to_o,
         chem_log_mh=log_mh,

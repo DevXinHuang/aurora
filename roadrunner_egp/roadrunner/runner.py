@@ -6,6 +6,7 @@ planet fluxes with correct unit conversions.
 """
 
 import os
+import re
 import inspect
 from pathlib import Path
 from typing import Any
@@ -138,6 +139,36 @@ def normalize_cloud_model(cloud_model: str | None) -> str:
     return aliases[cloud_model]
 
 
+def _virga_condensates(value):
+    """Normalize Virga condensates from string/list into a list PICASO accepts."""
+    if value is None:
+        return ["MgSiO3"]
+    if isinstance(value, str):
+        parts = [part for part in re.split(r"[,;\s]+", value.strip()) if part]
+        return parts or ["MgSiO3"]
+    try:
+        return list(value)
+    except TypeError:
+        return [str(value)]
+
+
+def _patchy_cloud_kwargs(system: SystemParams) -> dict[str, Any]:
+    """Return native PICASO patchy-cloud kwargs from cloudy fraction.
+
+    PICASO's do_holes mode also expects fthin_cld to be numeric.
+    For a standard patchy case, the cloudy portion keeps full cloud opacity,
+    so fthin_cld=1.0 and fhole is the clear-hole area fraction.
+    """
+    cloud_fraction = float(getattr(system, "cloud_fraction", 1.0))
+    if cloud_fraction < 0.0 or cloud_fraction > 1.0:
+        raise ValueError(f"cloud_fraction must be between 0 and 1; got {cloud_fraction}")
+    fhole = float(getattr(system, "cloud_hole_fraction", 1.0 - cloud_fraction))
+    if cloud_fraction >= 1.0:
+        return {"do_holes": False, "fhole": None, "fthin_cld": 1.0}
+    if cloud_fraction <= 0.0:
+        return {"do_holes": False, "fhole": None, "fthin_cld": 0.0}
+    return {"do_holes": True, "fhole": fhole, "fthin_cld": 1.0}
+
 def equilibrium_temperature(sys: SystemParams) -> float:
     """Estimate equilibrium temperature from star/orbit and Bond albedo."""
     radius = sys.rstar_rsun * R_sun.value
@@ -204,10 +235,15 @@ def _build_generated_picaso_atmosphere(
     if model == "virga":
         try:
             case.inputs["atmosphere"]["profile"]["kz"] = sys.kzz_cgs
+            patchy_kwargs = _patchy_cloud_kwargs(sys)
             case.virga(
-                condensates=sys.virga_condensates,
+                condensates=_virga_condensates(sys.virga_condensates),
                 directory=sys.virga_dir,
                 fsed=sys.virga_fsed,
+                kz_min=sys.kzz_cgs,
+                do_holes=patchy_kwargs["do_holes"],
+                fhole=patchy_kwargs["fhole"],
+                fthin_cld=patchy_kwargs["fthin_cld"],
             )
             if verbose:
                 print(
@@ -217,10 +253,19 @@ def _build_generated_picaso_atmosphere(
                 )
             return
         except Exception as exc:
+            if os.environ.get("ROADRUNNER_REQUIRE_VIRGA", "0").lower() in {"1", "true", "yes", "y"}:
+                raise RuntimeError(f"Virga failed and ROADRUNNER_REQUIRE_VIRGA=1: {exc}") from exc
             if verbose:
                 print(f"⚠ Virga not available ({exc}), using Jupiter cloud model")
 
-    case.clouds(filename=jdi.jupiter_cld(), sep=r"\s+")
+    patchy_kwargs = _patchy_cloud_kwargs(sys)
+    case.clouds(
+        filename=jdi.jupiter_cld(),
+        sep=r"\s+",
+        do_holes=patchy_kwargs["do_holes"],
+        fhole=patchy_kwargs["fhole"],
+        fthin_cld=patchy_kwargs["fthin_cld"],
+    )
     if verbose:
         print(
             "✓ Using generated PICASO atmosphere "

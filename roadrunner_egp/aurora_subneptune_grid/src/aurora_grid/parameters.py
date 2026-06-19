@@ -223,13 +223,14 @@ def picaso_tint_k(config: dict[str, Any], equilibrium_k: float) -> float:
 
 def cloud_model_for_fraction(cloud_fraction: float) -> str:
     value = float(cloud_fraction)
+    if value < 0.0 or value > 1.0:
+        raise ValueError(f"cloud_fraction must be between 0 and 1; got {cloud_fraction!r}.")
     if math.isclose(value, 0.0, abs_tol=1e-12):
         return "none"
-    if math.isclose(value, 1.0, abs_tol=1e-12):
-        return "virga"
-    raise ValueError(
-        f"Unsupported cloud_fraction {cloud_fraction!r}; first implementation supports 0.0 or 1.0."
-    )
+    # Any nonzero value is a cloudy PICASO/Virga column.
+    # Values between 0 and 1 are handled natively by PICASO patchy-cloud holes:
+    # fhole = 1 - cloud_fraction.
+    return "virga"
 
 
 def expected_grid_size(config: dict[str, Any]) -> int:

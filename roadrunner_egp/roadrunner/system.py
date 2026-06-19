@@ -60,6 +60,8 @@ class SystemParams:
     cld_file:    str   = None   # override: absolute or basename CLD file
     atmosphere_source: str = ATMOSPHERE_SOURCE  # "slgrid" or "picaso"
     cloud_model: str = PICASO_CLOUD_MODEL       # for atmosphere_source="picaso"
+    cloud_fraction: float = 1.0                 # native PICASO patchy cloudy fraction
+    cloud_hole_fraction: float = 0.0            # clear-hole fraction; fhole in PICASO
     bond_albedo: float = PICASO_BOND_ALBEDO
     chem_c_o: float = PICASO_CHEM_C_TO_O
     chem_log_mh: float = PICASO_CHEM_LOG_MH
