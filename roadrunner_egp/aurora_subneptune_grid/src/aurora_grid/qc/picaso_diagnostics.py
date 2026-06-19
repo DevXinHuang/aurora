@@ -97,10 +97,18 @@ def run_picaso_diagnostics(
     if brightness_temperature is not None and isinstance(raw_output, dict) and "spectrum_output" in raw_output:
         try:
             brightness = np.asarray(brightness_temperature(raw_output["spectrum_output"], plot=False), dtype=float)
-            ds = _add_1d(ds, "qc_brightness_temperature", brightness, "qc_brightness_wavelength", "K")
             wavelength = _brightness_wavelength(raw_output, brightness)
             if wavelength is not None:
-                ds = _add_1d(ds, "qc_brightness_wavelength", wavelength, "qc_brightness_wavelength", "um")
+                order = np.argsort(wavelength)
+                wavelength = wavelength[order]
+                brightness = brightness[order]
+                ds.coords["qc_brightness_wavelength_um"] = (
+                    ("brightness_wavelength_um",),
+                    wavelength,
+                    {"units": "um"},
+                )
+                ds = _add_1d(ds, "qc_brightness_temperature", brightness, "brightness_wavelength_um", "K")
+                ds = _add_1d(ds, "qc_brightness_wavelength", wavelength, "brightness_wavelength_um", "um")
             finite = brightness[np.isfinite(brightness)]
             if finite.size:
                 max_tb = float(np.nanmax(finite))

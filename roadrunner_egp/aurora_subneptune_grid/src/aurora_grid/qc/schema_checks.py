@@ -54,6 +54,7 @@ KNOWN_NON_CHEMISTRY = {
     "qc_adiabat_pressure",
     "qc_brightness_temperature",
     "qc_brightness_wavelength",
+    "qc_brightness_wavelength_um",
     "fnet_irfnet",
     "Fnet_IRFnet",
     "Fnet/IR-Fnet",
@@ -97,6 +98,8 @@ def array_values(ds: xr.Dataset, name: str) -> np.ndarray | None:
         "asymmetry_factor": "asy",
         "Fnet_IRFnet": "fnet_irfnet",
         "fnet_irfnet": "Fnet_IRFnet",
+        "qc_brightness_wavelength": "qc_brightness_wavelength_um",
+        "qc_brightness_wavelength_um": "qc_brightness_wavelength",
     }
     if name not in ds and name == "fnet_irfnet":
         for candidate in ("Fnet_IRFnet", "Fnet/IR-Fnet"):
@@ -177,7 +180,11 @@ def validate_schema(ds: xr.Dataset, row: dict[str, Any] | None = None) -> list[Q
             flags.append(QCFlag("schema", severity, issue.split(": ", 1)[-1]))
         has_adiabat = {"qc_adiabat", "qc_dtdp", "qc_adiabat_pressure"}.issubset(ds.data_vars)
         has_flux_balance = "fnet_irfnet" in ds.data_vars or "Fnet_IRFnet" in ds.data_vars or "Fnet/IR-Fnet" in ds.data_vars
-        has_brightness_temperature = {"qc_brightness_temperature", "qc_brightness_wavelength"}.issubset(ds.data_vars)
+        has_brightness_wavelength = (
+            "qc_brightness_wavelength" in ds
+            or "qc_brightness_wavelength_um" in ds
+        )
+        has_brightness_temperature = "qc_brightness_temperature" in ds and has_brightness_wavelength
         if not (has_adiabat and has_flux_balance and has_brightness_temperature):
             flags.append(
                 QCFlag(

@@ -172,8 +172,43 @@ def test_nested_exact_climate_qc_diagnostics_are_written(model_output, manifest_
     assert dataset["qc_dtdp"].dims == ("level",)
     assert dataset["qc_adiabat_pressure"].dims == ("level",)
     assert dataset["fnet_irfnet"].dims == ("level",)
-    assert dataset["qc_brightness_temperature"].dims == ("wavelength",)
+    assert dataset["qc_brightness_temperature"].dims == ("brightness_wavelength_um",)
+    assert dataset["qc_brightness_wavelength_um"].dims == ("brightness_wavelength_um",)
+    assert dataset["qc_brightness_wavelength"].dims == ("brightness_wavelength_um",)
     assert "brightness diagnostic fallback warning" in dataset.attrs["schema_warnings"]
+
+
+def test_native_grid_brightness_qc_writes_and_reopens(model_output, manifest_row, tmp_path):
+    model_output = dict(model_output)
+    brightness_wavelength = np.array([1.0, 1.4, 1.8, 2.2, 2.6, 3.0])
+    brightness_temperature = np.array([310.0, 320.0, 330.0, 340.0, 350.0, 360.0])
+    model_output["qc_diagnostics"] = {
+        "qc_brightness_temperature": brightness_temperature,
+        "qc_brightness_wavelength": brightness_wavelength,
+    }
+
+    dataset = build_aurora_run_dataset(model_output, manifest_row)
+
+    assert dataset["wavelength_um"].shape == (4,)
+    assert dataset["qc_brightness_temperature"].shape == brightness_temperature.shape
+    assert dataset["qc_brightness_wavelength_um"].shape == brightness_wavelength.shape
+    assert dataset["qc_brightness_temperature"].shape != dataset["wavelength_um"].shape
+    assert validate_aurora_netcdf_schema(dataset) == []
+    assert "exact brightness-temperature diagnostic does not match schema wavelength grid" not in dataset.attrs.get("schema_warnings", "")
+
+    output_path = tmp_path / "native_brightness.nc"
+    status = write_aurora_run_netcdf(dataset, output_path)
+    assert status["status"] == "wrote"
+    with xr.open_dataset(output_path) as reopened:
+        assert "qc_brightness_temperature" in reopened
+        assert "qc_brightness_wavelength_um" in reopened or "qc_brightness_wavelength" in reopened
+        brightness_wavelength_name = (
+            "qc_brightness_wavelength_um"
+            if "qc_brightness_wavelength_um" in reopened
+            else "qc_brightness_wavelength"
+        )
+        assert reopened["qc_brightness_temperature"].shape == reopened[brightness_wavelength_name].shape
+        assert reopened["qc_brightness_temperature"].shape != reopened["wavelength_um"].shape
 
 
 def test_missing_enabled_optional_warns_by_default(model_output, manifest_row):

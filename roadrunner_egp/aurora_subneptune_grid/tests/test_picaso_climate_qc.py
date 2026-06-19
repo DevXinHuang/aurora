@@ -193,8 +193,8 @@ def test_picaso_climate_mode_uses_converged_pt_and_saves_schema(monkeypatch):
         "qc_dtdp": np.array([0.1, 0.2, 0.3, 0.4]),
         "fnet_irfnet": np.array([1.0e-4, 2.0e-4, 3.0e-4, 4.0e-4]),
         "flux_balance": np.array([1.0e-5, 2.0e-5, 3.0e-5, 4.0e-5]),
-        "qc_brightness_temperature": np.full(output_grid.size, 350.0),
-        "qc_brightness_wavelength": output_grid.copy(),
+        "qc_brightness_temperature": np.full(output_grid.size + 2, 350.0),
+        "qc_brightness_wavelength": np.linspace(1.0, 5.0, output_grid.size + 2),
     }
 
     class FakeCase:
@@ -240,6 +240,10 @@ def test_picaso_climate_mode_uses_converged_pt_and_saves_schema(monkeypatch):
     assert "fnet_irfnet" in dataset
     assert "qc_dtdp" in dataset
     assert "flux_balance" in dataset
+    assert "qc_brightness_temperature" in dataset
+    assert "qc_brightness_wavelength_um" in dataset
+    assert dataset["qc_brightness_temperature"].shape == dataset["qc_brightness_wavelength_um"].shape
+    assert dataset["qc_brightness_temperature"].shape != dataset["wavelength_um"].shape
     assert dataset.attrs["climate_converged"] == 1
     assert dataset.attrs["climate_opacity_method"] == "preweighted"
     assert dataset.attrs["selected_ck_file"].endswith("sonora_2121grid_feh1.0_co0.55.hdf5")

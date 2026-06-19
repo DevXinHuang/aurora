@@ -38,6 +38,7 @@ QC_DIAGNOSTIC_VARIABLES = (
     "flux_balance",
     "qc_brightness_temperature",
     "qc_brightness_wavelength",
+    "qc_brightness_wavelength_um",
 )
 
 REQUIRED_DIMS = ("wavelength", "level", "layer", "species")
@@ -653,7 +654,12 @@ def _extract_explicit_qc_diagnostics(model_output: dict[str, Any]) -> dict[str, 
         "fnet_irfnet": ("fnet_irfnet", "Fnet_IRFnet", "Fnet/IR-Fnet"),
         "flux_balance": ("flux_balance",),
         "qc_brightness_temperature": ("qc_brightness_temperature", "brightness_temperature"),
-        "qc_brightness_wavelength": ("qc_brightness_wavelength", "brightness_wavelength", "brightness_wavelength_um"),
+        "qc_brightness_wavelength": (
+            "qc_brightness_wavelength",
+            "qc_brightness_wavelength_um",
+            "brightness_wavelength",
+            "brightness_wavelength_um",
+        ),
     }
     for target, names in aliases.items():
         for source in sources:
@@ -780,27 +786,20 @@ def _diagnostic_vertical_dim(size: int, nlevel: int, nlayer: int) -> str | None:
     return None
 
 
-def _align_to_schema_wavelength(
+def _native_brightness_grid(
     values: np.ndarray,
     source_wavelength: np.ndarray | None,
     schema_wavelength: np.ndarray,
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
     if source_wavelength is None:
         if values.size == schema_wavelength.size:
-            return values, schema_wavelength
-        return None, None
+            source_wavelength = schema_wavelength
+        else:
+            return None, None
     if values.size != source_wavelength.size:
         return None, None
     order = np.argsort(source_wavelength)
-    sorted_wavelength = source_wavelength[order]
-    if sorted_wavelength.size != schema_wavelength.size or not np.allclose(
-        sorted_wavelength,
-        schema_wavelength,
-        rtol=0.0,
-        atol=1.0e-10,
-    ):
-        return None, None
-    return values[order], schema_wavelength
+    return values[order], source_wavelength[order]
 
 
 def _add_exact_qc_diagnostics(
@@ -893,30 +892,38 @@ def _add_exact_qc_diagnostics(
     brightness = diagnostics.get("qc_brightness_temperature")
     if brightness is not None:
         brightness_wavelength = diagnostics.get("qc_brightness_wavelength")
-        aligned_brightness, aligned_wavelength = _align_to_schema_wavelength(
+        native_brightness, native_wavelength = _native_brightness_grid(
             brightness,
             brightness_wavelength,
             wavelength_um,
         )
-        if aligned_brightness is not None and aligned_wavelength is not None:
+        if native_brightness is not None and native_wavelength is not None:
+            ds.coords["qc_brightness_wavelength_um"] = (
+                ("brightness_wavelength_um",),
+                native_wavelength,
+                {
+                    "units": "um",
+                    "description": "Native wavelength grid for the exact PICASO brightness-temperature diagnostic.",
+                },
+            )
             ds["qc_brightness_temperature"] = (
-                ("wavelength",),
-                aligned_brightness,
+                ("brightness_wavelength_um",),
+                native_brightness,
                 {
                     "units": "K",
-                    "description": "Exact PICASO brightness-temperature diagnostic on the schema wavelength grid.",
+                    "description": "Exact PICASO brightness-temperature diagnostic on its native wavelength grid.",
                 },
             )
             ds["qc_brightness_wavelength"] = (
-                ("wavelength",),
-                aligned_wavelength,
+                ("brightness_wavelength_um",),
+                native_wavelength,
                 {
                     "units": "um",
-                    "description": "Wavelength grid for the exact PICASO brightness-temperature diagnostic.",
+                    "description": "Compatibility alias for qc_brightness_wavelength_um.",
                 },
             )
         else:
-            warnings.append("exact brightness-temperature diagnostic does not match schema wavelength grid")
+            warnings.append("exact brightness-temperature diagnostic has no matching native wavelength grid")
 
 
 def _add_scalar(ds: xr.Dataset, name: str, value: Any, units: str | None = None) -> None:
@@ -1319,6 +1326,25 @@ def validate_aurora_netcdf_schema(ds: xr.Dataset) -> list[str]:
             issues.append(f"ERROR: {name} must have dimensions ('layer', 'wavelength')")
     if ds.sizes["layer"] != ds.sizes["level"] - 1:
         issues.append("ERROR: len(layer) must equal len(level) - 1")
+    if "qc_brightness_temperature" in ds:
+        brightness_dims = ds["qc_brightness_temperature"].dims
+        if len(brightness_dims) != 1:
+            issues.append("ERROR: qc_brightness_temperature must be one-dimensional")
+        else:
+            brightness_dim = brightness_dims[0]
+            brightness_wavelength_name = (
+                "qc_brightness_wavelength_um"
+                if "qc_brightness_wavelength_um" in ds
+                else "qc_brightness_wavelength"
+                if "qc_brightness_wavelength" in ds
+                else None
+            )
+            if brightness_wavelength_name is None:
+                issues.append("ERROR: qc_brightness_temperature requires qc_brightness_wavelength_um")
+            elif ds[brightness_wavelength_name].dims != (brightness_dim,):
+                issues.append(f"ERROR: {brightness_wavelength_name} must share qc_brightness_temperature dimensions")
+            if brightness_dim == "wavelength" and ds.sizes.get(brightness_dim) != ds.sizes.get("wavelength"):
+                issues.append("ERROR: qc_brightness_temperature wavelength dimension is inconsistent")
 
     units = {
         "wavelength_um": "um",
@@ -1337,15 +1363,27 @@ def validate_aurora_netcdf_schema(ds: xr.Dataset) -> list[str]:
         "cloud_optical_depth": "unitless per layer",
         "single_scattering_albedo": "dimensionless",
         "asymmetry_factor": "dimensionless",
+        "qc_brightness_temperature": "K",
+        "qc_brightness_wavelength": "um",
+        "qc_brightness_wavelength_um": "um",
     }
     for name, unit in units.items():
-        _check_units(ds, name, unit, issues)
+        if name in ds:
+            _check_units(ds, name, unit, issues)
 
     wavelength = np.asarray(ds["wavelength_um"].values, dtype=float)
     if wavelength.ndim != 1 or not np.all(np.isfinite(wavelength)):
         issues.append("ERROR: wavelength_um must be finite and one-dimensional")
     elif wavelength.size > 1 and not np.all(np.diff(wavelength) > 0):
         issues.append("ERROR: wavelength_um must be strictly increasing")
+    for brightness_wavelength_name in ("qc_brightness_wavelength_um", "qc_brightness_wavelength"):
+        if brightness_wavelength_name not in ds:
+            continue
+        brightness_wavelength = np.asarray(ds[brightness_wavelength_name].values, dtype=float)
+        if brightness_wavelength.ndim != 1 or not np.all(np.isfinite(brightness_wavelength)):
+            issues.append(f"ERROR: {brightness_wavelength_name} must be finite and one-dimensional")
+        elif brightness_wavelength.size > 1 and not np.all(np.diff(brightness_wavelength) > 0):
+            issues.append(f"ERROR: {brightness_wavelength_name} must be strictly increasing")
 
     pressure = np.asarray(ds["pressure_bar"].values, dtype=float)
     if np.any(~np.isfinite(pressure)) or np.any(pressure <= 0):
