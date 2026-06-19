@@ -54,6 +54,9 @@ KNOWN_NON_CHEMISTRY = {
     "qc_adiabat_pressure",
     "qc_brightness_temperature",
     "qc_brightness_wavelength",
+    "fnet_irfnet",
+    "Fnet_IRFnet",
+    "Fnet/IR-Fnet",
 }
 KNOWN_CHEMISTRY_NAMES = {
     "H2O",
@@ -92,7 +95,14 @@ def array_values(ds: xr.Dataset, name: str) -> np.ndarray | None:
         "cloud_optical_depth": "opd",
         "single_scattering_albedo": "ssa",
         "asymmetry_factor": "asy",
+        "Fnet_IRFnet": "fnet_irfnet",
+        "fnet_irfnet": "Fnet_IRFnet",
     }
+    if name not in ds and name == "fnet_irfnet":
+        for candidate in ("Fnet_IRFnet", "Fnet/IR-Fnet"):
+            if candidate in ds:
+                name = candidate
+                break
     if name not in ds and name in aliases:
         name = aliases[name]
     if name not in ds:
@@ -165,6 +175,21 @@ def validate_schema(ds: xr.Dataset, row: dict[str, Any] | None = None) -> list[Q
         for issue in validate_aurora_netcdf_schema(ds):
             severity = "warning" if issue.startswith("WARNING:") else "fail"
             flags.append(QCFlag("schema", severity, issue.split(": ", 1)[-1]))
+        missing_diagnostics = []
+        if not {"qc_adiabat", "qc_dtdp", "qc_adiabat_pressure"}.issubset(ds.data_vars):
+            missing_diagnostics.append("adiabat")
+        if "fnet_irfnet" not in ds.data_vars and "Fnet_IRFnet" not in ds.data_vars and "Fnet/IR-Fnet" not in ds.data_vars:
+            missing_diagnostics.append("flux_balance")
+        if not {"qc_brightness_temperature", "qc_brightness_wavelength"}.issubset(ds.data_vars):
+            missing_diagnostics.append("brightness_temperature")
+        if missing_diagnostics:
+            flags.append(
+                QCFlag(
+                    "picaso_diagnostics",
+                    "warning",
+                    f"exact climate QC diagnostics unavailable: {','.join(missing_diagnostics)}",
+                )
+            )
         return flags
 
     if not has_wavelength(ds):

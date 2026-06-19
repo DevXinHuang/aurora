@@ -30,6 +30,15 @@ OPTIONAL_VARIABLES = (
     "mean_molecular_weight_amu",
 )
 
+QC_DIAGNOSTIC_VARIABLES = (
+    "qc_adiabat",
+    "qc_dtdp",
+    "qc_adiabat_pressure",
+    "fnet_irfnet",
+    "qc_brightness_temperature",
+    "qc_brightness_wavelength",
+)
+
 REQUIRED_DIMS = ("wavelength", "level", "layer", "species")
 REQUIRED_COORDS = ("wavelength_um", "wavenumber_cm1", "level", "layer", "species")
 REQUIRED_SPECTRAL_VARS = (
@@ -308,6 +317,20 @@ def _as_1d_float(values: Any, name: str) -> np.ndarray:
     return array
 
 
+def _as_optional_1d_float(values: Any) -> np.ndarray | None:
+    if values is None:
+        return None
+    try:
+        array = np.asarray(values, dtype=float)
+    except Exception:
+        return None
+    if array.ndim != 1:
+        array = np.ravel(array)
+    if array.size == 0:
+        return None
+    return array
+
+
 def _match_wavelength_array(values: Any, wavelength_size: int, name: str) -> np.ndarray:
     array = _as_1d_float(values, name)
     if array.size != wavelength_size:
@@ -548,6 +571,316 @@ def _optional_description(name: str) -> str:
     return descriptions.get(name, "Optional schema v1 diagnostic.")
 
 
+def _parse_adiabat_result(result: Any) -> tuple[np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+    if result is None or not isinstance(result, (tuple, list)):
+        return None, None, None
+    if len(result) >= 4:
+        _, adiabat, dtdp, pressure = result[:4]
+    elif len(result) >= 3:
+        adiabat, dtdp, pressure = result[:3]
+    else:
+        return None, None, None
+    return (
+        _as_optional_1d_float(adiabat),
+        _as_optional_1d_float(dtdp),
+        _as_optional_1d_float(pressure),
+    )
+
+
+def _brightness_wavelength(raw_output: dict[str, Any], brightness: np.ndarray) -> np.ndarray | None:
+    spectrum = raw_output.get("spectrum_output") if isinstance(raw_output, dict) else None
+    if isinstance(spectrum, dict) and "wavenumber" in spectrum:
+        wavenumber = _as_optional_1d_float(spectrum["wavenumber"])
+    elif isinstance(raw_output, dict) and "wavenumber" in raw_output:
+        wavenumber = _as_optional_1d_float(raw_output["wavenumber"])
+    else:
+        return None
+    if wavenumber is None or wavenumber.size != brightness.size:
+        return None
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return 1.0e4 / wavenumber
+
+
+def _maybe_picaso_output_xarray(model_output: dict[str, Any]) -> tuple[xr.Dataset | None, str | None]:
+    out_ref = model_output.get("picaso_out_reflected")
+    case = model_output.get("picaso_case")
+    if out_ref is None or case is None:
+        return None, None
+
+    try:
+        from picaso import justdoit as jdi
+    except Exception as exc:
+        return None, f"PICASO output_xarray import failed: {exc}"
+    output_xarray = getattr(jdi, "output_xarray", None)
+    if output_xarray is None:
+        return None, "picaso.justdoit.output_xarray unavailable"
+
+    add_output = {}
+    out_emission = model_output.get("picaso_out_emission")
+    if isinstance(out_emission, dict):
+        add_output["thermal_output"] = out_emission
+    try:
+        dataset = output_xarray(out_ref, case, add_output=add_output, savefile=None)
+    except Exception as exc:
+        if not add_output:
+            return None, f"PICASO output_xarray failed: {exc}"
+        try:
+            dataset = output_xarray(out_ref, case, add_output={}, savefile=None)
+        except Exception:
+            return None, f"PICASO output_xarray failed: {exc}"
+    if not isinstance(dataset, xr.Dataset):
+        return None, f"PICASO output_xarray returned {type(dataset).__name__}"
+    return dataset, None
+
+
+def _raw_picaso_outputs(model_output: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        model_output.get("picaso_out_emission"),
+        model_output.get("picaso_out_reflected"),
+    )
+
+
+def _extract_explicit_qc_diagnostics(model_output: dict[str, Any]) -> dict[str, np.ndarray]:
+    diagnostics: dict[str, np.ndarray] = {}
+    nested = model_output.get("qc_diagnostics")
+    sources = [nested] if isinstance(nested, dict) else []
+    sources.append(model_output)
+    aliases = {
+        "qc_adiabat": ("qc_adiabat",),
+        "qc_dtdp": ("qc_dtdp",),
+        "qc_adiabat_pressure": ("qc_adiabat_pressure",),
+        "fnet_irfnet": ("fnet_irfnet", "Fnet_IRFnet", "Fnet/IR-Fnet"),
+        "qc_brightness_temperature": ("qc_brightness_temperature", "brightness_temperature"),
+        "qc_brightness_wavelength": ("qc_brightness_wavelength", "brightness_wavelength", "brightness_wavelength_um"),
+    }
+    for target, names in aliases.items():
+        for source in sources:
+            for name in names:
+                array = _as_optional_1d_float(source.get(name))
+                if array is not None:
+                    diagnostics[target] = array
+                    break
+            if target in diagnostics:
+                break
+    return diagnostics
+
+
+def _extract_jpi_adiabat(model_output: dict[str, Any], warnings: list[str]) -> dict[str, np.ndarray]:
+    case = model_output.get("picaso_case")
+    opacity = model_output.get("picaso_opacity")
+    if case is None or opacity is None:
+        return {}
+    raw_outputs = [raw for raw in _raw_picaso_outputs(model_output) if isinstance(raw, dict)]
+    if not raw_outputs:
+        return {}
+    try:
+        from picaso import justplotit as jpi
+    except Exception as exc:
+        warnings.append(f"exact adiabat diagnostic unavailable: PICASO plotting import failed: {exc}")
+        return {}
+    pt_adiabat = getattr(jpi, "pt_adiabat", None)
+    if pt_adiabat is None:
+        warnings.append("exact adiabat diagnostic unavailable: picaso.justplotit.pt_adiabat missing")
+        return {}
+    for raw_output in raw_outputs:
+        try:
+            adiabat, dtdp, pressure = _parse_adiabat_result(pt_adiabat(raw_output, case, opacity, plot=False))
+        except Exception as exc:
+            warnings.append(f"exact adiabat diagnostic unavailable: {exc}")
+            continue
+        if adiabat is not None and dtdp is not None and pressure is not None:
+            return {
+                "qc_adiabat": adiabat,
+                "qc_dtdp": dtdp,
+                "qc_adiabat_pressure": pressure,
+            }
+    return {}
+
+
+def _extract_jpi_brightness(model_output: dict[str, Any], warnings: list[str]) -> dict[str, np.ndarray]:
+    raw_outputs = [
+        raw
+        for raw in _raw_picaso_outputs(model_output)
+        if isinstance(raw, dict) and "spectrum_output" in raw
+    ]
+    if not raw_outputs:
+        return {}
+    try:
+        from picaso import justplotit as jpi
+    except Exception as exc:
+        warnings.append(f"exact brightness-temperature diagnostic unavailable: PICASO plotting import failed: {exc}")
+        return {}
+    brightness_temperature = getattr(jpi, "brightness_temperature", None)
+    if brightness_temperature is None:
+        warnings.append("exact brightness-temperature diagnostic unavailable: picaso.justplotit.brightness_temperature missing")
+        return {}
+
+    for raw_output in raw_outputs:
+        try:
+            brightness = _as_optional_1d_float(brightness_temperature(raw_output["spectrum_output"], plot=False))
+        except Exception as exc:
+            warnings.append(f"exact brightness-temperature diagnostic unavailable: {exc}")
+            continue
+        if brightness is None:
+            continue
+        wavelength = _brightness_wavelength(raw_output, brightness)
+        diagnostics = {"qc_brightness_temperature": brightness}
+        if wavelength is not None:
+            diagnostics["qc_brightness_wavelength"] = wavelength
+        return diagnostics
+    return {}
+
+
+def _extract_output_xarray_flux(model_output: dict[str, Any], warnings: list[str]) -> dict[str, np.ndarray]:
+    dataset, error = _maybe_picaso_output_xarray(model_output)
+    if dataset is None:
+        if error:
+            warnings.append(f"exact flux-balance diagnostic unavailable: {error}")
+        return {}
+    try:
+        for name in ("fnet_irfnet", "Fnet_IRFnet", "Fnet/IR-Fnet"):
+            if name in dataset:
+                values = _as_optional_1d_float(dataset[name].values)
+                if values is not None:
+                    return {"fnet_irfnet": values}
+        return {}
+    finally:
+        dataset.close()
+
+
+def extract_aurora_qc_diagnostics(model_output: dict[str, Any]) -> tuple[dict[str, np.ndarray], list[str]]:
+    """Extract exact PICASO climate QC diagnostics without approximating them."""
+    warnings: list[str] = []
+    diagnostics = _extract_explicit_qc_diagnostics(model_output)
+
+    if not {"qc_adiabat", "qc_dtdp", "qc_adiabat_pressure"}.issubset(diagnostics):
+        diagnostics.update({key: value for key, value in _extract_jpi_adiabat(model_output, warnings).items() if key not in diagnostics})
+    if "fnet_irfnet" not in diagnostics:
+        diagnostics.update(_extract_output_xarray_flux(model_output, warnings))
+    if "qc_brightness_temperature" not in diagnostics:
+        diagnostics.update({key: value for key, value in _extract_jpi_brightness(model_output, warnings).items() if key not in diagnostics})
+
+    return diagnostics, warnings
+
+
+def _diagnostic_vertical_dim(size: int, nlevel: int, nlayer: int) -> str | None:
+    if size == nlevel:
+        return "level"
+    if size == nlayer:
+        return "layer"
+    return None
+
+
+def _align_to_schema_wavelength(
+    values: np.ndarray,
+    source_wavelength: np.ndarray | None,
+    schema_wavelength: np.ndarray,
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    if source_wavelength is None:
+        if values.size == schema_wavelength.size:
+            return values, schema_wavelength
+        return None, None
+    if values.size != source_wavelength.size:
+        return None, None
+    order = np.argsort(source_wavelength)
+    sorted_wavelength = source_wavelength[order]
+    if sorted_wavelength.size != schema_wavelength.size or not np.allclose(
+        sorted_wavelength,
+        schema_wavelength,
+        rtol=0.0,
+        atol=1.0e-10,
+    ):
+        return None, None
+    return values[order], schema_wavelength
+
+
+def _add_exact_qc_diagnostics(
+    ds: xr.Dataset,
+    diagnostics: dict[str, np.ndarray],
+    wavelength_um: np.ndarray,
+    nlevel: int,
+    nlayer: int,
+    warnings: list[str],
+) -> None:
+    if {"qc_adiabat", "qc_dtdp", "qc_adiabat_pressure"}.issubset(diagnostics):
+        sizes = {diagnostics[name].size for name in ("qc_adiabat", "qc_dtdp", "qc_adiabat_pressure")}
+        if len(sizes) == 1:
+            size = sizes.pop()
+            dim = _diagnostic_vertical_dim(size, nlevel, nlayer)
+            if dim is not None:
+                ds["qc_adiabat"] = (
+                    (dim,),
+                    diagnostics["qc_adiabat"],
+                    {
+                        "units": "K bar-1",
+                        "description": "Exact PICASO adiabatic temperature gradient diagnostic.",
+                    },
+                )
+                ds["qc_dtdp"] = (
+                    (dim,),
+                    diagnostics["qc_dtdp"],
+                    {
+                        "units": "K bar-1",
+                        "description": "Exact PICASO atmospheric dT/dP diagnostic.",
+                    },
+                )
+                ds["qc_adiabat_pressure"] = (
+                    (dim,),
+                    diagnostics["qc_adiabat_pressure"],
+                    {
+                        "units": "bar",
+                        "description": "Pressure grid returned with exact PICASO adiabatic diagnostic.",
+                    },
+                )
+            else:
+                warnings.append(f"exact adiabat diagnostic length {size} does not match level or layer dimension")
+        else:
+            warnings.append("exact adiabat diagnostic arrays have inconsistent lengths")
+
+    fnet = diagnostics.get("fnet_irfnet")
+    if fnet is not None:
+        dim = _diagnostic_vertical_dim(fnet.size, nlevel, nlayer)
+        if dim is not None:
+            ds["fnet_irfnet"] = (
+                (dim,),
+                fnet,
+                {
+                    "units": "dimensionless",
+                    "description": "Exact PICASO Fnet/IR-Fnet flux-balance diagnostic.",
+                },
+            )
+        else:
+            warnings.append(f"exact flux-balance diagnostic length {fnet.size} does not match level or layer dimension")
+
+    brightness = diagnostics.get("qc_brightness_temperature")
+    if brightness is not None:
+        brightness_wavelength = diagnostics.get("qc_brightness_wavelength")
+        aligned_brightness, aligned_wavelength = _align_to_schema_wavelength(
+            brightness,
+            brightness_wavelength,
+            wavelength_um,
+        )
+        if aligned_brightness is not None and aligned_wavelength is not None:
+            ds["qc_brightness_temperature"] = (
+                ("wavelength",),
+                aligned_brightness,
+                {
+                    "units": "K",
+                    "description": "Exact PICASO brightness-temperature diagnostic on the schema wavelength grid.",
+                },
+            )
+            ds["qc_brightness_wavelength"] = (
+                ("wavelength",),
+                aligned_wavelength,
+                {
+                    "units": "um",
+                    "description": "Wavelength grid for the exact PICASO brightness-temperature diagnostic.",
+                },
+            )
+        else:
+            warnings.append("exact brightness-temperature diagnostic does not match schema wavelength grid")
+
+
 def _add_scalar(ds: xr.Dataset, name: str, value: Any, units: str | None = None) -> None:
     if name == "run_success":
         try:
@@ -714,6 +1047,17 @@ def build_aurora_run_dataset(
             if options.strict_optional:
                 raise ValueError(message)
             schema_warnings.append(message)
+
+    qc_diagnostics, qc_warnings = extract_aurora_qc_diagnostics(model_output)
+    schema_warnings.extend(qc_warnings)
+    _add_exact_qc_diagnostics(
+        ds,
+        qc_diagnostics,
+        wavelength_um,
+        nlevel,
+        nlayer,
+        schema_warnings,
+    )
 
     scalar_values = {
         "run_index": _row_value(row, "run_index", -1),

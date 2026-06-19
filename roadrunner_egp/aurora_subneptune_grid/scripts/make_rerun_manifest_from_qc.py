@@ -66,7 +66,7 @@ def main() -> int:
     for row in triage_rows:
         if str(row.get("decision", "")).lower() != "bad":
             continue
-        run_id = _run_id_from_plot(str(row.get("plot_path", "")))
+        run_id = str(row.get("run_id") or _run_id_from_plot(str(row.get("plot_path", ""))))
         key = run_id
         reasons.setdefault(key, []).append(row.get("notes") or "triage marked bad")
 

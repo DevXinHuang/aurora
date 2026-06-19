@@ -9,6 +9,12 @@ from . import QCFlag
 from .schema_checks import array_values, has_pressure, pressure_dependent_vars
 
 
+ADIABAT_RATIO_THRESHOLD = 1.05
+FNET_IRFNET_THRESHOLD = 1.0e-3
+FNET_UPPER_PRESSURE_BAR = 1.0e-2
+BRIGHTNESS_BOTTOM_FRACTION = 0.99
+
+
 def _mostly_between(values: np.ndarray, lo: float, hi: float, tolerance: float = 1.0e-8, fraction: float = 0.95) -> bool:
     finite = values[np.isfinite(values)]
     if finite.size == 0:
@@ -22,6 +28,14 @@ def _not_flat(values: np.ndarray, rtol: float = 1.0e-8, atol: float = 1.0e-14) -
     if finite.size < 2:
         return False
     return not bool(np.allclose(finite, finite[0], rtol=rtol, atol=atol))
+
+
+def _pressure_for_values(ds: xr.Dataset, values: np.ndarray) -> np.ndarray | None:
+    for name in ("pressure", "layer_pressure_bar", "qc_adiabat_pressure"):
+        pressure = array_values(ds, name)
+        if pressure is not None and pressure.size == values.size:
+            return np.ravel(pressure)
+    return None
 
 
 def _check_spectrum(ds: xr.Dataset, flags: list[QCFlag]) -> None:
@@ -54,7 +68,7 @@ def _check_spectrum(ds: xr.Dataset, flags: list[QCFlag]) -> None:
 
 
 def _check_pt(ds: xr.Dataset, flags: list[QCFlag]) -> None:
-    if not has_pressure(ds) or "temperature" not in ds:
+    if not has_pressure(ds):
         return
     pressure = array_values(ds, "pressure")
     temperature = array_values(ds, "temperature")
@@ -135,10 +149,92 @@ def _check_clouds(ds: xr.Dataset, flags: list[QCFlag]) -> None:
             flags.append(QCFlag("cloud", severity, f"{name} mostly outside [{lo}, {hi}]"))
 
 
+def _check_exact_adiabat(ds: xr.Dataset, flags: list[QCFlag]) -> None:
+    adiabat = array_values(ds, "qc_adiabat")
+    dtdp = array_values(ds, "qc_dtdp")
+    if adiabat is None or dtdp is None or adiabat.size != dtdp.size:
+        return
+    with np.errstate(divide="ignore", invalid="ignore"):
+        ratio = dtdp / adiabat
+    finite = ratio[np.isfinite(ratio)]
+    if finite.size == 0:
+        return
+    bad = finite > ADIABAT_RATIO_THRESHOLD
+    if not np.any(bad):
+        return
+    max_ratio = float(np.nanmax(finite))
+    n_bad = int(np.count_nonzero(bad))
+    severity = "warning" if n_bad <= 2 and max_ratio <= 1.2 else "rerun_recommended"
+    flags.append(
+        QCFlag(
+            "adiabat",
+            severity,
+            f"Adiabat violated at {n_bad} layer(s) (max dTdp/dTdp_ad = {max_ratio:.3f})",
+            "max_adiabat_ratio",
+            max_ratio,
+        )
+    )
+
+
+def _check_exact_flux_balance(ds: xr.Dataset, flags: list[QCFlag]) -> None:
+    fnet = array_values(ds, "fnet_irfnet")
+    if fnet is None:
+        return
+    fnet = np.ravel(fnet)
+    pressure = _pressure_for_values(ds, fnet)
+    if pressure is None:
+        return
+    mask = np.isfinite(fnet) & np.isfinite(pressure) & (pressure < FNET_UPPER_PRESSURE_BAR)
+    bad = mask & (np.abs(fnet) > FNET_IRFNET_THRESHOLD)
+    if not np.any(bad):
+        return
+    max_abs = float(np.nanmax(np.abs(fnet[bad])))
+    n_bad = int(np.count_nonzero(bad))
+    flags.append(
+        QCFlag(
+            "flux_balance",
+            "warning",
+            f"Fnet/IR-Fnet > {FNET_IRFNET_THRESHOLD:.0e} at {n_bad} upper-atmosphere layer(s) (p < {FNET_UPPER_PRESSURE_BAR:g} bar) (max = {max_abs:.2e})",
+            "max_abs_fnet_irfnet",
+            max_abs,
+        )
+    )
+
+
+def _check_exact_brightness_temperature(ds: xr.Dataset, flags: list[QCFlag]) -> None:
+    brightness = array_values(ds, "qc_brightness_temperature")
+    temperature = array_values(ds, "temperature")
+    if brightness is None or temperature is None or temperature.size == 0:
+        return
+    finite = brightness[np.isfinite(brightness)]
+    if finite.size == 0:
+        return
+    bottom_temperature = float(np.ravel(temperature)[-1])
+    max_brightness = float(np.nanmax(finite))
+    if max_brightness < BRIGHTNESS_BOTTOM_FRACTION * bottom_temperature:
+        return
+    flags.append(
+        QCFlag(
+            "brightness_temperature",
+            "rerun_recommended",
+            f"Brightness temperature reaches/exceeds bottom layer (T_bottom = {bottom_temperature:.1f} K, max Tbrt = {max_brightness:.1f} K). Need deeper grid.",
+            "max_brightness_temperature",
+            max_brightness,
+        )
+    )
+
+
+def _check_exact_climate_diagnostics(ds: xr.Dataset, flags: list[QCFlag]) -> None:
+    _check_exact_adiabat(ds, flags)
+    _check_exact_flux_balance(ds, flags)
+    _check_exact_brightness_temperature(ds, flags)
+
+
 def validate_science(ds: xr.Dataset, row: dict[str, Any] | None = None) -> list[QCFlag]:
     flags: list[QCFlag] = []
     _check_spectrum(ds, flags)
     _check_pt(ds, flags)
     _check_chemistry(ds, flags)
     _check_clouds(ds, flags)
+    _check_exact_climate_diagnostics(ds, flags)
     return flags

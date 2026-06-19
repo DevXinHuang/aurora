@@ -182,14 +182,26 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/combine_outputs.py \
   --out roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_inventory.csv
 ```
 
-## PICASO Model Store Validation
+## Post-Run QC And Triage
 
-Each per-run NetCDF now uses the `picaso_model_store_v1` schema. Validate a
-completed output directory after jobs finish:
+Each per-run NetCDF uses the `aurora_subneptune_netcdf` schema. After jobs
+finish, run post-run QC to validate files, write CSV reports, and generate the
+diagnostic plots used for review:
 
 ```bash
-python roadrunner_egp/aurora_subneptune_grid/scripts/validate_picaso_model_store.py \
-  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune
+python roadrunner_egp/aurora_subneptune_grid/scripts/run_postrun_qc.py \
+  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune/nc \
+  --grid-manifest roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv
+```
+
+This writes `qc_summary.csv`, `qc_flags.csv`, diagnostic PNGs, and a rerun
+manifest when `--grid-manifest` is supplied. To review plots in the browser:
+
+```bash
+python roadrunner_egp/aurora_subneptune_grid/scripts/run_postrun_qc.py \
+  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune/nc \
+  --grid-manifest roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv \
+  --serve
 ```
 
 To build a spectra-only Zarr collection after all jobs finish:

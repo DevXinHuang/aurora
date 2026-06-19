@@ -45,6 +45,19 @@ SUMMARY_COLUMNS = [
     "bottom_temperature",
 ]
 
+FLAG_COLUMNS = [
+    "run_index",
+    "run_id",
+    "file_path",
+    "check",
+    "severity",
+    "message",
+    "metric",
+    "value",
+    "diagnostic_plot_path",
+    "spectrum_plot_path",
+]
+
 
 def _range_metrics(ds: xr.Dataset, name: str) -> tuple[Any, Any]:
     values = array_values(ds, name)
@@ -74,10 +87,14 @@ def _qc_metrics(ds: xr.Dataset) -> dict[str, Any]:
             finite = values[np.isfinite(values)]
             if finite.size:
                 metrics["max_brightness_temperature"] = float(np.nanmax(finite))
-    if "temperature" in ds:
-        values = array_values(ds, "temperature")
-        if values is not None and values.size:
-            metrics["bottom_temperature"] = float(np.ravel(values)[-1])
+    values = array_values(ds, "temperature")
+    if values is not None and values.size:
+        metrics["bottom_temperature"] = float(np.ravel(values)[-1])
+    fnet = array_values(ds, "fnet_irfnet")
+    if fnet is not None:
+        finite = np.abs(fnet[np.isfinite(fnet)])
+        if finite.size:
+            metrics["max_abs_fnet_irfnet"] = float(np.nanmax(finite))
     for name in ("max_abs_fnet_irfnet",):
         if name in ds.attrs:
             metrics[name] = ds.attrs[name]
@@ -139,7 +156,7 @@ def result_to_row(result: QCResult, ds: xr.Dataset | None = None) -> dict[str, A
     if ds is not None:
         row["has_wavelength"] = has_wavelength(ds)
         row["has_pressure"] = has_pressure(ds)
-        row["has_temperature"] = "temperature" in ds
+        row["has_temperature"] = array_values(ds, "temperature") is not None
         row["n_chemistry_vars"] = len(pressure_dependent_vars(ds))
         row["has_cloud_opd"] = "cloud_optical_depth" in ds.data_vars or "opd" in ds.data_vars
         row["has_cloud_ssa"] = "single_scattering_albedo" in ds.data_vars or "ssa" in ds.data_vars
@@ -168,6 +185,37 @@ def validate_paths(paths: list[Path]) -> list[dict[str, Any]]:
     return rows
 
 
+def flags_to_rows(
+    result: QCResult,
+    plot_paths_by_check: dict[str, dict[str, str]] | None = None,
+) -> list[dict[str, Any]]:
+    plot_paths_by_check = plot_paths_by_check or {}
+    flags = result.flags
+    if not flags and "open_error" in result.metrics:
+        from . import QCFlag
+
+        flags = [QCFlag("open", "fail", f"open failed: {result.metrics['open_error']}")]
+
+    rows: list[dict[str, Any]] = []
+    for flag in flags:
+        plot_paths = plot_paths_by_check.get(flag.check, {})
+        rows.append(
+            {
+                "run_index": result.run_index,
+                "run_id": result.run_id,
+                "file_path": result.file_path,
+                "check": flag.check,
+                "severity": flag.severity,
+                "message": flag.message,
+                "metric": flag.metric or "",
+                "value": "" if flag.value is None else flag.value,
+                "diagnostic_plot_path": plot_paths.get("diagnostic", ""),
+                "spectrum_plot_path": plot_paths.get("spectrum", ""),
+            }
+        )
+    return rows
+
+
 def write_summary(rows: list[dict[str, Any]], csv_path: Path, json_path: Path | None = None) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
@@ -177,3 +225,11 @@ def write_summary(rows: list[dict[str, Any]], csv_path: Path, json_path: Path | 
     if json_path is not None:
         json_path.parent.mkdir(parents=True, exist_ok=True)
         json_path.write_text(json.dumps(rows, indent=2, sort_keys=True, default=str), encoding="utf-8")
+
+
+def write_flags(rows: list[dict[str, Any]], csv_path: Path) -> None:
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    with csv_path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=FLAG_COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)

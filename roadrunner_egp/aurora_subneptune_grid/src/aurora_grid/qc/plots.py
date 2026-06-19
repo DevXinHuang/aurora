@@ -6,7 +6,8 @@ import numpy as np
 import xarray as xr
 
 from . import QCResult
-from .schema_checks import array_values
+from .schema_checks import array_values, manifest_row
+from .science_checks import FNET_IRFNET_THRESHOLD
 
 
 def _matplotlib():
@@ -18,17 +19,126 @@ def _matplotlib():
     return plt
 
 
-def _plot_pt(ax, ds: xr.Dataset) -> None:
+def _plot_pt(ax, ds: xr.Dataset) -> bool:
     pressure = array_values(ds, "pressure")
     temperature = array_values(ds, "temperature")
     if pressure is None or temperature is None:
         ax.text(0.5, 0.5, "PT unavailable", ha="center", va="center")
-        return
+        return False
     ax.plot(temperature, pressure)
     ax.set_xlabel("Temperature [K]")
     ax.set_ylabel("Pressure [bar]")
     ax.set_yscale("log")
     ax.invert_yaxis()
+    return True
+
+
+def _pressure_for_values(ds: xr.Dataset, values: np.ndarray) -> np.ndarray | None:
+    for name in ("pressure", "layer_pressure_bar", "qc_adiabat_pressure"):
+        pressure = array_values(ds, name)
+        if pressure is not None and pressure.size == values.size:
+            return np.ravel(pressure)
+    return None
+
+
+def _plot_adiabat(ax, ds: xr.Dataset) -> bool:
+    adiabat = array_values(ds, "qc_adiabat")
+    dtdp = array_values(ds, "qc_dtdp")
+    if adiabat is None or dtdp is None:
+        ax.text(0.5, 0.5, "Adiabat unavailable", ha="center", va="center")
+        return False
+    adiabat = np.ravel(adiabat)
+    dtdp = np.ravel(dtdp)
+    if adiabat.size != dtdp.size:
+        ax.text(0.5, 0.5, "Adiabat unavailable", ha="center", va="center")
+        return False
+    layers = np.arange(1, adiabat.size + 1)
+    ax.plot(dtdp, layers, color="blue", label="model dTdp")
+    ax.plot(adiabat, layers, color="red", label="adiabat")
+    ax.axvline(0.0, color="0.5", linewidth=0.6, linestyle="--")
+    ax.set_xlabel("dT/dp")
+    ax.set_ylabel("layer number")
+    ax.legend(fontsize=8)
+    ax.invert_yaxis()
+    return True
+
+
+def _plot_flux_balance(ax, ds: xr.Dataset) -> bool:
+    for flux_name in ("fnet_irfnet", "Fnet_IRFnet", "Fnet/IR-Fnet"):
+        flux = array_values(ds, flux_name)
+        if flux is not None:
+            break
+    else:
+        flux = None
+    if flux is None:
+        ax.text(0.5, 0.5, "Flux balance unavailable", ha="center", va="center")
+        return False
+    flux = np.ravel(flux)
+    pressure = _pressure_for_values(ds, flux)
+    if pressure is None:
+        ax.text(0.5, 0.5, "Flux balance unavailable", ha="center", va="center")
+        return False
+    x = np.where(np.abs(flux) > 0.0, np.abs(flux), np.nan)
+    finite = np.isfinite(x) & np.isfinite(pressure) & (x > 0.0) & (pressure > 0.0)
+    if not np.any(finite):
+        ax.text(0.5, 0.5, "Flux balance unavailable", ha="center", va="center")
+        return False
+    ax.loglog(x[finite], pressure[finite], color="deeppink", linewidth=1.2)
+    ax.axvline(FNET_IRFNET_THRESHOLD, color="cyan", linewidth=1.0, linestyle="--", label=f"threshold {FNET_IRFNET_THRESHOLD:.0e}")
+    ax.set_xlabel("|Fnet / IR-Fnet|")
+    ax.set_ylabel("Pressure [bar]")
+    ax.legend(fontsize=8)
+    ax.invert_yaxis()
+    return True
+
+
+def _plot_brightness_temperature(ax, ds: xr.Dataset) -> bool:
+    brightness = array_values(ds, "qc_brightness_temperature")
+    brightness_wavelength = array_values(ds, "qc_brightness_wavelength")
+    if brightness is None or brightness_wavelength is None or brightness.size != brightness_wavelength.size:
+        ax.text(0.5, 0.5, "Brightness T unavailable", ha="center", va="center")
+        return False
+    brightness = np.ravel(brightness)
+    brightness_wavelength = np.ravel(brightness_wavelength)
+    finite = np.isfinite(brightness) & np.isfinite(brightness_wavelength) & (brightness_wavelength > 0.0)
+    if not np.any(finite):
+        ax.text(0.5, 0.5, "Brightness T unavailable", ha="center", va="center")
+        return False
+    ax.semilogx(brightness_wavelength[finite], brightness[finite], color="purple", linewidth=1.2)
+    temperature = array_values(ds, "temperature")
+    if temperature is not None and temperature.size:
+        bottom_temperature = float(np.ravel(temperature)[-1])
+        ax.axhline(bottom_temperature, color="black", linewidth=1.0, linestyle="--", label=f"T_bottom = {bottom_temperature:.0f} K")
+        ax.legend(fontsize=8)
+    ax.set_xlabel("Wavelength [um]")
+    ax.set_ylabel("Brightness Temperature [K]")
+    ax.invert_yaxis()
+    return True
+
+
+def _format_number(value: object, fmt: str = ".3g", default: str = "?") -> str:
+    try:
+        return format(float(value), fmt)
+    except Exception:
+        return default
+
+
+def _diagnostic_title(ds: xr.Dataset, qc_result: QCResult) -> str:
+    row = manifest_row(ds)
+    parts = [
+        f"T_eq={_format_number(row.get('equilibrium_temperature_k'), '.0f')}K",
+        f"g={_format_number(row.get('gravity_ms2'), '.3g')} m/s2",
+        f"fsed={_format_number(row.get('fsed'), '.3g')}",
+        f"metallicity={_format_number(row.get('metallicity_xsolar'), '.3g')}x",
+        f"C/O={_format_number(row.get('c_to_o_xsolar'), '.3g')}x",
+        f"cloud={_format_number(row.get('cloud_fraction'), '.3g')}",
+        f"phase={_format_number(row.get('phase_deg'), '.3g')} deg",
+    ]
+    flagged = [flag.message for flag in qc_result.flags if flag.severity in {"warning", "fail", "rerun_recommended"}]
+    subtitle = " | ".join(flagged[:4])
+    if len(flagged) > 4:
+        subtitle += f" | +{len(flagged) - 4} more"
+    return "  ".join(parts) + (f"\n! {subtitle}" if subtitle else f"\n{qc_result.status}")
 
 
 def make_qc_plot(ds: xr.Dataset, qc_result: QCResult, out_png: Path | str) -> Path:
@@ -36,61 +146,23 @@ def make_qc_plot(ds: xr.Dataset, qc_result: QCResult, out_png: Path | str) -> Pa
     out_png = Path(out_png)
     out_png.parent.mkdir(parents=True, exist_ok=True)
 
-    fig, axes = plt.subplots(2, 2, figsize=(11, 8), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10), constrained_layout=True)
     ax = axes.ravel()
 
-    adiabat = array_values(ds, "qc_adiabat")
-    dtdp = array_values(ds, "qc_dtdp")
-    adiabat_pressure = array_values(ds, "qc_adiabat_pressure")
-    if adiabat is not None and dtdp is not None:
-        x = np.arange(adiabat.size) if adiabat_pressure is None else adiabat_pressure
-        with np.errstate(divide="ignore", invalid="ignore"):
-            ratio = dtdp / adiabat
-        ax[0].plot(ratio, x)
-        ax[0].axvline(1.05, color="crimson", linewidth=1)
-        ax[0].set_xlabel("dT/dP / adiabat")
-        ax[0].set_ylabel("Pressure [bar]" if adiabat_pressure is not None else "Layer")
-        if adiabat_pressure is not None and np.all(adiabat_pressure > 0):
-            ax[0].set_yscale("log")
-            ax[0].invert_yaxis()
-    else:
-        ax[0].text(0.5, 0.5, "Adiabat unavailable", ha="center", va="center")
-    ax[0].set_title("Adiabatic Slope")
+    _plot_adiabat(ax[0], ds)
+    ax[0].set_title("Profile slope vs adiabat")
 
     _plot_pt(ax[1], ds)
     ax[1].set_title("PT Profile")
 
-    flux_name = "Fnet_IRFnet" if "Fnet_IRFnet" in ds else "fnet_irfnet"
-    flux = array_values(ds, flux_name)
-    pressure = array_values(ds, "pressure")
-    if flux is not None:
-        x = np.ravel(flux)
-        y = np.arange(x.size) if pressure is None or pressure.size != x.size else pressure
-        ax[2].plot(x, y)
-        ax[2].axvline(1.0e-3, color="crimson", linewidth=1)
-        ax[2].axvline(-1.0e-3, color="crimson", linewidth=1)
-        ax[2].set_xlabel("Fnet / IR-Fnet")
-        ax[2].set_ylabel("Pressure [bar]" if pressure is not None and pressure.size == x.size else "Layer")
-        if pressure is not None and pressure.size == x.size and np.all(pressure > 0):
-            ax[2].set_yscale("log")
-            ax[2].invert_yaxis()
-    else:
-        ax[2].text(0.5, 0.5, "Flux balance unavailable", ha="center", va="center")
-    ax[2].set_title("Flux Balance")
+    _plot_flux_balance(ax[2], ds)
+    ax[2].set_title("Fnet / IR-Fnet")
 
-    brightness = array_values(ds, "qc_brightness_temperature")
-    brightness_wavelength = array_values(ds, "qc_brightness_wavelength")
-    if brightness is not None:
-        x = np.arange(brightness.size) if brightness_wavelength is None else brightness_wavelength
-        ax[3].plot(x, brightness)
-        ax[3].set_xlabel("Wavelength [micron]" if brightness_wavelength is not None else "Sample")
-        ax[3].set_ylabel("Brightness T [K]")
-    else:
-        ax[3].text(0.5, 0.5, "Brightness T unavailable", ha="center", va="center")
-    ax[3].set_title("Brightness Temperature")
+    _plot_brightness_temperature(ax[3], ds)
+    ax[3].set_title("IR Brightness Temperature")
 
-    fig.suptitle(f"{qc_result.run_id or Path(qc_result.file_path).stem}: {qc_result.status}")
-    fig.savefig(out_png, dpi=150)
+    fig.suptitle(_diagnostic_title(ds, qc_result), fontsize=9, wrap=True)
+    fig.savefig(out_png, dpi=120)
     plt.close(fig)
     return out_png
 
@@ -112,7 +184,7 @@ def make_spectrum_plot(ds: xr.Dataset, qc_result: QCResult, out_png: Path | str)
         values = array_values(ds, name)
         if wavelength is not None and values is not None and values.size == wavelength.size:
             ax.plot(wavelength, values)
-            ax.set_xlabel("Wavelength [micron]")
+            ax.set_xlabel("Wavelength [um]")
         elif values is not None:
             ax.plot(np.ravel(values))
             ax.set_xlabel("Sample")

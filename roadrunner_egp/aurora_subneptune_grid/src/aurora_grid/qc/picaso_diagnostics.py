@@ -100,7 +100,7 @@ def run_picaso_diagnostics(
             ds = _add_1d(ds, "qc_brightness_temperature", brightness, "qc_brightness_wavelength", "K")
             wavelength = _brightness_wavelength(raw_output, brightness)
             if wavelength is not None:
-                ds = _add_1d(ds, "qc_brightness_wavelength", wavelength, "qc_brightness_wavelength", "micron")
+                ds = _add_1d(ds, "qc_brightness_wavelength", wavelength, "qc_brightness_wavelength", "um")
             finite = brightness[np.isfinite(brightness)]
             if finite.size:
                 max_tb = float(np.nanmax(finite))
