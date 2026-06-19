@@ -1,0 +1,2 @@
+run_index,run_id,file_path,status,storage_level,fail_reasons,warning_reasons,has_wavelength,has_pressure,has_temperature,n_chemistry_vars,has_cloud_opd,has_cloud_ssa,has_cloud_asy,has_fpfs_reflected,has_fpfs_reflection,has_albedo,wavelength_min,wavelength_max
+0,8226c64bd658,roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune/smoke_test_aurora_subneptune_steff5000_rs0p8_rp2p0_g10_mh100_cto1p0_kzz09_cfrac0p0_fsed3_s1p0_phase000__8226c64bd658.nc,passed,spectrum_only,,,True,False,False,0,False,False,False,True,True,True,0.3,2.5
