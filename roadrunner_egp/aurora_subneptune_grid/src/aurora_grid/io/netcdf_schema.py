@@ -800,6 +800,30 @@ def build_aurora_run_dataset(
     return ds
 
 
+def _best_netcdf_engine() -> str:
+    """Return the best available xarray NetCDF engine.
+
+    netcdf4 and h5netcdf support compression options like zlib/complevel/shuffle.
+    scipy is a safe fallback, but it only writes basic NetCDF and must not receive
+    compression encoding.
+    """
+    try:
+        import netCDF4  # noqa: F401
+
+        return "netcdf4"
+    except Exception:
+        pass
+
+    try:
+        import h5netcdf  # noqa: F401
+
+        return "h5netcdf"
+    except Exception:
+        pass
+
+    return "scipy"
+
+
 def _numeric_data_encoding(ds: xr.Dataset) -> dict[str, dict[str, Any]]:
     encoding: dict[str, dict[str, Any]] = {}
     for name, data_array in ds.data_vars.items():
@@ -814,12 +838,17 @@ def write_aurora_run_netcdf(ds: xr.Dataset, output_path: str | Path, overwrite: 
     output_path = Path(output_path)
     if output_path.exists() and not overwrite:
         return {"status": "skipped_exists", "output_nc": str(output_path)}
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = Path(str(output_path) + ".tmp.nc")
     if tmp_path.exists():
         tmp_path.unlink()
+
+    engine = _best_netcdf_engine()
+    encoding = {} if engine == "scipy" else _numeric_data_encoding(ds)
+
     try:
-        ds.to_netcdf(tmp_path, encoding=_numeric_data_encoding(ds))
+        ds.to_netcdf(tmp_path, engine=engine, encoding=encoding)
         os.replace(tmp_path, output_path)
     except Exception:
         if tmp_path.exists():
@@ -827,7 +856,8 @@ def write_aurora_run_netcdf(ds: xr.Dataset, output_path: str | Path, overwrite: 
         raise
     finally:
         ds.close()
-    return {"status": "wrote", "output_nc": str(output_path)}
+
+    return {"status": "wrote", "output_nc": str(output_path), "netcdf_engine": engine}
 
 
 def _has_all_nan(ds: xr.Dataset, name: str) -> bool:
