@@ -20,6 +20,8 @@ RUN_ID_EXCLUDE_KEYS = {
     "project",
     "notes",
     "code",
+    "netcdf_optional_variables",
+    "netcdf_strict_optional",
 }
 
 
@@ -130,4 +132,4 @@ def make_output_filename(row_dict: dict[str, Any]) -> str:
 
 
 def make_output_path(row_dict: dict[str, Any], output_root: str | Path) -> str:
-    return str(Path(output_root) / make_output_filename(row_dict))
+    return str(Path(output_root) / "nc" / f"run_{int(row_dict['run_index']):06d}.nc")

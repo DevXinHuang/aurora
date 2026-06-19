@@ -103,6 +103,27 @@ def _dry_run_model(row: dict[str, Any]) -> dict[str, Any]:
         out=np.zeros_like(fpfs_reflection),
         where=(fpfs_reflection + fpfs_emission) > 0,
     )
+    pressure = np.geomspace(1.0e-4, 300.0, 12)
+    temperature = np.linspace(0.7, 1.25, pressure.size) * float(row["picaso_tint_k"])
+    h2o = np.full(pressure.size, min(5.0e-2, 1.0e-3 * float(row["metallicity_xsolar"])))
+    ch4 = np.full(pressure.size, min(2.0e-2, 5.0e-4 * float(row["metallicity_xsolar"])))
+    he = np.full(pressure.size, 0.15)
+    h2 = np.clip(1.0 - he - h2o - ch4, 0.0, 1.0)
+    nlayer = pressure.size - 1
+    layer_shape = (nlayer, wavelength.size)
+    if float(row["cloud_fraction"]) == 0.0:
+        opd = np.zeros(layer_shape)
+        w0 = np.zeros(layer_shape)
+        g0 = np.zeros(layer_shape)
+    else:
+        layer_scale = np.exp(-0.5 * ((np.arange(nlayer) - 0.45 * nlayer) / max(1.0, 0.2 * nlayer)) ** 2)
+        spectral_scale = 0.4 + 0.6 * np.exp(-0.5 * ((wavelength - 0.65) / 0.28) ** 2)
+        opd = 0.08 * float(row["cloud_fraction"]) * layer_scale[:, None] * spectral_scale[None, :]
+        w0 = np.clip(0.72 + 0.12 * np.cos(2.0 * np.pi * (wavelength - wavelength.min()) / np.ptp(wavelength)), 0.0, 1.0)
+        w0 = np.broadcast_to(w0, layer_shape).copy()
+        g0 = np.broadcast_to(np.full(wavelength.size, 0.35), layer_shape).copy()
+    absolute_flux_reflected = fpfs_reflection * 1.0e-6
+    absolute_flux_thermal = fpfs_emission * 1.0e-6
 
     return {
         "wavelength_um": wavelength,
@@ -110,9 +131,27 @@ def _dry_run_model(row: dict[str, Any]) -> dict[str, Any]:
         "albedo": albedo,
         "fpfs_emission": fpfs_emission,
         "reflected_fraction": reflected_fraction,
+        "absolute_flux_reflected": absolute_flux_reflected,
+        "absolute_flux_thermal": absolute_flux_thermal,
+        "pt_profile": {
+            "pressure": pressure,
+            "temperature": temperature,
+            "H2": h2,
+            "He": he,
+            "H2O": h2o,
+            "CH4": ch4,
+        },
+        "cloud_profile": {
+            "wavelength_um": wavelength,
+            "opd": opd,
+            "w0": w0,
+            "g0": g0,
+        },
+        "mean_molecular_weight_amu": np.full(pressure.size, 2.33),
         "picaso_metadata": {
             "dry_run": True,
             "spectrum_source": "toy spectrum",
+            "cloud_model": str(row.get("cloud_model", "none")),
             "wavelength_points": int(wavelength.size),
         },
     }

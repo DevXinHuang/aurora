@@ -15,6 +15,10 @@ picaso_tint_mode: "equilibrium"
 picaso_tint_fixed_k: 1000.0
 picaso_tint_floor_k: 100.0
 
+netcdf:
+  optional_variables: []
+  strict_optional: false
+
 stars:
   - teff_k: 3500
     radius_rsun: 0.45

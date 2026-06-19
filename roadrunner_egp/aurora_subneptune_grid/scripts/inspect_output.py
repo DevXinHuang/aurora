@@ -35,14 +35,15 @@ def main() -> int:
         print("attrs:")
         for key, value in dataset.attrs.items():
             print(f"{key}: {value}")
-        wavelength_name = "wavelength" if "wavelength" in dataset else "wavelength_um"
+        wavelength_name = "wavelength_um" if "wavelength_um" in dataset else "wavelength"
         wavelength = dataset[wavelength_name].values
         print(f"first_{wavelength_name}: {float(wavelength[0])}")
         print(f"last_{wavelength_name}: {float(wavelength[-1])}")
-        if "fpfs_reflection" in dataset:
-            values = np.asarray(dataset["fpfs_reflection"].values, dtype=float)
-            print(f"fpfs_reflection_min: {float(np.nanmin(values))}")
-            print(f"fpfs_reflection_max: {float(np.nanmax(values))}")
+        reflected_name = "reflected_planet_star_flux_ratio" if "reflected_planet_star_flux_ratio" in dataset else "fpfs_reflection"
+        if reflected_name in dataset:
+            values = np.asarray(dataset[reflected_name].values, dtype=float)
+            print(f"{reflected_name}_min: {float(np.nanmin(values))}")
+            print(f"{reflected_name}_max: {float(np.nanmax(values))}")
     return 0
 
 

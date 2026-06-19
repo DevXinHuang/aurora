@@ -6,6 +6,8 @@ from typing import Any
 import numpy as np
 import xarray as xr
 
+from aurora_grid.io.netcdf_schema import validate_aurora_netcdf_schema
+
 from . import QCFlag
 
 
@@ -25,11 +27,20 @@ REQUIRED_ATTRS = [
     "grid_params",
 ]
 
-ESSENTIAL_SPECTRAL_VARS = ("albedo", "fpfs_reflected", "fpfs_reflection")
+ESSENTIAL_SPECTRAL_VARS = ("geometric_albedo", "reflected_planet_star_flux_ratio")
 KNOWN_NON_CHEMISTRY = {
-    "albedo",
-    "fpfs_reflected",
-    "fpfs_reflection",
+    "geometric_albedo",
+    "reflected_planet_star_flux_ratio",
+    "reflected_flux",
+    "thermal_flux",
+    "pressure_bar",
+    "temperature_k",
+    "mole_fraction",
+    "layer_pressure_bar",
+    "layer_temperature_k",
+    "cloud_optical_depth",
+    "single_scattering_albedo",
+    "asymmetry_factor",
     "fpfs_emission",
     "flux_emission",
     "aurora_reflected_fraction",
@@ -64,6 +75,26 @@ KNOWN_CHEMISTRY_NAMES = {
 
 
 def array_values(ds: xr.Dataset, name: str) -> np.ndarray | None:
+    aliases = {
+        "wavelength": "wavelength_um",
+        "pressure": "pressure_bar",
+        "pressure_bar": "pressure",
+        "temperature": "temperature_k",
+        "temperature_k": "temperature",
+        "albedo": "geometric_albedo",
+        "geometric_albedo": "albedo",
+        "fpfs_reflected": "reflected_planet_star_flux_ratio",
+        "fpfs_reflection": "reflected_planet_star_flux_ratio",
+        "reflected_planet_star_flux_ratio": "fpfs_reflected",
+        "opd": "cloud_optical_depth",
+        "ssa": "single_scattering_albedo",
+        "asy": "asymmetry_factor",
+        "cloud_optical_depth": "opd",
+        "single_scattering_albedo": "ssa",
+        "asymmetry_factor": "asy",
+    }
+    if name not in ds and name in aliases:
+        name = aliases[name]
     if name not in ds:
         return None
     try:
@@ -80,11 +111,11 @@ def manifest_row(ds: xr.Dataset) -> dict[str, Any]:
 
 
 def has_wavelength(ds: xr.Dataset) -> bool:
-    return "wavelength" in ds.coords or "wavelength" in ds.dims
+    return "wavelength_um" in ds.coords or "wavelength" in ds.coords
 
 
 def has_pressure(ds: xr.Dataset) -> bool:
-    return "pressure" in ds.coords or "pressure" in ds.dims or "pressure" in ds.data_vars
+    return "pressure_bar" in ds.data_vars or "pressure" in ds.coords or "pressure" in ds.dims or "pressure" in ds.data_vars
 
 
 def pressure_dependent_vars(ds: xr.Dataset) -> list[str]:
@@ -104,7 +135,17 @@ def classify_storage(ds: xr.Dataset | None, flags: list[QCFlag] | None = None) -
     essential_failed = any(flag.check == "schema" and flag.severity == "fail" for flag in flags)
     if essential_failed:
         return "failed"
-    if not (has_wavelength(ds) and "albedo" in ds.data_vars and ("fpfs_reflected" in ds.data_vars or "fpfs_reflection" in ds.data_vars)):
+    if str(ds.attrs.get("schema_name", "")) == "aurora_subneptune_netcdf":
+        return "aurora_schema_v1"
+    if not (
+        has_wavelength(ds)
+        and ("geometric_albedo" in ds.data_vars or "albedo" in ds.data_vars)
+        and (
+            "reflected_planet_star_flux_ratio" in ds.data_vars
+            or "fpfs_reflected" in ds.data_vars
+            or "fpfs_reflection" in ds.data_vars
+        )
+    ):
         return "failed"
     if not has_pressure(ds) or "temperature" not in ds:
         return "spectrum_only"
@@ -115,6 +156,11 @@ def classify_storage(ds: xr.Dataset | None, flags: list[QCFlag] | None = None) -
 
 def validate_schema(ds: xr.Dataset, row: dict[str, Any] | None = None) -> list[QCFlag]:
     flags: list[QCFlag] = []
+    if str(ds.attrs.get("schema_name", "")) == "aurora_subneptune_netcdf":
+        for issue in validate_aurora_netcdf_schema(ds):
+            severity = "warning" if issue.startswith("WARNING:") else "fail"
+            flags.append(QCFlag("schema", severity, issue.split(": ", 1)[-1]))
+        return flags
 
     if not has_wavelength(ds):
         flags.append(QCFlag("schema", "fail", "missing wavelength coordinate"))
@@ -133,9 +179,13 @@ def validate_schema(ds: xr.Dataset, row: dict[str, Any] | None = None) -> list[Q
             else:
                 flags.append(QCFlag("schema", "fail", "wavelength is not strictly monotonic"))
 
-    if "albedo" not in ds.data_vars:
+    if "geometric_albedo" not in ds.data_vars and "albedo" not in ds.data_vars:
         flags.append(QCFlag("schema", "fail", "missing albedo"))
-    if "fpfs_reflected" not in ds.data_vars and "fpfs_reflection" not in ds.data_vars:
+    if (
+        "reflected_planet_star_flux_ratio" not in ds.data_vars
+        and "fpfs_reflected" not in ds.data_vars
+        and "fpfs_reflection" not in ds.data_vars
+    ):
         flags.append(QCFlag("schema", "fail", "missing reflected fpfs variable"))
     if has_pressure(ds) and "temperature" not in ds:
         flags.append(QCFlag("schema", "warning", "pressure exists without temperature"))
@@ -146,7 +196,7 @@ def validate_schema(ds: xr.Dataset, row: dict[str, Any] | None = None) -> list[Q
     if missing_attrs:
         flags.append(QCFlag("schema", "warning", f"missing attrs: {'|'.join(missing_attrs)}"))
 
-    for cloud_name in ("opd", "ssa", "asy"):
+    for cloud_name in ("cloud_optical_depth", "single_scattering_albedo", "asymmetry_factor", "opd", "ssa", "asy"):
         if cloud_name not in ds.data_vars:
             continue
         missing_dims = [dim for dim in ds[cloud_name].dims if dim not in ds.sizes]

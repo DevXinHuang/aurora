@@ -45,9 +45,8 @@ OUTPUT_COLUMNS = [
     "has_cloud_opd",
     "has_cloud_ssa",
     "has_cloud_asy",
-    "has_fpfs_reflected",
-    "has_fpfs_reflection",
-    "has_albedo",
+    "has_reflected_planet_star_flux_ratio",
+    "has_geometric_albedo",
     "wavelength_min",
     "wavelength_max",
 ]
@@ -58,11 +57,11 @@ REQUIRED_ATTRS = [
     "code",
     "model_name",
     "run_id",
-    "run_index",
     "created_utc",
     "git_commit",
     "picaso_version",
-    "aurora_schema_version",
+    "schema_name",
+    "schema_version",
     "planet_params",
     "stellar_params",
     "orbit_params",
@@ -105,6 +104,13 @@ def _manifest_row(dataset: xr.Dataset) -> dict[str, Any]:
 
 
 def _array_values(dataset: xr.Dataset, name: str) -> np.ndarray | None:
+    aliases = {
+        "wavelength": "wavelength_um",
+        "pressure": "pressure_bar",
+        "temperature": "temperature_k",
+    }
+    if name not in dataset and name in aliases:
+        name = aliases[name]
     if name not in dataset:
         return None
     try:
@@ -124,6 +130,8 @@ def _mostly_between(values: np.ndarray, lo: float, hi: float, tolerance: float =
 def _storage_level(dataset: xr.Dataset, failed: bool) -> str:
     if failed:
         return "failed"
+    if str(dataset.attrs.get("schema_name", "")) == "aurora_subneptune_netcdf":
+        return "aurora_schema_v1"
     attr_level = str(dataset.attrs.get("storage_level", "")).strip()
     if attr_level in {"spectrum_only", "picaso_reusable", "aurora_extended"}:
         return attr_level
@@ -152,9 +160,8 @@ def validate_file(path: Path) -> dict[str, Any]:
         "has_cloud_opd": False,
         "has_cloud_ssa": False,
         "has_cloud_asy": False,
-        "has_fpfs_reflected": False,
-        "has_fpfs_reflection": False,
-        "has_albedo": False,
+        "has_reflected_planet_star_flux_ratio": False,
+        "has_geometric_albedo": False,
         "wavelength_min": "",
         "wavelength_max": "",
     }
@@ -162,18 +169,17 @@ def validate_file(path: Path) -> dict[str, Any]:
     try:
         with xr.open_dataset(path) as dataset:
             manifest_row = _manifest_row(dataset)
-            row["run_index"] = dataset.attrs.get("run_index", manifest_row.get("run_index", ""))
+            row["run_index"] = dataset["run_index"].item() if "run_index" in dataset.data_vars else dataset.attrs.get("run_index", manifest_row.get("run_index", ""))
             row["run_id"] = dataset.attrs.get("run_id", manifest_row.get("run_id", ""))
 
-            row["has_wavelength"] = "wavelength" in dataset.coords or "wavelength" in dataset.dims
-            row["has_pressure"] = "pressure" in dataset.coords or "pressure" in dataset.dims
-            row["has_temperature"] = "temperature" in dataset.data_vars
-            row["has_fpfs_reflected"] = "fpfs_reflected" in dataset.data_vars
-            row["has_fpfs_reflection"] = "fpfs_reflection" in dataset.data_vars
-            row["has_albedo"] = "albedo" in dataset.data_vars
-            row["has_cloud_opd"] = "opd" in dataset.data_vars
-            row["has_cloud_ssa"] = "ssa" in dataset.data_vars
-            row["has_cloud_asy"] = "asy" in dataset.data_vars
+            row["has_wavelength"] = "wavelength" in dataset.dims or "wavelength_um" in dataset.coords or "wavelength" in dataset.coords
+            row["has_pressure"] = "pressure_bar" in dataset.data_vars or "pressure" in dataset.coords or "pressure" in dataset.dims
+            row["has_temperature"] = "temperature_k" in dataset.data_vars or "temperature" in dataset.data_vars
+            row["has_reflected_planet_star_flux_ratio"] = "reflected_planet_star_flux_ratio" in dataset.data_vars
+            row["has_geometric_albedo"] = "geometric_albedo" in dataset.data_vars
+            row["has_cloud_opd"] = "cloud_optical_depth" in dataset.data_vars or "opd" in dataset.data_vars
+            row["has_cloud_ssa"] = "single_scattering_albedo" in dataset.data_vars or "ssa" in dataset.data_vars
+            row["has_cloud_asy"] = "asymmetry_factor" in dataset.data_vars or "asy" in dataset.data_vars
 
             if not row["has_wavelength"]:
                 fail_reasons.append("missing wavelength coordinate")
@@ -189,14 +195,14 @@ def validate_file(path: Path) -> dict[str, Any]:
                     row["wavelength_min"] = float(np.nanmin(wavelength))
                     row["wavelength_max"] = float(np.nanmax(wavelength))
 
-            if not row["has_albedo"]:
+            if not row["has_geometric_albedo"]:
                 fail_reasons.append("missing albedo")
-            if not (row["has_fpfs_reflected"] or row["has_fpfs_reflection"]):
+            if not row["has_reflected_planet_star_flux_ratio"]:
                 fail_reasons.append("missing reflected fpfs variable")
             if row["has_pressure"] and not row["has_temperature"]:
                 warning_reasons.append("pressure exists without temperature")
 
-            for spectrum_name in ("fpfs_reflected", "fpfs_reflection", "albedo"):
+            for spectrum_name in ("reflected_planet_star_flux_ratio", "geometric_albedo"):
                 values = _array_values(dataset, spectrum_name)
                 if values is None:
                     continue
@@ -204,7 +210,7 @@ def validate_file(path: Path) -> dict[str, Any]:
                     fail_reasons.append(f"{spectrum_name} contains nonfinite values")
                 if not np.any(np.asarray(values) != 0.0):
                     fail_reasons.append(f"{spectrum_name} is all zeros")
-            albedo = _array_values(dataset, "albedo")
+            albedo = _array_values(dataset, "geometric_albedo")
             if albedo is not None and not _mostly_between(albedo, 0.0, 1.0):
                 warning_reasons.append("albedo mostly outside [0, 1]")
 
@@ -219,7 +225,7 @@ def validate_file(path: Path) -> dict[str, Any]:
                 elif np.nanmin(values) < -1.0e-12:
                     fail_reasons.append(f"{name} chemistry contains negative values")
 
-            for cloud_name in ("opd", "ssa", "asy"):
+            for cloud_name in ("cloud_optical_depth", "single_scattering_albedo", "asymmetry_factor", "opd", "ssa", "asy"):
                 if cloud_name not in dataset.data_vars:
                     continue
                 dims = dataset[cloud_name].dims

@@ -29,7 +29,7 @@ def _check_spectrum(ds: xr.Dataset, flags: list[QCFlag]) -> None:
     if wavelength is not None and not np.all(np.isfinite(wavelength)):
         flags.append(QCFlag("spectrum", "fail", "wavelength contains nonfinite values"))
 
-    for name in ("albedo", "fpfs_reflected", "fpfs_reflection"):
+    for name in ("geometric_albedo", "reflected_planet_star_flux_ratio"):
         values = array_values(ds, name)
         if values is None:
             continue
@@ -41,11 +41,11 @@ def _check_spectrum(ds: xr.Dataset, flags: list[QCFlag]) -> None:
         if finite.size and not _not_flat(finite):
             flags.append(QCFlag("spectrum", "warning", f"{name} is completely flat"))
 
-    albedo = array_values(ds, "albedo")
+    albedo = array_values(ds, "geometric_albedo")
     if albedo is not None and not _mostly_between(albedo, 0.0, 1.0, tolerance=1.0e-6):
         flags.append(QCFlag("spectrum", "warning", "albedo mostly outside [0, 1]"))
 
-    reflected_name = "fpfs_reflected" if "fpfs_reflected" in ds.data_vars else "fpfs_reflection"
+    reflected_name = "reflected_planet_star_flux_ratio"
     reflected = array_values(ds, reflected_name)
     if reflected is not None:
         finite = reflected[np.isfinite(reflected)]
@@ -70,7 +70,7 @@ def _check_pt(ds: xr.Dataset, flags: list[QCFlag]) -> None:
     if not np.all(np.isfinite(pressure)):
         flags.append(QCFlag("climate", "fail", "pressure contains nonfinite values"))
     if not np.all(pressure > 0):
-        flags.append(QCFlag("climate", "fail", "pressure contains nonpositive values"))
+        flags.append(QCFlag("climate", "fail", "nonpositive pressure values"))
     if not np.all(np.isfinite(temperature)):
         flags.append(QCFlag("climate", "fail", "temperature contains nonfinite values"))
     if not np.all(temperature > 0):
@@ -118,9 +118,9 @@ def _check_chemistry(ds: xr.Dataset, flags: list[QCFlag]) -> None:
 
 def _check_clouds(ds: xr.Dataset, flags: list[QCFlag]) -> None:
     checks = {
-        "opd": (0.0, np.inf, "fail"),
-        "ssa": (0.0, 1.0, "warning"),
-        "asy": (-1.0, 1.0, "warning"),
+        "cloud_optical_depth": (0.0, np.inf, "fail"),
+        "single_scattering_albedo": (0.0, 1.0, "warning"),
+        "asymmetry_factor": (-1.0, 1.0, "warning"),
     }
     for name, (lo, hi, severity) in checks.items():
         values = array_values(ds, name)
@@ -129,9 +129,9 @@ def _check_clouds(ds: xr.Dataset, flags: list[QCFlag]) -> None:
         if not np.all(np.isfinite(values)):
             flags.append(QCFlag("cloud", "fail", f"{name} contains nonfinite values"))
             continue
-        if name == "opd" and float(np.nanmin(values)) < -1.0e-12:
-            flags.append(QCFlag("cloud", "fail", "opd contains negative values"))
-        elif name != "opd" and not _mostly_between(values, float(lo), float(hi), tolerance=1.0e-6):
+        if name == "cloud_optical_depth" and float(np.nanmin(values)) < -1.0e-12:
+            flags.append(QCFlag("cloud", "fail", "cloud_optical_depth contains negative values"))
+        elif name != "cloud_optical_depth" and not _mostly_between(values, float(lo), float(hi), tolerance=1.0e-6):
             flags.append(QCFlag("cloud", severity, f"{name} mostly outside [{lo}, {hi}]"))
 
 

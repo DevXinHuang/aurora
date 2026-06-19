@@ -103,10 +103,10 @@ def make_spectrum_plot(ds: xr.Dataset, qc_result: QCResult, out_png: Path | str)
     wavelength = array_values(ds, "wavelength")
     fig, axes = plt.subplots(2, 2, figsize=(11, 8), constrained_layout=True)
     panels = [
-        ("albedo", "Albedo"),
-        ("fpfs_reflected" if "fpfs_reflected" in ds else "fpfs_reflection", "Reflected Fp/Fs"),
-        ("fpfs_emission", "Emission Fp/Fs"),
-        ("aurora_reflected_fraction", "Reflected Fraction"),
+        ("geometric_albedo", "Albedo"),
+        ("reflected_planet_star_flux_ratio", "Reflected Fp/Fs"),
+        ("thermal_planet_star_flux_ratio", "Emission Fp/Fs"),
+        ("total_planet_star_flux_ratio", "Total Fp/Fs"),
     ]
     for ax, (name, title) in zip(axes.ravel(), panels, strict=False):
         values = array_values(ds, name)

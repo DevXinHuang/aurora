@@ -30,9 +30,8 @@ SUMMARY_COLUMNS = [
     "has_cloud_opd",
     "has_cloud_ssa",
     "has_cloud_asy",
-    "has_fpfs_reflected",
-    "has_fpfs_reflection",
-    "has_albedo",
+    "has_reflected_planet_star_flux_ratio",
+    "has_geometric_albedo",
     "wavelength_min",
     "wavelength_max",
     "pressure_min",
@@ -142,12 +141,11 @@ def result_to_row(result: QCResult, ds: xr.Dataset | None = None) -> dict[str, A
         row["has_pressure"] = has_pressure(ds)
         row["has_temperature"] = "temperature" in ds
         row["n_chemistry_vars"] = len(pressure_dependent_vars(ds))
-        row["has_cloud_opd"] = "opd" in ds.data_vars
-        row["has_cloud_ssa"] = "ssa" in ds.data_vars
-        row["has_cloud_asy"] = "asy" in ds.data_vars
-        row["has_fpfs_reflected"] = "fpfs_reflected" in ds.data_vars
-        row["has_fpfs_reflection"] = "fpfs_reflection" in ds.data_vars
-        row["has_albedo"] = "albedo" in ds.data_vars
+        row["has_cloud_opd"] = "cloud_optical_depth" in ds.data_vars or "opd" in ds.data_vars
+        row["has_cloud_ssa"] = "single_scattering_albedo" in ds.data_vars or "ssa" in ds.data_vars
+        row["has_cloud_asy"] = "asymmetry_factor" in ds.data_vars or "asy" in ds.data_vars
+        row["has_reflected_planet_star_flux_ratio"] = "reflected_planet_star_flux_ratio" in ds.data_vars
+        row["has_geometric_albedo"] = "geometric_albedo" in ds.data_vars
         row["wavelength_min"], row["wavelength_max"] = _range_metrics(ds, "wavelength")
         row["pressure_min"], row["pressure_max"] = _range_metrics(ds, "pressure")
         row["temperature_min"], row["temperature_max"] = _range_metrics(ds, "temperature")

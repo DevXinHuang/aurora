@@ -66,6 +66,8 @@ MANIFEST_COLUMNS = [
     "picaso_tint_mode",
     "picaso_tint_fixed_k",
     "picaso_tint_floor_k",
+    "netcdf_optional_variables",
+    "netcdf_strict_optional",
     "source_notebook_reference",
 ]
 
@@ -91,6 +93,7 @@ FLOAT_COLUMNS = {
 }
 
 INT_COLUMNS = {"run_index"}
+BOOL_COLUMNS = {"netcdf_strict_optional"}
 
 
 class ManifestTable:
@@ -239,6 +242,11 @@ def expected_grid_size(config: dict[str, Any]) -> int:
 
 
 def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
+    netcdf_config = config.get("netcdf", {})
+    if netcdf_config is None:
+        netcdf_config = {}
+    if not isinstance(netcdf_config, dict):
+        raise ValueError("Config key 'netcdf' must be a mapping when provided.")
     return {
         "author": config.get("author", ""),
         "contact": config.get("contact", ""),
@@ -248,6 +256,8 @@ def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
         "picaso_tint_mode": config.get("picaso_tint_mode", "equilibrium"),
         "picaso_tint_fixed_k": float(config.get("picaso_tint_fixed_k", 1000.0)),
         "picaso_tint_floor_k": float(config.get("picaso_tint_floor_k", 100.0)),
+        "netcdf_optional_variables": json.dumps(netcdf_config.get("optional_variables", []), sort_keys=True),
+        "netcdf_strict_optional": bool(netcdf_config.get("strict_optional", False)),
         "source_notebook_reference": NOTEBOOK_REFERENCE,
     }
 
@@ -335,6 +345,8 @@ def _coerce_manifest_row(row: dict[str, str]) -> dict[str, Any]:
     for key, value in row.items():
         if key in INT_COLUMNS:
             coerced[key] = int(value)
+        elif key in BOOL_COLUMNS:
+            coerced[key] = str(value).strip().lower() in {"1", "true", "t", "yes", "y", "on"}
         elif key in FLOAT_COLUMNS:
             coerced[key] = float(value)
         else:

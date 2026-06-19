@@ -30,13 +30,12 @@ for path in (SRC_ROOT, ROADRUNNER_ROOT):
 
 DEFAULT_OUT = GRID_ROOT / "data" / "combined" / "subneptune_grid_spectra_v1.zarr"
 DEFAULT_VARIABLES = [
-    "albedo",
-    "fpfs_reflected",
-    "fpfs_reflection",
-    "fpfs_emission",
-    "flux_emission",
-    "aurora_reflected_fraction",
-    "aurora_flux_reflected",
+    "geometric_albedo",
+    "reflected_planet_star_flux_ratio",
+    "reflected_flux",
+    "thermal_flux",
+    "thermal_planet_star_flux_ratio",
+    "total_planet_star_flux_ratio",
 ]
 
 
@@ -64,7 +63,7 @@ def _manifest_row(dataset: xr.Dataset) -> dict[str, Any]:
 
 
 def _run_index(dataset: xr.Dataset) -> int | None:
-    value = dataset.attrs.get("run_index", _manifest_row(dataset).get("run_index"))
+    value = dataset["run_index"].item() if "run_index" in dataset.data_vars else dataset.attrs.get("run_index", _manifest_row(dataset).get("run_index"))
     try:
         return int(value)
     except Exception:
@@ -101,10 +100,11 @@ def main() -> int:
             continue
         try:
             with xr.open_dataset(path) as dataset:
-                if "wavelength" not in dataset.coords:
+                if "wavelength_um" not in dataset.coords and "wavelength" not in dataset.coords:
                     skipped.append(f"{path}: missing wavelength")
                     continue
-                wavelength = np.asarray(dataset["wavelength"].values, dtype=float)
+                wavelength_name = "wavelength_um" if "wavelength_um" in dataset.coords else "wavelength"
+                wavelength = np.asarray(dataset[wavelength_name].values, dtype=float)
                 if reference_wavelength is None:
                     reference_wavelength = wavelength
                 elif wavelength.shape != reference_wavelength.shape or not np.allclose(
@@ -150,7 +150,7 @@ def main() -> int:
         data_vars=data_vars,
         coords={
             "run_index": ("run_index", sorted_run_indices),
-            "wavelength": ("wavelength", reference_wavelength),
+            "wavelength_um": ("wavelength", reference_wavelength),
             "source_file": ("run_index", sorted_file_paths),
         },
         attrs={
@@ -158,7 +158,7 @@ def main() -> int:
             "source": "post-job collection of per-run Aurora PICASO model-store NetCDF files",
         },
     )
-    combined["wavelength"].attrs["units"] = "micron"
+    combined["wavelength_um"].attrs["units"] = "um"
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     combined.to_zarr(output_path)
