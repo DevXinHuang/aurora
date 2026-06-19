@@ -52,3 +52,14 @@ roadrunner_egp/aurora_subneptune_grid/manifests/*.csv
 *.tar
 *.tar.gz
 *.zip
+
+# Large/local PICASO opacity files
+picaso4_reference/opacities/
+picaso4_reference/**/*.hdf5
+picaso4_reference/**/*.h5
+picaso4_reference/**/*.zip
+
+# Generated AURORA outputs
+roadrunner_egp/aurora_subneptune_grid/outputs/
+*.nc
+*.png
