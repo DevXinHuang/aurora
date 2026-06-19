@@ -660,6 +660,7 @@ def _extract_explicit_qc_diagnostics(model_output: dict[str, Any]) -> dict[str, 
             "brightness_wavelength",
             "brightness_wavelength_um",
         ),
+        "qc_fint_over_sigma_teff4": ("qc_fint_over_sigma_teff4",),
     }
     for target, names in aliases.items():
         for source in sources:
@@ -802,6 +803,13 @@ def _native_brightness_grid(
     return values[order], source_wavelength[order]
 
 
+def _extract_reporting_vertical_dim(ds: xr.Dataset, name: str) -> np.ndarray | None:
+    values = array_values(ds, name)
+    if values is None:
+        return None
+    return np.ravel(values)
+
+
 def _add_exact_qc_diagnostics(
     ds: xr.Dataset,
     diagnostics: dict[str, np.ndarray],
@@ -869,6 +877,9 @@ def _add_exact_qc_diagnostics(
                 {
                     "units": "dimensionless",
                     "description": "Exact PICASO Fnet/IR-Fnet flux-balance diagnostic.",
+                    "source": "PICASO climate_out['fnet/fnetir']",
+                    "picaso_key": "fnet/fnetir",
+                    "recommended_plot": "plot abs(fnet_irfnet) on log x-axis versus pressure; threshold 1e-3",
                 },
             )
         else:
@@ -925,6 +936,11 @@ def _add_exact_qc_diagnostics(
         else:
             warnings.append("exact brightness-temperature diagnostic has no matching native wavelength grid")
 
+    if diagnostics.get("qc_fint_over_sigma_teff4") is not None:
+        _add_scalar(ds, "qc_fint_over_sigma_teff4", diagnostics["qc_fint_over_sigma_teff4"], "dimensionless")
+
+    _add_qc_brightness_reference_scalars(ds, warnings)
+
 
 def _add_scalar(ds: xr.Dataset, name: str, value: Any, units: str | None = None) -> None:
     if name == "run_success":
@@ -939,12 +955,92 @@ def _add_scalar(ds: xr.Dataset, name: str, value: Any, units: str | None = None)
             scalar = np.int64(-1)
     else:
         try:
-            scalar = np.float64(value)
+            array = np.asarray(value)
+            if array.shape == ():
+                scalar = np.float64(array.item())
+            elif array.size == 1:
+                scalar = np.float64(array.ravel()[0])
+            else:
+                scalar = np.float64(value)
         except Exception:
             scalar = np.float64(np.nan)
     ds[name] = scalar
     if units:
         ds[name].attrs["units"] = units
+
+
+def _array_values(ds: xr.Dataset, name: str) -> np.ndarray | None:
+    aliases = {
+        "wavelength": "wavelength_um",
+        "pressure": "pressure_bar",
+        "pressure_bar": "pressure",
+        "temperature": "temperature_k",
+        "temperature_k": "temperature",
+        "albedo": "geometric_albedo",
+        "geometric_albedo": "albedo",
+        "fpfs_reflected": "reflected_planet_star_flux_ratio",
+        "fpfs_reflection": "reflected_planet_star_flux_ratio",
+        "reflected_planet_star_flux_ratio": "fpfs_reflected",
+        "opd": "cloud_optical_depth",
+        "ssa": "single_scattering_albedo",
+        "asy": "asymmetry_factor",
+        "cloud_optical_depth": "opd",
+        "single_scattering_albedo": "ssa",
+        "asymmetry_factor": "asy",
+        "Fnet_IRFnet": "fnet_irfnet",
+        "fnet_irfnet": "Fnet_IRFnet",
+        "qc_brightness_wavelength": "qc_brightness_wavelength_um",
+        "qc_brightness_wavelength_um": "qc_brightness_wavelength",
+    }
+    if name not in ds and name == "fnet_irfnet":
+        for candidate in ("Fnet_IRFnet", "Fnet/IR-Fnet"):
+            if candidate in ds:
+                name = candidate
+                break
+    if name not in ds and name in aliases:
+        name = aliases[name]
+    if name not in ds:
+        return None
+    try:
+        return np.asarray(ds[name].values, dtype=float)
+    except Exception:
+        return None
+
+
+def _add_qc_brightness_reference_scalars(ds: xr.Dataset, warnings: list[str]) -> None:
+    pressure = _array_values(ds, "pressure_bar")
+    if pressure is None:
+        pressure = _array_values(ds, "pressure")
+    temperature = _array_values(ds, "temperature_k")
+    if temperature is None:
+        temperature = _array_values(ds, "temperature")
+    if pressure is None or temperature is None or pressure.size == 0 or temperature.size == 0:
+        warnings.append("qc_brightness reference scalars unavailable: missing PT profile")
+        return
+    pressure = np.ravel(pressure)
+    temperature = np.ravel(temperature)
+    if pressure.size != temperature.size:
+        warnings.append("qc_brightness reference scalars unavailable: pressure and temperature arrays have different lengths")
+        return
+
+    bottom_index = int(np.nanargmax(pressure))
+    qc_p_bottom_bar = float(pressure[bottom_index])
+    qc_t_bottom_k = float(temperature[bottom_index])
+    _add_scalar(ds, "qc_p_bottom_bar", qc_p_bottom_bar, "bar")
+    _add_scalar(ds, "qc_t_bottom_k", qc_t_bottom_k, "K")
+
+    brightness = _array_values(ds, "qc_brightness_temperature")
+    if brightness is None:
+        return
+    brightness = np.ravel(brightness)
+    finite = brightness[np.isfinite(brightness)]
+    if finite.size:
+        qc_brightness_tmax_k = float(np.nanmax(finite))
+        _add_scalar(ds, "qc_brightness_tmax_k", qc_brightness_tmax_k, "K")
+        if qc_t_bottom_k != 0.0:
+            _add_scalar(ds, "qc_brightness_tmax_over_tbottom", qc_brightness_tmax_k / qc_t_bottom_k, "dimensionless")
+    else:
+        warnings.append("qc_brightness reference scalars unavailable: brightness temperature contains no finite values")
 
 
 def _climate_metadata_attrs(model_output: dict[str, Any]) -> dict[str, Any]:

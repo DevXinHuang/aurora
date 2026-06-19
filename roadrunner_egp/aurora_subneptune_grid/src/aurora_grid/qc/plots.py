@@ -110,7 +110,10 @@ def _plot_brightness_temperature(ax, ds: xr.Dataset) -> bool:
         _show_exact_diagnostics_unavailable(ax)
         return False
     ax.semilogx(brightness_wavelength[finite], brightness[finite], color="purple", linewidth=1.2)
-    temperature = array_values(ds, "temperature")
+    ax.set_xscale("log")
+    temperature = array_values(ds, "temperature_k")
+    if temperature is None:
+        temperature = array_values(ds, "temperature")
     if temperature is not None and temperature.size:
         bottom_temperature = float(np.ravel(temperature)[-1])
         ax.axhline(bottom_temperature, color="black", linewidth=1.0, linestyle="--", label=f"T_bottom = {bottom_temperature:.0f} K")

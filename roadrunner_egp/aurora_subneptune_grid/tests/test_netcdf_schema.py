@@ -175,6 +175,12 @@ def test_nested_exact_climate_qc_diagnostics_are_written(model_output, manifest_
     assert dataset["qc_brightness_temperature"].dims == ("brightness_wavelength_um",)
     assert dataset["qc_brightness_wavelength_um"].dims == ("brightness_wavelength_um",)
     assert dataset["qc_brightness_wavelength"].dims == ("brightness_wavelength_um",)
+    assert dataset["qc_p_bottom_bar"].item() == pytest.approx(0.1)
+    assert dataset["qc_t_bottom_k"].item() == pytest.approx(500.0)
+    assert dataset["qc_brightness_tmax_k"].item() == pytest.approx(370.0)
+    assert dataset["qc_brightness_tmax_over_tbottom"].item() == pytest.approx(370.0 / 500.0)
+    assert dataset["fnet_irfnet"].attrs["source"] == "PICASO climate_out['fnet/fnetir']"
+    assert dataset["fnet_irfnet"].attrs["picaso_key"] == "fnet/fnetir"
     assert "brightness diagnostic fallback warning" in dataset.attrs["schema_warnings"]
 
 
@@ -234,6 +240,16 @@ def test_missing_enabled_optional_fails_when_strict(model_output, manifest_row):
             manifest_row,
             schema_options={"optional_variables": ["bond_albedo"], "strict_optional": True},
         )
+
+
+def test_qc_fint_over_sigma_teff4_scalar_is_saved(model_output, manifest_row):
+    model_output = dict(model_output)
+    model_output["qc_diagnostics"] = {"qc_fint_over_sigma_teff4": np.array([0.981])}
+
+    dataset = build_aurora_run_dataset(model_output, manifest_row)
+
+    assert dataset["qc_fint_over_sigma_teff4"].item() == pytest.approx(0.981)
+    assert dataset["qc_fint_over_sigma_teff4"].attrs["units"] == "dimensionless"
 
 
 def test_cloud_profile_is_saved_with_layer_wavelength_dims(model_output, manifest_row):
