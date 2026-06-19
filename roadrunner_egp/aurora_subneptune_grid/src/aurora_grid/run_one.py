@@ -26,6 +26,7 @@ def run_one(
     *,
     run_exact_climate_qc: bool = False,
     ck_root: str | Path | None = None,
+    atmosphere_source: str | None = None,
 ) -> dict[str, Any]:
     output_path = resolve_repo_path(row["output_nc"])
     if output_path.exists() and not overwrite:
@@ -41,6 +42,7 @@ def run_one(
         dry_run=dry_run,
         run_exact_climate_qc=run_exact_climate_qc,
         ck_root=ck_root,
+        atmosphere_source=atmosphere_source,
     )
     runtime_seconds = perf_counter() - start
     dataset = build_aurora_run_dataset(

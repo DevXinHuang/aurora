@@ -83,6 +83,55 @@ def _thermal_fpfs(out_emission: dict[str, Any], output_grid_um: np.ndarray) -> n
     )
 
 
+def _profile_value(profile: Any, key: str) -> np.ndarray | None:
+    try:
+        value = profile[key]
+    except Exception:
+        return None
+    if hasattr(value, "values"):
+        value = value.values
+    try:
+        return np.asarray(value, dtype=float)
+    except Exception:
+        return None
+
+
+def _profile_columns(profile: Any) -> list[str]:
+    if hasattr(profile, "columns"):
+        return [str(column) for column in profile.columns]
+    if isinstance(profile, dict):
+        return [str(column) for column in profile]
+    return []
+
+
+def _climate_pt_profile(case: Any, climate_out: dict[str, Any]) -> dict[str, np.ndarray]:
+    profile = case.inputs["atmosphere"]["profile"]
+    pressure = np.asarray(climate_out["pressure"], dtype=float)
+    temperature = np.asarray(climate_out["temperature"], dtype=float)
+    pt_profile: dict[str, np.ndarray] = {
+        "pressure": pressure,
+        "temperature": temperature,
+    }
+    ignored = {"pressure", "temperature", "kz", "kzz", "e-", "lvl", "wv", "sigma"}
+    for column in _profile_columns(profile):
+        if column.strip().lower() in ignored:
+            continue
+        values = _profile_value(profile, column)
+        if values is not None and values.ndim == 1 and values.size == pressure.size:
+            pt_profile[column] = values
+    return pt_profile
+
+
+def _as_bool_scalar(value: Any) -> bool:
+    try:
+        array = np.asarray(value)
+        if array.shape == ():
+            return bool(array.item())
+    except Exception:
+        pass
+    return bool(value)
+
+
 def _dry_run_model(row: dict[str, Any]) -> dict[str, Any]:
     wavelength = np.linspace(WAVELENGTH_MIN_UM, WAVELENGTH_MAX_UM, 128)
     radius_au = float(row["planet_radius_rearth"]) * R_EARTH_AU
@@ -157,17 +206,92 @@ def _dry_run_model(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _run_real_picaso_climate_model(
+    row: dict[str, Any],
+    *,
+    system: Any,
+    output_grid: np.ndarray,
+    cloud_model: str,
+    ck_root: str | Path | None,
+    run_picaso_climate_model_once: Any,
+    extract_planet_fluxes: Any,
+) -> dict[str, Any]:
+    out_ref, out_em, climate_out, qc_diagnostics, case, opacity = run_picaso_climate_model_once(
+        system,
+        output_grid,
+        ck_root=ck_root,
+        cloud_model=cloud_model,
+        verbose=True,
+        return_case=True,
+        return_opacity=True,
+    )
+    albedo, fpfs_reflection = _reflected_observables(out_ref, system, output_grid)
+    fpfs_emission = _thermal_fpfs(out_em, output_grid)
+    pt_profile = _climate_pt_profile(case, climate_out)
+
+    result: dict[str, Any] = {
+        "wavelength_um": output_grid,
+        "fpfs_reflection": fpfs_reflection,
+        "albedo": albedo,
+        "pt_profile": pt_profile,
+        "picaso_out_reflected": out_ref,
+        "picaso_out_emission": out_em,
+        "picaso_climate_out": climate_out,
+        "picaso_case": case,
+        "picaso_opacity": opacity,
+        "qc_diagnostics": qc_diagnostics,
+        "picaso_metadata": {
+            "dry_run": False,
+            "atmosphere_source": "picaso_climate",
+            "thermal_source": "picaso_climate_spectrum_output",
+            "cloud_model": cloud_model,
+            "chem_log_mh": system.chem_log_mh,
+            "chem_c_o_from_picaso_tag": system.chem_c_o,
+            "c_to_o_picaso_tag": str(row["c_to_o_picaso_tag"]).zfill(3),
+            "picaso_tint_k": float(row["picaso_tint_k"]),
+            "climate_converged": _as_bool_scalar(qc_diagnostics.get("climate_converged", False)),
+            "climate_opacity_method": "preweighted",
+            "selected_ck_file": str(qc_diagnostics.get("selected_ck_file", "")),
+            "has_exact_climate_qc": True,
+        },
+    }
+    if fpfs_emission is not None:
+        result["fpfs_emission"] = fpfs_emission
+        denominator = fpfs_reflection + fpfs_emission
+        result["reflected_fraction"] = np.divide(
+            fpfs_reflection,
+            denominator,
+            out=np.zeros_like(fpfs_reflection),
+            where=denominator > 0,
+        )
+
+    try:
+        _, fp_reflected_abs, fp_thermal_abs = extract_planet_fluxes(out_ref, out_em, output_grid, system)
+        result["picaso_metadata"]["has_absolute_flux_diagnostics"] = True
+        result["absolute_flux_reflected"] = fp_reflected_abs
+        result["absolute_flux_thermal"] = fp_thermal_abs
+    except Exception as exc:
+        result["picaso_metadata"]["absolute_flux_diagnostics_error"] = str(exc)
+        result["absolute_flux_reflected"] = np.zeros(output_grid.size, dtype=float)
+        result["absolute_flux_thermal"] = np.zeros(output_grid.size, dtype=float)
+
+    return result
+
+
 def _run_real_picaso_model(
     row: dict[str, Any],
     *,
     run_exact_climate_qc: bool = False,
     ck_root: str | Path | None = None,
+    atmosphere_source: str = "picaso_guillot",
 ) -> dict[str, Any]:
     if str(ROADRUNNER_ROOT) not in sys.path:
         sys.path.insert(0, str(ROADRUNNER_ROOT))
 
     from roadrunner.runner import (
         extract_planet_fluxes,
+        normalize_atmosphere_source,
+        run_picaso_climate_model_once,
         run_picaso_climate_diagnostics_once,
         run_picaso_once,
     )
@@ -179,6 +303,7 @@ def _run_real_picaso_model(
     metallicity_xsolar = float(row["metallicity_xsolar"])
     log_mh = math.log10(metallicity_xsolar)
 
+    source = normalize_atmosphere_source(atmosphere_source)
     system = SystemParams(
         teff_k=float(row["picaso_tint_k"]),
         logg_cgs=math.log10(float(row["gravity_ms2"]) * 100.0),
@@ -187,7 +312,7 @@ def _run_real_picaso_model(
         phase_deg=float(row["phase_deg"]),
         tstar_k=float(row["star_teff_k"]),
         rstar_rsun=float(row["star_radius_rsun"]),
-        atmosphere_source="picaso",
+        atmosphere_source=source,
         cloud_model=cloud_model,
         bond_albedo=0.0,
         chem_c_o=c_to_o,
@@ -195,6 +320,17 @@ def _run_real_picaso_model(
         kzz_cgs=float(row["kzz_cm2_s"]),
         virga_fsed=float(row["fsed"]),
     )
+
+    if source == "picaso_climate":
+        return _run_real_picaso_climate_model(
+            row,
+            system=system,
+            output_grid=output_grid,
+            cloud_model=cloud_model,
+            ck_root=ck_root,
+            run_picaso_climate_model_once=run_picaso_climate_model_once,
+            extract_planet_fluxes=extract_planet_fluxes,
+        )
 
     out_ref, out_em, case, opacity = run_picaso_once(
         system,
@@ -270,12 +406,15 @@ def run_picaso_model(
     *,
     run_exact_climate_qc: bool = False,
     ck_root: str | Path | None = None,
+    atmosphere_source: str | None = None,
 ) -> dict[str, Any]:
     """Run one Aurora model row, or return a valid toy spectrum for plumbing tests."""
     if dry_run:
         return _dry_run_model(row)
+    selected_source = str(atmosphere_source or row.get("atmosphere_source") or "picaso_guillot")
     return _run_real_picaso_model(
         row,
         run_exact_climate_qc=run_exact_climate_qc,
         ck_root=ck_root,
+        atmosphere_source=selected_source,
     )

@@ -35,6 +35,7 @@ QC_DIAGNOSTIC_VARIABLES = (
     "qc_dtdp",
     "qc_adiabat_pressure",
     "fnet_irfnet",
+    "flux_balance",
     "qc_brightness_temperature",
     "qc_brightness_wavelength",
 )
@@ -650,6 +651,7 @@ def _extract_explicit_qc_diagnostics(model_output: dict[str, Any]) -> dict[str, 
         "qc_dtdp": ("qc_dtdp",),
         "qc_adiabat_pressure": ("qc_adiabat_pressure",),
         "fnet_irfnet": ("fnet_irfnet", "Fnet_IRFnet", "Fnet/IR-Fnet"),
+        "flux_balance": ("flux_balance",),
         "qc_brightness_temperature": ("qc_brightness_temperature", "brightness_temperature"),
         "qc_brightness_wavelength": ("qc_brightness_wavelength", "brightness_wavelength", "brightness_wavelength_um"),
     }
@@ -843,6 +845,20 @@ def _add_exact_qc_diagnostics(
                 warnings.append(f"exact adiabat diagnostic length {size} does not match level or layer dimension")
         else:
             warnings.append("exact adiabat diagnostic arrays have inconsistent lengths")
+    elif "qc_dtdp" in diagnostics:
+        dtdp = diagnostics["qc_dtdp"]
+        dim = _diagnostic_vertical_dim(dtdp.size, nlevel, nlayer)
+        if dim is not None:
+            ds["qc_dtdp"] = (
+                (dim,),
+                dtdp,
+                {
+                    "units": "K bar-1",
+                    "description": "Exact PICASO atmospheric dT/dP diagnostic.",
+                },
+            )
+        else:
+            warnings.append(f"exact dT/dP diagnostic length {dtdp.size} does not match level or layer dimension")
 
     fnet = diagnostics.get("fnet_irfnet")
     if fnet is not None:
@@ -858,6 +874,21 @@ def _add_exact_qc_diagnostics(
             )
         else:
             warnings.append(f"exact flux-balance diagnostic length {fnet.size} does not match level or layer dimension")
+
+    flux_balance = diagnostics.get("flux_balance")
+    if flux_balance is not None:
+        dim = _diagnostic_vertical_dim(flux_balance.size, nlevel, nlayer)
+        if dim is not None:
+            ds["flux_balance"] = (
+                (dim,),
+                flux_balance,
+                {
+                    "units": "dimensionless",
+                    "description": "Exact PICASO climate flux-balance diagnostic.",
+                },
+            )
+        else:
+            warnings.append(f"exact flux-balance array length {flux_balance.size} does not match level or layer dimension")
 
     brightness = diagnostics.get("qc_brightness_temperature")
     if brightness is not None:
@@ -907,6 +938,29 @@ def _add_scalar(ds: xr.Dataset, name: str, value: Any, units: str | None = None)
     ds[name] = scalar
     if units:
         ds[name].attrs["units"] = units
+
+
+def _climate_metadata_attrs(model_output: dict[str, Any]) -> dict[str, Any]:
+    metadata = model_output.get("picaso_metadata", {})
+    diagnostics = model_output.get("qc_diagnostics", {})
+    attrs: dict[str, Any] = {}
+    if isinstance(metadata, dict):
+        for key in ("climate_converged", "climate_opacity_method", "selected_ck_file"):
+            if key in metadata:
+                attrs[key] = metadata[key]
+    if isinstance(diagnostics, dict):
+        if "climate_converged" in diagnostics:
+            attrs.setdefault("climate_converged", _json_clean(diagnostics["climate_converged"]))
+        if "climate_opacity_method" in diagnostics:
+            attrs.setdefault("climate_opacity_method", str(diagnostics["climate_opacity_method"]))
+        if "selected_ck_file" in diagnostics:
+            attrs.setdefault("selected_ck_file", str(diagnostics["selected_ck_file"]))
+    if "climate_converged" in attrs:
+        try:
+            attrs["climate_converged"] = int(bool(np.asarray(attrs["climate_converged"]).item()))
+        except Exception:
+            attrs["climate_converged"] = int(bool(attrs["climate_converged"]))
+    return attrs
 
 
 def _schema_warning_for_missing_scalars(row: dict[str, Any]) -> list[str]:
@@ -1139,6 +1193,7 @@ def build_aurora_run_dataset(
             "netcdf_strict_optional": str(bool(options.strict_optional)),
         }
     )
+    ds.attrs.update(_climate_metadata_attrs(model_output))
 
     issues = validate_aurora_netcdf_schema(ds)
     errors = [issue for issue in issues if issue.startswith("ERROR:")]

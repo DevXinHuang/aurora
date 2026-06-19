@@ -104,12 +104,15 @@ def normalize_atmosphere_source(source: str | None) -> str:
         "picaso_generated": "picaso",
         "generated": "picaso",
         "guillot": "picaso",
+        "picaso_guillot": "picaso",
+        "picaso_climate": "picaso_climate",
+        "climate": "picaso_climate",
         "full_picaso": "picaso",
     }
     if source not in aliases:
         raise ValueError(
             "Unknown atmosphere source "
-            f"{source!r}; choose 'slgrid' or 'picaso'."
+            f"{source!r}; choose 'slgrid', 'picaso_guillot', or 'picaso_climate'."
         )
     return aliases[source]
 
@@ -567,12 +570,138 @@ def run_picaso_climate_diagnostics_once(
         }.items():
             if source_key in climate_out:
                 diagnostics[target_key] = climate_out[source_key]
+        if "dtdp" in climate_out:
+            diagnostics.setdefault("qc_dtdp", climate_out["dtdp"])
         _add_justplotit_climate_diagnostics(diagnostics, climate_out, cl_run, opa)
     else:
         diagnostics["schema_warnings"].append(
             f"PICASO climate returned {type(climate_out).__name__}, not dict"
         )
     return diagnostics
+
+
+def _apply_climate_profile_to_case(case, climate_out: dict[str, Any]) -> None:
+    profile = case.inputs["atmosphere"]["profile"]
+    if "pressure" in climate_out:
+        profile["pressure"] = np.asarray(climate_out["pressure"], dtype=float)
+    if "temperature" in climate_out:
+        profile["temperature"] = np.asarray(climate_out["temperature"], dtype=float)
+
+
+def _compact_climate_diagnostics(
+    climate_out: dict[str, Any],
+    selected_ck_file: Path,
+    climate_input_summary: dict[str, Any],
+    cl_run,
+    opa,
+) -> dict[str, Any]:
+    diagnostics: dict[str, Any] = {
+        "selected_ck_file": str(selected_ck_file),
+        "climate_opacity_method": "preweighted",
+        "initial_pressure": climate_input_summary["pressure"],
+        "initial_temp_guess": climate_input_summary["temp_guess"],
+        "rcb_guess": climate_input_summary["rcb_guess"],
+        "nstr": climate_input_summary["nstr"],
+        "rfacv": climate_input_summary["rfacv"],
+        "rfaci": climate_input_summary["rfaci"],
+        "moistgrad": climate_input_summary["moistgrad"],
+        "schema_warnings": [],
+    }
+    if "dtdp" in climate_out:
+        diagnostics["dtdp"] = climate_out["dtdp"]
+        diagnostics["qc_dtdp"] = climate_out["dtdp"]
+    for source_key, target_key in {
+        "fnet/fnetir": "fnet_irfnet",
+        "flux_balance": "flux_balance",
+        "spectrum_output": "spectrum_output",
+        "pressure": "pressure",
+        "temperature": "temperature",
+        "converged": "climate_converged",
+    }.items():
+        if source_key in climate_out:
+            diagnostics[target_key] = climate_out[source_key]
+    _add_justplotit_climate_diagnostics(diagnostics, climate_out, cl_run, opa)
+    return diagnostics
+
+
+def run_picaso_climate_model_once(
+    system: SystemParams,
+    output_grid: np.ndarray,
+    ck_root: str | Path | None = None,
+    cloud_model: str | None = None,
+    verbose: bool = True,
+    return_case: bool = False,
+    return_opacity: bool = False,
+) -> tuple[Any, ...]:
+    """Run PICASO climate as the primary atmosphere, then spectra from it."""
+    assert HAVE_PICASO, "PICASO is required"
+
+    output_grid = np.asarray(output_grid, dtype=float)
+    selected_ck_file = select_picaso4_preweighted_ck_file(system, ck_root=ck_root)
+    opa = jdi.opannection(
+        ck_db=str(selected_ck_file),
+        wave_range=[float(np.nanmin(output_grid)), float(np.nanmax(output_grid))],
+        method="preweighted",
+    )
+
+    cl_run = jdi.inputs(calculation="planet", climate=True)
+    g_cgs = 10 ** system.logg_cgs
+    cl_run.gravity(
+        gravity=g_cgs,
+        gravity_unit=u.cm / u.s**2,
+        radius=system.rj,
+        radius_unit=u.R_jup,
+    )
+    cl_run.star(
+        opa,
+        temp=system.tstar_k,
+        metal=0,
+        logg=4.44,
+        radius=system.rstar_rsun,
+        radius_unit=u.R_sun,
+        semi_major=system.a_au,
+        semi_major_unit=u.AU,
+    )
+    configure_picaso_atmosphere(
+        cl_run,
+        system,
+        atmosphere_source="picaso",
+        cloud_model=cloud_model,
+        verbose=verbose,
+    )
+    climate_input_summary = configure_climate_inputs(cl_run, system)
+    climate_out = cl_run.climate(opa, save_all_profiles=True, with_spec=True)
+    if not isinstance(climate_out, dict):
+        raise RuntimeError(f"PICASO climate returned {type(climate_out).__name__}, not dict")
+
+    _apply_climate_profile_to_case(cl_run, climate_out)
+
+    cl_run.phase_angle(
+        np.deg2rad(system.phase_deg),
+        num_gangle=REFLECT_NUM_GANGLE,
+        num_tangle=REFLECT_NUM_TANGLE,
+    )
+    out_ref = cl_run.spectrum(opa, calculation="reflected", as_dict=True, full_output=True)
+    out_em = climate_out.get("spectrum_output")
+    if not isinstance(out_em, dict):
+        out_em = {}
+
+    diagnostics = _compact_climate_diagnostics(
+        climate_out,
+        selected_ck_file,
+        climate_input_summary,
+        cl_run,
+        opa,
+    )
+
+    result = (out_ref, out_em, climate_out, diagnostics)
+    if return_case and return_opacity:
+        return (*result, cl_run, opa)
+    if return_case:
+        return (*result, cl_run)
+    if return_opacity:
+        return (*result, opa)
+    return result
 
 
 # ---------------------------------------------------------------------------
