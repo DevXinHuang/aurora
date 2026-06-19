@@ -19,7 +19,14 @@ from .parameters import resolve_repo_path
 from .picaso_runner import run_picaso_model
 
 
-def run_one(row: dict[str, Any], overwrite: bool = False, dry_run: bool = False) -> dict[str, Any]:
+def run_one(
+    row: dict[str, Any],
+    overwrite: bool = False,
+    dry_run: bool = False,
+    *,
+    run_exact_climate_qc: bool = False,
+    ck_root: str | Path | None = None,
+) -> dict[str, Any]:
     output_path = resolve_repo_path(row["output_nc"])
     if output_path.exists() and not overwrite:
         return {
@@ -29,7 +36,12 @@ def run_one(row: dict[str, Any], overwrite: bool = False, dry_run: bool = False)
         }
 
     start = perf_counter()
-    model_output = run_picaso_model(row, dry_run=dry_run)
+    model_output = run_picaso_model(
+        row,
+        dry_run=dry_run,
+        run_exact_climate_qc=run_exact_climate_qc,
+        ck_root=ck_root,
+    )
     runtime_seconds = perf_counter() - start
     dataset = build_aurora_run_dataset(
         model_output,

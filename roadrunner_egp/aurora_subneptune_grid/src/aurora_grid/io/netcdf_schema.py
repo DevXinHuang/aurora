@@ -752,6 +752,13 @@ def extract_aurora_qc_diagnostics(model_output: dict[str, Any]) -> tuple[dict[st
     """Extract exact PICASO climate QC diagnostics without approximating them."""
     warnings: list[str] = []
     diagnostics = _extract_explicit_qc_diagnostics(model_output)
+    nested = model_output.get("qc_diagnostics")
+    if isinstance(nested, dict):
+        nested_warnings = nested.get("schema_warnings")
+        if isinstance(nested_warnings, (list, tuple)):
+            warnings.extend(str(item) for item in nested_warnings)
+        elif nested_warnings:
+            warnings.append(str(nested_warnings))
 
     if not {"qc_adiabat", "qc_dtdp", "qc_adiabat_pressure"}.issubset(diagnostics):
         diagnostics.update({key: value for key, value in _extract_jpi_adiabat(model_output, warnings).items() if key not in diagnostics})

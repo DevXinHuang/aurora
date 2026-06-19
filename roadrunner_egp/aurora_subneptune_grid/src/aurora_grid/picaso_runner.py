@@ -157,11 +157,20 @@ def _dry_run_model(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _run_real_picaso_model(row: dict[str, Any]) -> dict[str, Any]:
+def _run_real_picaso_model(
+    row: dict[str, Any],
+    *,
+    run_exact_climate_qc: bool = False,
+    ck_root: str | Path | None = None,
+) -> dict[str, Any]:
     if str(ROADRUNNER_ROOT) not in sys.path:
         sys.path.insert(0, str(ROADRUNNER_ROOT))
 
-    from roadrunner.runner import extract_planet_fluxes, run_picaso_once
+    from roadrunner.runner import (
+        extract_planet_fluxes,
+        run_picaso_climate_diagnostics_once,
+        run_picaso_once,
+    )
     from roadrunner.system import SystemParams
 
     output_grid = wavelength_grid_um()
@@ -238,11 +247,35 @@ def _run_real_picaso_model(row: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         result["picaso_metadata"]["absolute_flux_diagnostics_error"] = str(exc)
 
+    if run_exact_climate_qc:
+        try:
+            result["qc_diagnostics"] = run_picaso_climate_diagnostics_once(
+                system,
+                output_grid,
+                ck_root=ck_root,
+                cloud_model=cloud_model,
+                verbose=True,
+            )
+            result["picaso_metadata"]["has_exact_climate_qc"] = True
+        except Exception as exc:
+            result["qc_diagnostics"] = {"schema_warnings": [f"exact climate QC failed: {exc}"]}
+            result["picaso_metadata"]["exact_climate_qc_error"] = str(exc)
+
     return result
 
 
-def run_picaso_model(row: dict[str, Any], dry_run: bool = False) -> dict[str, Any]:
+def run_picaso_model(
+    row: dict[str, Any],
+    dry_run: bool = False,
+    *,
+    run_exact_climate_qc: bool = False,
+    ck_root: str | Path | None = None,
+) -> dict[str, Any]:
     """Run one Aurora model row, or return a valid toy spectrum for plumbing tests."""
     if dry_run:
         return _dry_run_model(row)
-    return _run_real_picaso_model(row)
+    return _run_real_picaso_model(
+        row,
+        run_exact_climate_qc=run_exact_climate_qc,
+        ck_root=ck_root,
+    )

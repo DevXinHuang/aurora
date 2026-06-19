@@ -154,6 +154,28 @@ def test_all_optional_policy(model_output, manifest_row):
         assert name in dataset.data_vars
 
 
+def test_nested_exact_climate_qc_diagnostics_are_written(model_output, manifest_row):
+    model_output = dict(model_output)
+    model_output["qc_diagnostics"] = {
+        "qc_adiabat": np.array([1.0, 1.1, 1.2]),
+        "qc_dtdp": np.array([0.8, 0.9, 1.0]),
+        "qc_adiabat_pressure": np.array([1.0e-3, 1.0e-2, 1.0e-1]),
+        "fnet_irfnet": np.array([1.0e-4, -2.0e-4, 3.0e-4]),
+        "qc_brightness_temperature": np.array([350.0, 360.0, 365.0, 370.0]),
+        "qc_brightness_wavelength": np.array([0.5, 0.6, 0.7, 0.8]),
+        "schema_warnings": ["brightness diagnostic fallback warning"],
+    }
+
+    dataset = build_aurora_run_dataset(model_output, manifest_row)
+
+    assert dataset["qc_adiabat"].dims == ("level",)
+    assert dataset["qc_dtdp"].dims == ("level",)
+    assert dataset["qc_adiabat_pressure"].dims == ("level",)
+    assert dataset["fnet_irfnet"].dims == ("level",)
+    assert dataset["qc_brightness_temperature"].dims == ("wavelength",)
+    assert "brightness diagnostic fallback warning" in dataset.attrs["schema_warnings"]
+
+
 def test_missing_enabled_optional_warns_by_default(model_output, manifest_row):
     model_output = dict(model_output)
     model_output.pop("bond_albedo")

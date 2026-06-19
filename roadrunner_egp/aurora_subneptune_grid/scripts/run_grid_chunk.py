@@ -46,6 +46,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-name", help="Expected model_name for selected rows.")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing NetCDF outputs.")
     parser.add_argument("--dry-run", action="store_true", help="Use a toy spectrum instead of running PICASO.")
+    parser.add_argument("--run-exact-climate-qc", action="store_true", help="Run opt-in PICASO exact climate QC diagnostics.")
+    parser.add_argument("--picaso-ck-root", help="Root containing PICASO 4 preweighted CK opacity files.")
     parser.add_argument("--start-index", type=int, help="Inclusive run_index start.")
     parser.add_argument("--end-index", type=int, help="Exclusive run_index end.")
     parser.add_argument("--limit", type=int, help="Run only the first N rows after selection.")
@@ -92,6 +94,7 @@ def main() -> int:
     print(f"manifest: {args.manifest}")
     print(f"selected_rows: {len(selected)}")
     print(f"dry_run: {args.dry_run}")
+    print(f"run_exact_climate_qc: {args.run_exact_climate_qc}")
     print(f"overwrite: {args.overwrite}")
 
     statuses = []
@@ -99,7 +102,13 @@ def main() -> int:
         print("selected_row:")
         for column in DISPLAY_COLUMNS:
             print(f"{column}: {row_dict.get(column)}")
-        result = run_one(row_dict, overwrite=args.overwrite, dry_run=args.dry_run)
+        result = run_one(
+            row_dict,
+            overwrite=args.overwrite,
+            dry_run=args.dry_run,
+            run_exact_climate_qc=args.run_exact_climate_qc,
+            ck_root=args.picaso_ck_root,
+        )
         statuses.append(result)
         print("final_status:")
         print(result)

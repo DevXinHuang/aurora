@@ -6,6 +6,9 @@ planet fluxes with correct unit conversions.
 """
 
 import os
+import inspect
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -23,6 +26,71 @@ from .config import (
     THERMAL_NUM_TANGLE,
 )
 from .system import SystemParams, resolve_slgrid_files
+
+
+PICASO4_CK_FEH_VALUES = np.array(
+    [-2.0, -1.5, -1.0, -0.7, -0.5, -0.3, 0.0, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0],
+    dtype=float,
+)
+PICASO4_CK_CO_VALUES = np.array([0.14, 0.27, 0.46, 0.55, 0.82, 1.10], dtype=float)
+PICASO4_SOLAR_C_TO_O = 0.55
+
+
+def _nearest_available(value: float, available: np.ndarray) -> float:
+    return float(available[int(np.argmin(np.abs(available - float(value))))])
+
+
+def default_picaso4_ck_roots() -> list[Path]:
+    """Return candidate local roots for PICASO 4 preweighted CK opacity files."""
+    env_root = os.environ.get("PICASO_CK_ROOT")
+    if env_root:
+        return [Path(env_root).expanduser()]
+
+    repo_root = Path(__file__).resolve().parents[2]
+    return [
+        repo_root / "picaso4_reference" / "opacities" / "preweighted",
+        repo_root / "picaso4_reference" / "opacities",
+    ]
+
+
+def picaso4_preweighted_ck_filename(system: SystemParams) -> str:
+    """Return the nearest-grid PICASO 4 preweighted CK filename for a system."""
+    feh = _nearest_available(system.chem_log_mh, PICASO4_CK_FEH_VALUES)
+    absolute_co = float(system.chem_c_o) * PICASO4_SOLAR_C_TO_O
+    co = _nearest_available(absolute_co, PICASO4_CK_CO_VALUES)
+    return f"sonora_2121grid_feh{feh:.1f}_co{co:.2f}.hdf5"
+
+
+def select_picaso4_preweighted_ck_file(
+    system: SystemParams,
+    ck_root: str | Path | None = None,
+) -> Path:
+    """
+    Locate the nearest-grid PICASO 4 preweighted correlated-k opacity file.
+
+    The chemistry convention matches ``chemeq_visscher_2121``: ``chem_c_o`` is
+    stored as x-solar and converted to absolute C/O by multiplying by 0.55.
+    """
+    expected_name = picaso4_preweighted_ck_filename(system)
+    roots = [Path(ck_root).expanduser()] if ck_root is not None else default_picaso4_ck_roots()
+    searched: list[str] = []
+    for root in roots:
+        searched.append(str(root))
+        candidate = root / expected_name
+        if candidate.exists():
+            return candidate
+        if root.exists():
+            matches = sorted(root.rglob(expected_name))
+            if matches:
+                return matches[0]
+
+    absolute_co = float(system.chem_c_o) * PICASO4_SOLAR_C_TO_O
+    raise FileNotFoundError(
+        "PICASO 4 preweighted CK opacity file not found. "
+        f"Expected {expected_name!r} for chem_log_mh={system.chem_log_mh:g}, "
+        f"chem_c_o_xsolar={system.chem_c_o:g}, absolute_c_to_o={absolute_co:g}. "
+        f"Searched: {searched}."
+    )
 
 
 def normalize_atmosphere_source(source: str | None) -> str:
@@ -109,7 +177,7 @@ def _build_generated_picaso_atmosphere(
     Build the atmosphere inside PICASO instead of reading SLGRID files.
 
     This follows the notebook pattern: Guillot (2010) PT profile, Visscher
-    equilibrium chemistry, then Virga/Jupiter/clear clouds.
+    equilibrium chemistry, then Virga/Jupiter/clear clouds. that is the old way don't use this
     """
     teq = equilibrium_temperature(sys)
     case.guillot_pt(Teq=teq, T_int=sys.teff_k, nlevel=ATM_NLAYERS)
@@ -274,6 +342,237 @@ def run_picaso_once(
     if return_opacity:
         return out_ref, out_em, opa
     return out_ref, out_em
+
+
+def _as_1d_float_or_none(values: Any) -> np.ndarray | None:
+    if values is None:
+        return None
+    try:
+        array = np.asarray(values, dtype=float)
+    except Exception:
+        return None
+    if array.ndim != 1:
+        array = np.ravel(array)
+    if array.size == 0:
+        return None
+    return array
+
+
+def _parse_adiabat_result(result: Any) -> tuple[np.ndarray | None, np.ndarray | None, np.ndarray | None]:
+    if not isinstance(result, (tuple, list)):
+        return None, None, None
+    if len(result) >= 4:
+        _, adiabat, dtdp, pressure = result[:4]
+    elif len(result) >= 3:
+        adiabat, dtdp, pressure = result[:3]
+    else:
+        return None, None, None
+    return (
+        _as_1d_float_or_none(adiabat),
+        _as_1d_float_or_none(dtdp),
+        _as_1d_float_or_none(pressure),
+    )
+
+
+def _brightness_wavelength_from_spectrum(spectrum_output: Any, brightness: np.ndarray) -> np.ndarray | None:
+    if not isinstance(spectrum_output, dict) or "wavenumber" not in spectrum_output:
+        return None
+    wno = _as_1d_float_or_none(spectrum_output.get("wavenumber"))
+    if wno is None or wno.size != brightness.size:
+        return None
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return 1.0e4 / wno
+
+
+def configure_climate_inputs(
+    cl_run,
+    system: SystemParams,
+    *,
+    rfacv: float = 0.5,
+    rfaci: float = 1.0,
+    moistgrad: bool = False,
+) -> dict[str, Any]:
+    """Attach PICASO climate solver controls using the generated PT profile."""
+    if hasattr(cl_run, "effective_temp"):
+        cl_run.effective_temp(float(system.teff_k))
+    else:
+        cl_run.T_eff(float(system.teff_k))
+
+    profile = cl_run.inputs["atmosphere"]["profile"]
+    pressure = np.asarray(profile["pressure"], dtype=float)
+    temp_guess = np.asarray(profile["temperature"], dtype=float)
+
+    nlevel = len(pressure)
+    rcb_guess = max(1, nlevel - 7)
+    nstr = np.array([0, rcb_guess, nlevel - 2, 0, 0, 0])
+
+    sig = inspect.signature(cl_run.inputs_climate)
+    params = sig.parameters
+    kwargs: dict[str, Any] = {
+        "temp_guess": temp_guess,
+        "pressure": pressure,
+        "rfacv": rfacv,
+        "moistgrad": moistgrad,
+    }
+
+    if "rfaci" in params:
+        kwargs["rfaci"] = rfaci
+
+    if "rcb_guess" in params:
+        kwargs["rcb_guess"] = rcb_guess
+    else:
+        kwargs["nstr"] = nstr
+        kwargs["nofczns"] = 1
+
+    cl_run.inputs_climate(**kwargs)
+
+    return {
+        "pressure": pressure,
+        "temp_guess": temp_guess,
+        "rcb_guess": rcb_guess,
+        "nstr": nstr,
+        "rfacv": rfacv,
+        "rfaci": rfaci,
+        "moistgrad": moistgrad,
+    }
+
+
+def _add_justplotit_climate_diagnostics(
+    diagnostics: dict[str, Any],
+    climate_out: dict[str, Any],
+    cl_run: Any,
+    opa: Any,
+) -> None:
+    warnings = diagnostics.setdefault("schema_warnings", [])
+    try:
+        from picaso import justplotit as jpi
+    except Exception as exc:
+        warnings.append(f"PICASO justplotit diagnostics unavailable: {exc}")
+        return
+
+    pt_adiabat = getattr(jpi, "pt_adiabat", None)
+    if pt_adiabat is not None:
+        last_error: Exception | str = "no usable adiabat arrays returned"
+        for call in (
+            lambda: pt_adiabat(climate_out, cl_run, opa, plot=False),
+            lambda: pt_adiabat(climate_out, cl_run, plot=False),
+        ):
+            try:
+                adiabat, dtdp, pressure = _parse_adiabat_result(call())
+            except Exception as exc:
+                last_error = exc
+                continue
+            if adiabat is not None and dtdp is not None and pressure is not None:
+                diagnostics["qc_adiabat"] = adiabat
+                diagnostics["qc_dtdp"] = dtdp
+                diagnostics["qc_adiabat_pressure"] = pressure
+                break
+        else:
+            warnings.append(f"PICASO adiabat diagnostic unavailable: {last_error}")
+    else:
+        warnings.append("PICASO adiabat diagnostic unavailable: pt_adiabat missing")
+
+    spectrum_output = climate_out.get("spectrum_output")
+    brightness_temperature = getattr(jpi, "brightness_temperature", None)
+    if brightness_temperature is not None and spectrum_output is not None:
+        last_error = "no usable brightness-temperature array returned"
+        for call in (
+            lambda: brightness_temperature(spectrum_output, plot=False),
+            lambda: brightness_temperature(spectrum_output),
+        ):
+            try:
+                brightness = _as_1d_float_or_none(call())
+            except Exception as exc:
+                last_error = exc
+                continue
+            if brightness is not None:
+                diagnostics["qc_brightness_temperature"] = brightness
+                wavelength = _brightness_wavelength_from_spectrum(spectrum_output, brightness)
+                if wavelength is not None:
+                    diagnostics["qc_brightness_wavelength"] = wavelength
+                break
+        else:
+            warnings.append(f"PICASO brightness-temperature diagnostic unavailable: {last_error}")
+    else:
+        warnings.append("PICASO brightness-temperature diagnostic unavailable")
+
+
+def run_picaso_climate_diagnostics_once(
+    system: SystemParams,
+    output_grid: np.ndarray,
+    ck_root: str | Path | None = None,
+    cloud_model: str | None = None,
+    verbose: bool = True,
+) -> dict[str, Any]:
+    """Run PICASO's exact climate path once and return compact QC diagnostics."""
+    assert HAVE_PICASO, "PICASO is required"
+
+    output_grid = np.asarray(output_grid, dtype=float)
+    selected_ck_file = select_picaso4_preweighted_ck_file(system, ck_root=ck_root)
+    opa = jdi.opannection(
+        ck_db=str(selected_ck_file),
+        wave_range=[float(np.nanmin(output_grid)), float(np.nanmax(output_grid))],
+        method="preweighted",
+    )
+
+    cl_run = jdi.inputs(calculation="planet", climate=True)
+    g_cgs = 10 ** system.logg_cgs
+    cl_run.gravity(
+        gravity=g_cgs,
+        gravity_unit=u.cm / u.s**2,
+        radius=system.rj,
+        radius_unit=u.R_jup,
+    )
+    cl_run.star(
+        opa,
+        temp=system.tstar_k,
+        metal=0,
+        logg=4.44,
+        radius=system.rstar_rsun,
+        radius_unit=u.R_sun,
+        semi_major=system.a_au,
+        semi_major_unit=u.AU,
+    )
+
+    configure_picaso_atmosphere(
+        cl_run,
+        system,
+        atmosphere_source="picaso",
+        cloud_model=cloud_model,
+        verbose=verbose,
+    )
+    climate_input_summary = configure_climate_inputs(cl_run, system)
+
+    climate_out = cl_run.climate(opa, save_all_profiles=True, with_spec=True)
+    diagnostics: dict[str, Any] = {
+        "selected_ck_file": str(selected_ck_file),
+        "initial_pressure": climate_input_summary["pressure"],
+        "initial_temp_guess": climate_input_summary["temp_guess"],
+        "rcb_guess": climate_input_summary["rcb_guess"],
+        "nstr": climate_input_summary["nstr"],
+        "rfacv": climate_input_summary["rfacv"],
+        "rfaci": climate_input_summary["rfaci"],
+        "moistgrad": climate_input_summary["moistgrad"],
+        "schema_warnings": [],
+    }
+    if isinstance(climate_out, dict):
+        for source_key, target_key in {
+            "dtdp": "dtdp",
+            "fnet/fnetir": "fnet_irfnet",
+            "flux_balance": "flux_balance",
+            "spectrum_output": "spectrum_output",
+            "pressure": "pressure",
+            "temperature": "temperature",
+            "converged": "converged",
+        }.items():
+            if source_key in climate_out:
+                diagnostics[target_key] = climate_out[source_key]
+        _add_justplotit_climate_diagnostics(diagnostics, climate_out, cl_run, opa)
+    else:
+        diagnostics["schema_warnings"].append(
+            f"PICASO climate returned {type(climate_out).__name__}, not dict"
+        )
+    return diagnostics
 
 
 # ---------------------------------------------------------------------------
