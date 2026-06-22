@@ -26,6 +26,27 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True, help="Directory for per-run NetCDF files.")
     parser.add_argument("--shard-id", type=int, required=True, help="This shard index.")
     parser.add_argument("--n-shards", type=int, required=True, help="Total number of shards.")
+    parser.add_argument(
+        "--run-exact-climate-qc",
+        action="store_true",
+        help="Run opt-in PICASO exact climate QC diagnostics in addition to the primary atmosphere mode.",
+    )
+    parser.add_argument(
+        "--atmosphere-source",
+        choices=("picaso_guillot", "picaso_climate"),
+        default=None,
+        help="Primary atmosphere mode: fast Guillot path or converged PICASO climate-first path.",
+    )
+    parser.add_argument(
+        "--use-picaso-climate",
+        action="store_true",
+        help="Shortcut for --atmosphere-source picaso_climate.",
+    )
+    parser.add_argument(
+        "--picaso-ck-root",
+        default=None,
+        help="Directory containing PICASO 4 preweighted correlated-k HDF5 files.",
+    )
     return parser.parse_args()
 
 
@@ -69,7 +90,18 @@ def main() -> int:
 
         print(f"[RUN] run_index={run_index} output={output_path}", flush=True)
         try:
-            status = run_one(row, overwrite=False, dry_run=False)
+            atmosphere_source = args.atmosphere_source
+            if args.use_picaso_climate:
+                atmosphere_source = "picaso_climate"
+
+            status = run_one(
+                row,
+                overwrite=False,
+                dry_run=False,
+                run_exact_climate_qc=args.run_exact_climate_qc,
+                ck_root=args.picaso_ck_root,
+                atmosphere_source=atmosphere_source,
+            )
             final_path = Path(status.get("output_nc", output_path))
             if final_path.suffix != ".nc" or not final_path.exists():
                 raise RuntimeError(f"Expected .nc output was not created: {final_path}")

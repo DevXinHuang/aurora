@@ -1,5 +1,8 @@
-#!/bin/bash
-#SBATCH --job-name=aurora_weekend
+
+module load micromamba/2.0.2-2
+export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-${HOME}/.local/share/mamba}"
+eval "$(micromamba shell hook --shell bash)"
+micromamba activate picaso4x#SBATCH --job-name=aurora_weekend
 #SBATCH --account=tdrobin
 #SBATCH --partition=standard
 #SBATCH --array=0-999%500
