@@ -1,0 +1,50 @@
+1000.            Internal temperature (K)
+100            Surface gravity (m/s**2)
+60              Level of initial R-C boundary
+0.01            Surface albedo
+0.              Metallicity
+0               Lower boundary condition (0=diffuse : 1=solid)
+'sonora_2020_kcoeffs/sonora_2020_feh+000_co_100.data.196/full_abunds'
+'sonora_2020_kcoeffs/sonora_2020_feh+000_co_100.data.196/binary_data'
+T               Generate new pressure grid?
+1.e-4           Minimum new grid pressure (bar)
+300.            Maximum new grid pressure (bar)
+500.            New grid temperature (K)
+'tstart.dat'
+1               Adiabat option (1=saumon : 2=dry : 3=moist)
+F               Use MMW gradient in stability calculation?
+0.005           Convergence tolerance (fraction)
+2.0             CFL stability multiplier
+F               Adjust super-adiabatic gradients?
+1.1             Super-adiabatic adjustment threshold (>1)
+0               Convergence option (0=NR : 1=NR then TS : 2=TS : 3=NR then TS [fix conv])
+1000.           Initial timestep length (s)
+1               Number of timesteps
+1               Timestep interval between printing output
+F               Include solar fluxes?
+'input/stars/wmo_solar_spectrum.dat'
+1046            Lines in solar file
+0.0             Distance (au)
+F               Use a stellar blackbody?
+8000.           Stellar Teff (K)
+1.5             Stellar radius (Rsun)
+'SLGRID_T1000_g100_m+000_CO100_fsed3_frac50'
+T               Do clouds?
+T               Do holes?
+F               Do Saumon?
+F               Use DISORT?
+T               Generate SMART outputs?
+0.5             Hole fraction, fhole
+3               Sedimentation efficiency, fsed
+1.e4		Minimum eddy diffusivity (cm**2/s)
+6               Number of condensible species
+T               Do optics?
+F               Read Mie data?
+F               Read initial cloud profiles?
+'cldstart.dat'
+MgSiO3
+Mg2SiO4
+Na2S
+KCl
+MnS
+ZnS

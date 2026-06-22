@@ -1,0 +1,47 @@
+# Single sidequest case using the existing Aurora/Roadrunner PICASO pipeline.
+# Patchiness is represented as TWO real PICASO component runs:
+#   row 0: clear column, cloud_fraction=0.0, cloud_model=none
+#   row 1: cloudy column, cloud_fraction=1.0, cloud_model=virga, fsed=3
+# The combine script then writes one patchy NetCDF:
+#   patchy = fhole * clear + (1 - fhole) * cloudy
+
+model_name: patchy_picaso_sidequest_components
+output_root: roadrunner_egp/aurora_subneptune_grid/outputs/patchy_picaso_sidequest_components
+
+author: Daniel Huang
+contact: ""
+project: aurora_subneptune_grid
+notes: >-
+  Local PICASO/Roadrunner sidequest for mentor-inspired T1000_g100_solar_CO100_fsed3_frac50 case.
+  The original SLGRID deck has Tint=1000 K, gravity=100 m/s2, solar metallicity, C/O=1.0,
+  fsed=3, and hole fraction fhole=0.5. This Roadrunner implementation runs clear and fully
+  cloudy component columns and combines their spectra into a patchy-cloud product.
+code:
+  route: roadrunner_picaso_path_a
+  sidequest: patchy_cloud_frac50
+source_notebook_reference: roadrunner_egp/notebooks/path_a_full_picaso_first_order_simulation.ipynb
+
+# The mentor SLGRID deck does not define a planet radius or reflected-light orbit.
+# For the local Roadrunner reflected-light test, use a representative sub-Neptune radius
+# and a HZ-like insolation. Change these later if Zarah gives exact values.
+stars:
+  - teff_k: 8000
+    radius_rsun: 1.5
+
+planet_radius_rearth: [3.0]
+gravity_ms2: [100.0]
+metallicity_xsolar: [1.0]
+c_to_o_xsolar: [1.0]
+kzz_cm2_s: [1.0e4]
+cloud_fraction: [0.0, 1.0]
+fsed: [3.0]
+insolation_searth: [1.0]
+phase_deg: [60.0]
+
+picaso_tint_mode: fixed
+picaso_tint_fixed_k: 1000.0
+picaso_tint_floor_k: 100.0
+
+netcdf:
+  optional_variables: [all]
+  strict_optional: false

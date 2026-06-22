@@ -1,0 +1,35 @@
+model_name: patchy_picaso_climate_native
+output_root: roadrunner_egp/aurora_subneptune_grid/outputs/patchy_picaso_climate_native
+
+author: Daniel Huang
+contact: ""
+project: aurora_subneptune_grid
+notes: >-
+  Native PICASO climate patchy-cloud test for mentor-inspired T1000_g100_solar_CO100_fsed3_frac50.
+  This should use PICASO climate/RCE and native cloud coverage, not post-hoc linear combination.
+code:
+  route: roadrunner_picaso_climate
+  sidequest: native_patchy_cloud_frac50
+
+stars:
+  - teff_k: 8000
+    radius_rsun: 1.5
+planet_radius_rearth: [3.0]
+gravity_ms2: [100.0]
+metallicity_xsolar: [1.0]
+c_to_o_xsolar: [1.0]
+# Use a real sub-Neptune/giant-planet-like mixing value so Virga does not fail at 1e4.
+kzz_cm2_s: [1.0e9]
+# This is the desired cloudy-area fraction. Native patchy means 50% cloudy, 50% clear holes.
+cloud_fraction: [0.5]
+fsed: [3.0]
+insolation_searth: [1.0]
+phase_deg: [60.0]
+
+picaso_tint_mode: fixed
+picaso_tint_fixed_k: 1000.0
+picaso_tint_floor_k: 100.0
+
+netcdf:
+  optional_variables: [all]
+  strict_optional: false
