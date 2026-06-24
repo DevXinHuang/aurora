@@ -1,0 +1,44 @@
+model_name: aurora_cahoy_solar_smoke_v0
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Cahoy-Matched Solar Validation"
+notes: "Small first HPC smoke-test grid roughly matched to Cahoy et al. solar-analog reflected-light setup. Separations represented by solar-equivalent insolation: 0.8, 2, 5, and 10 AU."
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA if available"
+  grid_runner: "aurora_grid"
+
+picaso_tint_mode: "equilibrium_floor"
+picaso_tint_fixed_k: 1000.0
+picaso_tint_floor_k: 100.0
+
+netcdf:
+  optional_variables: []
+  strict_optional: false
+
+stars:
+  - teff_k: 5772
+    radius_rsun: 1.0
+
+planet_radius_rearth: [2.5]
+gravity_ms2: [10]
+metallicity_xsolar: [10, 100]
+c_to_o_xsolar: [1.0]
+kzz_cm2_s: [1.0e9]
+
+cloud_fraction: [0.0, 1.0]
+fsed: [6]
+
+# Solar-equivalent Cahoy separations:
+# 0.8 AU -> 1.5625 S_Earth
+# 2.0 AU -> 0.25 S_Earth
+# 5.0 AU -> 0.04 S_Earth
+# 10 AU  -> 0.01 S_Earth
+insolation_searth: [1.5625, 0.25, 0.04, 0.01]
+
+phase_deg: [0, 60, 90]
+
+output_root: "roadrunner_egp/aurora_subneptune_grid/outputs/aurora_cahoy_solar_smoke_v0"
