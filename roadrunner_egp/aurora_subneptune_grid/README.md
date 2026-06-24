@@ -35,11 +35,28 @@ The full Cartesian grid has 276,480 simulations.
 ## Local Smoke Tests
 
 ```bash
+# Activate PICASO 4 consistently (Mac .venv-picaso4 or HPC micromamba/conda picaso4)
+source env/activate_aurora_picaso4_job.sh
+
 # Dry-run smoke test on Mac
 python roadrunner_egp/aurora_subneptune_grid/scripts/smoke_test.py --dry-run
 
 # Real smoke test on Mac, if the PICASO environment works
 python roadrunner_egp/aurora_subneptune_grid/scripts/smoke_test.py --real
+```
+
+`activate_aurora_picaso4_job.sh` wraps the older split setup:
+
+| | Mac (local) | HPC (Slurm) |
+| --- | --- | --- |
+| Python env | `.venv-picaso4` via `activate_local_picaso4.sh` | `micromamba`/`conda` env `picaso4` |
+| Reference paths | `env/activate_roadrunner_picaso4.sh` | same |
+| Grid extras | `env/activate_aurora_grid_runtime.sh` (`PICASO_CK_ROOT`, Virga condensates, grid `PYTHONPATH`) | same |
+
+Cahoy-matched native climate test case:
+
+```bash
+bash roadrunner_egp/aurora_subneptune_grid/scripts/run_patchy_picaso_climate_native_local.sh
 ```
 
 The dry run writes toy spectra, but it uses the real manifest, naming, xarray,

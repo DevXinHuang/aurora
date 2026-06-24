@@ -12,15 +12,12 @@
 
 set -euo pipefail
 
-cd "$SLURM_SUBMIT_DIR"
+cd "${SLURM_SUBMIT_DIR}"
 
-source ~/.bashrc || true
-conda activate picaso4 || conda activate picaso-env || true
-
-export PYTHONPATH="$PWD/roadrunner_egp/aurora_subneptune_grid/src:$PWD/roadrunner_egp:${PYTHONPATH:-}"
-export ROADRUNNER_PICASO_VIRGA_CONDENSATES="MgSiO3,Mg2SiO4,Na2S,KCl,MnS,ZnS"
-export ROADRUNNER_REQUIRE_VIRGA=1
-export PICASO_CK_ROOT="$PWD/picaso4_reference/opacities"
+source ~/.bashrc 2>/dev/null || true
+export AURORA_FORCE_CONDA=1
+# shellcheck source=/dev/null
+source env/activate_aurora_picaso4_job.sh
 
 mkdir -p roadrunner_egp/aurora_subneptune_grid/logs
 
