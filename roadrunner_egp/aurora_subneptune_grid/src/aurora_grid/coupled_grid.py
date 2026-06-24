@@ -9,6 +9,7 @@ import numpy as np
 import yaml
 
 from .naming import cto_to_picaso_tag, make_output_path, make_run_id
+from .stellar_spectrum import stellar_spectrum_fields_from_config
 from .parameters import (
     MANIFEST_COLUMNS,
     ManifestTable,
@@ -177,6 +178,15 @@ def _cloud_model_for_separation(separation: dict[str, Any]) -> str:
     return "none"
 
 
+def _fsed_from_separation(separation: dict[str, Any]) -> float | None:
+    if "fsed" not in separation:
+        return None
+    value = separation.get("fsed")
+    if value is None:
+        return None
+    return float(value)
+
+
 def expand_coupled_climates(config: dict[str, Any]) -> list[dict[str, Any]]:
     """Expand coupled planet-class × separation combinations (no phase axis)."""
     validate_coupled_config(config)
@@ -185,6 +195,7 @@ def expand_coupled_climates(config: dict[str, Any]) -> list[dict[str, Any]]:
     star_radius_rsun = star["radius_rsun"]
     luminosity_lsun = stellar_luminosity_lsun(star_teff_k, star_radius_rsun)
     metadata = _metadata_columns(config)
+    stellar_fields = stellar_spectrum_fields_from_config(config)
     rows: list[dict[str, Any]] = []
 
     for planet_class in config["planet_classes"]:
@@ -209,7 +220,7 @@ def expand_coupled_climates(config: dict[str, Any]) -> list[dict[str, Any]]:
                 )
                 kzz_cm2_s = float(planet_class.get("kzz_cm2_s", config.get("kzz_cm2_s", 1.0e9)))
                 cloud_fraction = float(separation.get("cloud_fraction", 0.0))
-                fsed = float(separation.get("fsed", config.get("fsed", 3.0)))
+                fsed_value = _fsed_from_separation(separation)
                 cloud_model = _cloud_model_for_separation(separation)
                 tint_mode = str(
                     planet_class.get("picaso_tint_mode", config.get("picaso_tint_mode", "equilibrium"))
@@ -231,7 +242,8 @@ def expand_coupled_climates(config: dict[str, Any]) -> list[dict[str, Any]]:
                     "logkzz": float(np.log10(kzz_cm2_s)),
                     "cloud_fraction": cloud_fraction,
                     "cloud_model": cloud_model,
-                    "fsed": fsed,
+                    "fsed": fsed_value if fsed_value is not None else "",
+                    "separation_notes": str(separation.get("notes", "")),
                     "insolation_searth": insolation_searth,
                     "semi_major_au": semi_major_au,
                     "equilibrium_temperature_k": teq_k,
@@ -241,6 +253,7 @@ def expand_coupled_climates(config: dict[str, Any]) -> list[dict[str, Any]]:
                         planet_class.get("picaso_tint_fixed_k", planet_class.get("picaso_tint_k", config.get("picaso_tint_fixed_k", 1000.0)))
                     ),
                     "picaso_tint_floor_k": float(planet_class.get("picaso_tint_floor_k", config.get("picaso_tint_floor_k", 100.0))),
+                    **stellar_fields,
                     "status": "pending",
                 }
                 rows.append(row)

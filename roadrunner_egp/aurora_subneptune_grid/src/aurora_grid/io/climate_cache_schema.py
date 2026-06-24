@@ -14,6 +14,7 @@ import pandas as pd
 import xarray as xr
 
 from ..picaso_runner import _thermal_fpfs, wavelength_grid_um
+from ..stellar_spectrum import stellar_spectrum_attrs
 from .netcdf_schema import (
     _extract_cloud_profile,
     _extract_pt_profile,
@@ -71,6 +72,7 @@ def _param_dicts_from_row(row: dict[str, Any]) -> dict[str, dict[str, Any]]:
         "star_params": {
             "star_teff_k": float(row["star_teff_k"]),
             "star_radius_rsun": float(row["star_radius_rsun"]),
+            **stellar_spectrum_attrs(row),
         },
         "orbit_params": {
             "semi_major_au": float(row["semi_major_au"]),
@@ -85,7 +87,7 @@ def _param_dicts_from_row(row: dict[str, Any]) -> dict[str, dict[str, Any]]:
         "cloud_params": {
             "cloud_fraction": float(row["cloud_fraction"]),
             "cloud_model": str(row.get("cloud_model", "")),
-            "fsed": float(row["fsed"]),
+            "fsed": float(row["fsed"]) if row.get("fsed") not in (None, "") else None,
         },
     }
 
@@ -178,6 +180,7 @@ def build_climate_cache_dataset(
             "wavelength_max_um": float(np.nanmax(wavelength_um)),
             "source_climate_row": json.dumps(row, sort_keys=True, default=str),
             **{key: json.dumps(value, sort_keys=True) for key, value in param_dicts.items()},
+            **stellar_spectrum_attrs(row),
         }
     )
     return ds
@@ -339,6 +342,18 @@ def row_from_climate_cache(state: ClimateCacheState) -> dict[str, Any]:
         "separation_id": state.attrs.get("separation_id", ""),
         "star_teff_k": star.get("star_teff_k", np.nan),
         "star_radius_rsun": star.get("star_radius_rsun", np.nan),
+        "stellar_spectrum_filename": state.attrs.get(
+            "stellar_spectrum_filename",
+            star.get("stellar_spectrum_filename", ""),
+        ),
+        "stellar_spectrum_w_unit": state.attrs.get(
+            "stellar_spectrum_w_unit",
+            star.get("stellar_spectrum_w_unit", ""),
+        ),
+        "stellar_spectrum_f_unit": state.attrs.get(
+            "stellar_spectrum_f_unit",
+            star.get("stellar_spectrum_f_unit", ""),
+        ),
         "planet_radius_rearth": planet.get("planet_radius_rearth", np.nan),
         "gravity_ms2": planet.get("gravity_ms2", np.nan),
         "picaso_tint_k": planet.get("picaso_tint_k", np.nan),

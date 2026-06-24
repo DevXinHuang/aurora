@@ -16,6 +16,7 @@ from .picaso_runner import (
     _reflected_observables,
     wavelength_grid_um,
 )
+from .stellar_spectrum import configure_picaso_star, stellar_spectrum_attrs
 
 
 def _merge_row(spectrum_row: dict[str, Any], climate_row: dict[str, Any]) -> dict[str, Any]:
@@ -69,16 +70,7 @@ def _run_real_spectrum_from_cache(spectrum_row: dict[str, Any], climate_cache_pa
         radius=system.rj,
         radius_unit=u.R_jup,
     )
-    case.star(
-        opa,
-        temp=system.tstar_k,
-        metal=0,
-        logg=4.44,
-        radius=system.rstar_rsun,
-        radius_unit=u.R_sun,
-        semi_major=system.a_au,
-        semi_major_unit=u.AU,
-    )
+    configure_picaso_star(case, opa, merged, verbose=True)
     apply_climate_cache_to_case(case, state, verbose=True)
 
     case.phase_angle(
@@ -102,6 +94,7 @@ def _run_real_spectrum_from_cache(spectrum_row: dict[str, Any], climate_cache_pa
             "climate_key": str(spectrum_row.get("climate_key", state.attrs.get("climate_key", ""))),
             "atmosphere_source": "cached",
             "thermal_source": "cached",
+            **stellar_spectrum_attrs(merged),
         },
     }
     if state.thermal_planet_star_flux_ratio is not None:

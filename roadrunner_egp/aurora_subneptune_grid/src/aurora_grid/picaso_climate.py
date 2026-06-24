@@ -10,13 +10,18 @@ from .naming import picaso_tag_to_cto
 from .parameters import ROADRUNNER_ROOT
 from .picaso_runner import (
     R_EARTH_TO_R_JUP,
-    WAVELENGTH_MAX_UM,
-    WAVELENGTH_MIN_UM,
-    WAVELENGTH_POINTS,
     _dry_run_model,
     _thermal_fpfs,
     wavelength_grid_um,
 )
+from .stellar_spectrum import configure_picaso_star, resolve_stellar_spectrum_path, stellar_spectrum_attrs
+
+
+def _fsed_from_row(row: dict[str, Any]) -> float:
+    value = row.get("fsed")
+    if value in (None, ""):
+        return 1.0
+    return float(value)
 
 
 def _climate_row_to_system(row: dict[str, Any], phase_deg: float = 0.0) -> Any:
@@ -47,15 +52,26 @@ def _climate_row_to_system(row: dict[str, Any], phase_deg: float = 0.0) -> Any:
         chem_c_o=c_to_o,
         chem_log_mh=log_mh,
         kzz_cgs=float(row["kzz_cm2_s"]),
-        virga_fsed=float(row["fsed"]),
+        virga_fsed=_fsed_from_row(row),
     )
 
 
 def _dry_run_climate(row: dict[str, Any]) -> dict[str, Any]:
     climate_row = dict(row)
     climate_row["phase_deg"] = 0.0
+    spec = row.get("stellar_spectrum_filename")
+    if spec:
+        spectrum_path = resolve_stellar_spectrum_path(str(spec))
+        print(f"Using custom stellar spectrum: {spectrum_path}")
     model = _dry_run_model(climate_row)
     wavelength = np.asarray(model["wavelength_um"], dtype=float)
+    metadata = {
+        "dry_run": True,
+        "atmosphere_source": "picaso",
+        "thermal_source": "picaso",
+        "cloud_model": str(row.get("cloud_model", "none")),
+        **stellar_spectrum_attrs(row),
+    }
     return {
         "wavelength_um": wavelength,
         "fpfs_emission": model.get("fpfs_emission"),
@@ -65,12 +81,7 @@ def _dry_run_climate(row: dict[str, Any]) -> dict[str, Any]:
         "picaso_case": None,
         "picaso_opacity": None,
         "picaso_out_emission": None,
-        "picaso_metadata": {
-            "dry_run": True,
-            "atmosphere_source": "picaso",
-            "thermal_source": "picaso",
-            "cloud_model": str(row.get("cloud_model", "none")),
-        },
+        "picaso_metadata": metadata,
     }
 
 
@@ -78,33 +89,56 @@ def _run_real_picaso_climate(row: dict[str, Any]) -> dict[str, Any]:
     if str(ROADRUNNER_ROOT) not in sys.path:
         sys.path.insert(0, str(ROADRUNNER_ROOT))
 
-    from roadrunner.runner import extract_planet_fluxes, run_picaso_climate_once
+    from astropy import units as u
+
+    from roadrunner.config import HAVE_PICASO, THERMAL_NUM_GANGLE, THERMAL_NUM_TANGLE, jdi
+    from roadrunner.runner import configure_picaso_atmosphere, extract_planet_fluxes
+
+    assert HAVE_PICASO, "PICASO is required"
 
     output_grid = wavelength_grid_um()
     cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
     system = _climate_row_to_system(row, phase_deg=0.0)
+    wave_range = [float(np.nanmin(output_grid)), float(np.nanmax(output_grid))]
+    opa = jdi.opannection(wave_range=wave_range)
 
-    out_em, case, opacity = run_picaso_climate_once(
+    case = jdi.inputs()
+    g_cgs = 10 ** system.logg_cgs
+    case.gravity(
+        gravity=g_cgs,
+        gravity_unit=u.cm / u.s**2,
+        radius=system.rj,
+        radius_unit=u.R_jup,
+    )
+    configure_picaso_star(case, opa, row, verbose=True)
+
+    configure_picaso_atmosphere(
+        case,
         system,
-        output_grid,
         atmosphere_source="picaso",
         cloud_model=cloud_model,
         verbose=True,
-        return_case=True,
-        return_opacity=True,
     )
+
+    case.phase_angle(
+        0.0,
+        num_gangle=THERMAL_NUM_GANGLE,
+        num_tangle=THERMAL_NUM_TANGLE,
+    )
+    out_em = case.spectrum(opa, calculation="thermal", as_dict=True, full_output=True)
     fpfs_emission = _thermal_fpfs(out_em, output_grid)
     result: dict[str, Any] = {
         "wavelength_um": output_grid,
         "fpfs_emission": fpfs_emission,
         "picaso_out_emission": out_em,
         "picaso_case": case,
-        "picaso_opacity": opacity,
+        "picaso_opacity": opa,
         "picaso_metadata": {
             "dry_run": False,
             "atmosphere_source": "picaso",
             "thermal_source": "picaso",
             "cloud_model": cloud_model,
+            **stellar_spectrum_attrs(row),
         },
     }
     try:

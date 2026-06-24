@@ -22,7 +22,9 @@ DEFAULT_CLIMATE_AXES = (
     "separation_id",
     "star_teff_k",
     "star_radius_rsun",
-    "stellar_spectrum",
+    "stellar_spectrum_filename",
+    "stellar_spectrum_w_unit",
+    "stellar_spectrum_f_unit",
     "semi_major_au",
     "insolation_searth",
     "planet_radius_rearth",
@@ -59,6 +61,12 @@ FULL_FACTORIZED_COLUMNS = tuple(
         list(MANIFEST_COLUMNS)
         + list(COUPLED_EXTRA_COLUMNS)
         + list(FACTORIZATION_ANNOTATION_COLUMNS)
+        + [
+            "stellar_spectrum_filename",
+            "stellar_spectrum_w_unit",
+            "stellar_spectrum_f_unit",
+            "separation_notes",
+        ]
     )
 )
 
@@ -66,7 +74,16 @@ CLIMATE_MANIFEST_COLUMNS = tuple(
     dict.fromkeys(
         list(MANIFEST_COLUMNS)
         + list(COUPLED_EXTRA_COLUMNS)
-        + ["climate_key", "climate_index", "climate_cache_nc", "climate_run_id"]
+        + [
+            "climate_key",
+            "climate_index",
+            "climate_cache_nc",
+            "climate_run_id",
+            "stellar_spectrum_filename",
+            "stellar_spectrum_w_unit",
+            "stellar_spectrum_f_unit",
+            "separation_notes",
+        ]
     )
 )
 
@@ -84,6 +101,9 @@ SPECTRUM_MANIFEST_COLUMNS = (
     "separation_id",
     "star_teff_k",
     "star_radius_rsun",
+    "stellar_spectrum_filename",
+    "stellar_spectrum_w_unit",
+    "stellar_spectrum_f_unit",
     "planet_radius_rearth",
     "gravity_ms2",
     "metallicity_xsolar",
@@ -293,6 +313,9 @@ def create_factorized_manifests(config: dict[str, Any]) -> FactorizedManifests:
             "separation_id": row.get("separation_id", ""),
             "star_teff_k": row["star_teff_k"],
             "star_radius_rsun": row["star_radius_rsun"],
+            "stellar_spectrum_filename": row.get("stellar_spectrum_filename", ""),
+            "stellar_spectrum_w_unit": row.get("stellar_spectrum_w_unit", ""),
+            "stellar_spectrum_f_unit": row.get("stellar_spectrum_f_unit", ""),
             "planet_radius_rearth": row["planet_radius_rearth"],
             "gravity_ms2": row["gravity_ms2"],
             "metallicity_xsolar": row["metallicity_xsolar"],

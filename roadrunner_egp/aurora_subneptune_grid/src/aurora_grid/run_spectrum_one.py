@@ -40,6 +40,11 @@ def run_spectrum_one(row: dict[str, Any], overwrite: bool = False, dry_run: bool
     full_row["run_id"] = str(row.get("spectrum_run_id", row.get("run_id", "")))
     full_row["phase_deg"] = float(row["phase_deg"])
     full_row["output_nc"] = str(row["output_nc"])
+    for key in ("stellar_spectrum_filename", "stellar_spectrum_w_unit", "stellar_spectrum_f_unit"):
+        if climate_row.get(key) not in (None, ""):
+            full_row[key] = climate_row[key]
+        elif row.get(key) not in (None, ""):
+            full_row[key] = row[key]
 
     start = perf_counter()
     model_output = run_picaso_spectrum_from_cache(row, climate_cache_path, dry_run=dry_run)
