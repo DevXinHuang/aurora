@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run from the aurora repo root with your .venv-picaso4 active.
+# Run from the aurora repo root. Uses .venv-picaso4 on Mac or conda/micromamba on HPC.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+cd "${REPO_ROOT}"
+
+# shellcheck source=/dev/null
+source "${REPO_ROOT}/env/activate_aurora_picaso4_job.sh"
+
 BASE="roadrunner_egp/aurora_subneptune_grid"
 MODEL="patchy_picaso_sidequest_components"
 CONFIG="$BASE/params/patchy_picaso_sidequest.yaml"
 MANIFEST="$BASE/manifests/patchy_picaso_sidequest_manifest.csv"
 PATCHY_OUT="$BASE/outputs/patchy_cloud/PICASO_T1000_g100_m+000_CO100_fsed3_frac50.patchy_picaso.nc"
-
-export PYTHONPATH="$BASE/src:roadrunner_egp:${PYTHONPATH:-}"
 
 python "$BASE/scripts/make_manifest.py" \
   --config "$CONFIG" \
