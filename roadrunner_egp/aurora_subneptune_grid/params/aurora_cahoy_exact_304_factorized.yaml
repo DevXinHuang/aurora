@@ -1,0 +1,88 @@
+# Cahoy validation grid — 16 coupled climates × 19 phase angles = 304 spectra
+# Planet classes (Jupiter / Neptune analogs) carry their own Rp, g, Tint, and MH list.
+# Separations set orbit and cloud regime together.
+
+model_name: aurora_cahoy_exact_304
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Cahoy Validation"
+notes: >-
+  Factorized Cahoy validation case: 16 unique PICASO climates (8 per planet class)
+  with 19 reflected-light spectra per climate (phase 0-180 deg in 10-deg steps).
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA if available"
+  grid_runner: "aurora_grid_factorized"
+
+factorization:
+  enabled: true
+  grid_expansion: coupled_cases
+  expected_climates: 16
+  expected_spectra: 304
+  cache_root: roadrunner_egp/aurora_subneptune_grid/cache/climates/aurora_cahoy_exact_304
+  climate_axes:
+    - planet_class_id
+    - separation_id
+    - star_teff_k
+    - star_radius_rsun
+    - planet_radius_rearth
+    - gravity_ms2
+    - metallicity_xsolar
+    - picaso_tint_k
+    - picaso_tint_mode
+    - semi_major_au
+    - cloud_fraction
+    - cloud_model
+    - fsed
+    - kzz_cm2_s
+    - c_to_o_xsolar
+  observation_axes:
+    - phase_deg
+
+netcdf:
+  optional_variables: []
+  strict_optional: false
+
+star:
+  teff_k: 5772
+  radius_rsun: 1.0
+
+planet_classes:
+  - id: jupiter_analog
+    planet_radius_rearth: 10.97
+    gravity_ms2: 24.79
+    picaso_tint_mode: fixed
+    picaso_tint_k: 140.0
+    metallicity_xsolar: [1, 3, 10, 30]
+    c_to_o_xsolar: 1.0
+    kzz_cm2_s: 1.0e9
+
+  - id: neptune_analog
+    planet_radius_rearth: 3.86
+    gravity_ms2: 11.15
+    picaso_tint_mode: fixed
+    picaso_tint_k: 60.0
+    metallicity_xsolar: [1, 3, 10, 30]
+    c_to_o_xsolar: 1.0
+    kzz_cm2_s: 1.0e9
+
+separations:
+  - id: inner_cloudy
+    semi_major_au: 0.5
+    cloud_fraction: 1.0
+    cloud_model: virga
+    fsed: 3
+
+  - id: outer_clear
+    semi_major_au: 5.0
+    cloud_fraction: 0.0
+    cloud_model: none
+    fsed: 3
+
+phase_deg: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180]
+
+output_root: roadrunner_egp/aurora_subneptune_grid/outputs/aurora_cahoy_exact_304
+cache_root: roadrunner_egp/aurora_subneptune_grid/cache/climates/aurora_cahoy_exact_304

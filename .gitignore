@@ -45,6 +45,7 @@ roadrunner_egp/aurora_subneptune_grid/outputs/*
 roadrunner_egp/aurora_subneptune_grid/logs/*
 !roadrunner_egp/aurora_subneptune_grid/logs/.gitkeep
 roadrunner_egp/aurora_subneptune_grid/manifests/*.csv
+!roadrunner_egp/aurora_subneptune_grid/manifests/aurora_cahoy_exact_304_*.csv
 *.nc
 *.tmp.nc
 
