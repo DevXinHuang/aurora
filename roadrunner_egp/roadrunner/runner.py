@@ -35,6 +35,8 @@ PICASO4_CK_FEH_VALUES = np.array(
 )
 PICASO4_CK_CO_VALUES = np.array([0.14, 0.27, 0.46, 0.55, 0.82, 1.10], dtype=float)
 PICASO4_SOLAR_C_TO_O = 0.55
+PHASE_ANGLE_PI_EPS_RAD = 1.0e-6
+_VIRGA_SUBLAYER_PATCH_APPLIED = False
 
 
 def _nearest_available(value: float, available: np.ndarray) -> float:
@@ -139,6 +141,80 @@ def normalize_cloud_model(cloud_model: str | None) -> str:
     return aliases[cloud_model]
 
 
+def reflected_phase_angle_rad(phase_deg: float) -> float:
+    """Return a reflected-light-safe phase angle in radians.
+
+    PICASO's reflected phase geometry has a singularity at 180 degrees
+    (cos(phase)+1 == 0). Use a finite epsilon below pi because some downstream
+    code paths reduce precision and can still hit the singularity if we only
+    use ``np.nextafter``.
+    """
+    phase_rad = float(np.deg2rad(float(phase_deg)))
+    if phase_rad >= np.pi or np.isclose(phase_rad, np.pi, rtol=0.0, atol=1.0e-12):
+        return float(np.pi - PHASE_ANGLE_PI_EPS_RAD)
+    return phase_rad
+
+
+def _patch_virga_calc_optics_sublayer_guard(verbose: bool = False) -> bool:
+    """Patch VIRGA calc_optics bottom-layer guard in-process if needed.
+
+    VIRGA versions with guard ``ibot >= nz - 2`` can still write ``ibot+3``,
+    which overflows when cloud decks sit near the pressure-grid bottom
+    (e.g., ibot == nz-3). This patch rewrites that guard to ``ibot >= nz - 4``.
+    """
+    global _VIRGA_SUBLAYER_PATCH_APPLIED
+    if _VIRGA_SUBLAYER_PATCH_APPLIED:
+        return True
+
+    try:
+        import virga.justdoit as virga_jdi
+    except Exception:
+        return False
+
+    calc_optics = getattr(virga_jdi, "calc_optics", None)
+    if not callable(calc_optics):
+        return False
+    if getattr(calc_optics, "_aurora_sublayer_guard_patch", False):
+        _VIRGA_SUBLAYER_PATCH_APPLIED = True
+        return True
+
+    try:
+        source = inspect.getsource(calc_optics)
+    except (OSError, TypeError):
+        return False
+
+    patched_guard_pattern = r"^\s*if\s+ibot\s*>=\s*nz\s*-\s*4\s*:"
+    if re.search(patched_guard_pattern, source, flags=re.MULTILINE):
+        setattr(calc_optics, "_aurora_sublayer_guard_patch", True)
+        _VIRGA_SUBLAYER_PATCH_APPLIED = True
+        return True
+
+    old_guard_pattern = r"^(\s*)if\s+ibot\s*>=\s*nz\s*-\s*2\s*:"
+    if not re.search(old_guard_pattern, source, flags=re.MULTILINE):
+        return False
+
+    patched_source = re.sub(
+        old_guard_pattern,
+        r"\1if ibot >= nz - 4:",
+        source,
+        count=1,
+        flags=re.MULTILINE,
+    )
+    try:
+        exec(compile(patched_source, calc_optics.__code__.co_filename, "exec"), virga_jdi.__dict__)
+    except Exception:
+        return False
+
+    patched_calc_optics = getattr(virga_jdi, "calc_optics", None)
+    if not callable(patched_calc_optics):
+        return False
+    setattr(patched_calc_optics, "_aurora_sublayer_guard_patch", True)
+    _VIRGA_SUBLAYER_PATCH_APPLIED = True
+    if verbose:
+        print("✓ Applied runtime VIRGA calc_optics bottom-layer guard patch")
+    return True
+
+
 def _virga_condensates(value):
     """Normalize Virga condensates from string/list into a list PICASO accepts."""
     if value is None:
@@ -234,6 +310,7 @@ def _build_generated_picaso_atmosphere(
 
     if model == "virga":
         try:
+            _patch_virga_calc_optics_sublayer_guard(verbose=verbose)
             case.inputs["atmosphere"]["profile"]["kz"] = sys.kzz_cgs
             patchy_kwargs = _patchy_cloud_kwargs(sys)
             case.virga(
@@ -368,7 +445,7 @@ def run_picaso_once(
 
     # Reflected at requested phase  (full_output for diagnostics)
     case.phase_angle(
-        np.deg2rad(sys.phase_deg),
+        reflected_phase_angle_rad(sys.phase_deg),
         num_gangle=REFLECT_NUM_GANGLE,
         num_tangle=REFLECT_NUM_TANGLE,
     )
@@ -773,7 +850,7 @@ def run_picaso_reflected_spectrum_from_converged_case(
         semi_major_unit=u.AU,
     )
     cl_run.phase_angle(
-        np.deg2rad(system.phase_deg),
+        reflected_phase_angle_rad(system.phase_deg),
         num_gangle=REFLECT_NUM_GANGLE,
         num_tangle=REFLECT_NUM_TANGLE,
     )
@@ -810,7 +887,7 @@ def run_picaso_reflected_spectrum_from_climate_profile(
         },
     )
     cl_run.phase_angle(
-        np.deg2rad(system.phase_deg),
+        reflected_phase_angle_rad(system.phase_deg),
         num_gangle=REFLECT_NUM_GANGLE,
         num_tangle=REFLECT_NUM_TANGLE,
     )
@@ -841,7 +918,7 @@ def run_picaso_climate_model_once(
     _apply_climate_profile_to_case(cl_run, climate_out)
 
     cl_run.phase_angle(
-        np.deg2rad(system.phase_deg),
+        reflected_phase_angle_rad(system.phase_deg),
         num_gangle=REFLECT_NUM_GANGLE,
         num_tangle=REFLECT_NUM_TANGLE,
     )
