@@ -3,11 +3,11 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sub-Neptune Grid Structure &mdash; Aurora 0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
       <link rel="stylesheet" type="text/css" href="_static/custom.css?v=c2f3139d" />
@@ -17,10 +17,11 @@
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="_static/documentation_options.js?v=2709fde1"></script>
-      <script src="_static/doctools.js?v=fd6eb6e6"></script>
-      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/doctools.js?v=9a2dae69"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
       <script src="_static/copybutton.js?v=f281be69"></script>
+      <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -57,7 +58,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Sub-Neptune Grid Structure</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#two-stage-workflow">Two-Stage Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#parameter-axes-aurora-subneptune-v0">Parameter Axes (<code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-axes-aurora-subneptune-v1">Parameter Axes (<code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v1</span></code>)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cloud-parameters">Cloud Parameters</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#spectral-coverage">Spectral Coverage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#submitting-grids-on-hpc">Submitting Grids on HPC</a></li>
@@ -104,16 +105,17 @@ multi-dimensional parameter space spanning host star properties, planet
 physical parameters, cloud properties, and orbital geometry.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
-<p>The production grid <code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code> contains <strong>276,480 spectra</strong>
-grouped into <strong>46,080 climate groups</strong>.  Smaller grids are available for
-pipeline validation and HPC timing tests.</p>
+<p>The production grid <code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v1</span></code> contains <strong>1,080,000 spectra</strong>
+grouped into <strong>180,000 climate groups</strong>.  Smaller grids are available for
+pipeline validation and HPC timing tests.  The earlier <code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code>
+grid remains available as a legacy baseline.</p>
 <table class="docutils align-default" id="id1">
 <caption><span class="caption-text">Available Aurora grids</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
 <colgroup>
-<col style="width: 35.0%" />
-<col style="width: 15.0%" />
-<col style="width: 15.0%" />
-<col style="width: 35.0%" />
+<col style="width: 35%" />
+<col style="width: 15%" />
+<col style="width: 15%" />
+<col style="width: 35%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Grid name</p></th>
@@ -138,10 +140,15 @@ pipeline validation and HPC timing tests.</p>
 <td><p>16</p></td>
 <td><p>1-to-1 Cahoy et al. 2010 replication</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v1</span></code></p></td>
+<td><p>1,080,000</p></td>
+<td><p>180,000</p></td>
+<td><p>Full production science grid (current)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code></p></td>
 <td><p>276,480</p></td>
 <td><p>46,080</p></td>
-<td><p>Full production science grid</p></td>
+<td><p>Legacy full-grid baseline</p></td>
 </tr>
 </tbody>
 </table>
@@ -157,10 +164,10 @@ climate solution.</p>
 <table class="docutils align-default" id="id2">
 <caption><span class="caption-text">Two-stage compute stages</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
 <colgroup>
-<col style="width: 15.0%" />
-<col style="width: 30.0%" />
-<col style="width: 20.0%" />
-<col style="width: 35.0%" />
+<col style="width: 15%" />
+<col style="width: 30%" />
+<col style="width: 20%" />
+<col style="width: 35%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Stage</p></th>
@@ -189,13 +196,15 @@ climate solution.</p>
 </pre></div>
 </div>
 </section>
-<section id="parameter-axes-aurora-subneptune-v0">
-<h2>Parameter Axes (<code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code>)<a class="headerlink" href="#parameter-axes-aurora-subneptune-v0" title="Link to this heading"></a></h2>
-<p>The full production grid spans the following parameter axes:</p>
+<section id="parameter-axes-aurora-subneptune-v1">
+<h2>Parameter Axes (<code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v1</span></code>)<a class="headerlink" href="#parameter-axes-aurora-subneptune-v1" title="Link to this heading"></a></h2>
+<p>The full production grid spans the following parameter axes.  <strong>Planet mass and
+radius are the primary axes</strong> (for comparison to measured values).  Surface
+gravity is computed per row as <span class="math notranslate nohighlight">\(g = GM/R^2\)</span> and passed to PICASO.</p>
 <table class="docutils align-default">
 <colgroup>
-<col style="width: 40.0%" />
-<col style="width: 60.0%" />
+<col style="width: 40%" />
+<col style="width: 60%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head"><p>Parameter</p></th>
@@ -204,37 +213,42 @@ climate solution.</p>
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Host star T<sub>eff</sub> / R<sub>star</sub></p></td>
-<td><p>(3500 K, 0.45 R<sub>☉</sub>), (4000 K, 0.63 R<sub>☉</sub>), (5000 K, 0.80 R<sub>☉</sub>), (7000 K, 1.70 R<sub>☉</sub>)</p></td>
+<td><p>(3500 K, 0.45 R<sub>☉</sub>), (4000 K, 0.63 R<sub>☉</sub>), (5000 K, 0.80 R<sub>☉</sub>), (6000 K, 1.00 R<sub>☉</sub>), (7000 K, 1.70 R<sub>☉</sub>)</p></td>
 </tr>
 <tr class="row-odd"><td><p>Planet radius (R<sub>⊕</sub>)</p></td>
 <td><p>1.6, 2.0, 2.5, 3.0</p></td>
 </tr>
-<tr class="row-even"><td><p>Surface gravity (m s<sup>−2</sup>)</p></td>
-<td><p>5, 10, 15, 25</p></td>
+<tr class="row-even"><td><p>Planet mass (M<sub>⊕</sub>)</p></td>
+<td><p>2.037, 4.073, 6.110, 10.183, 12.220</p></td>
 </tr>
-<tr class="row-odd"><td><p>Metallicity (× solar)</p></td>
+<tr class="row-odd"><td><p>Surface gravity (m s<sup>−2</sup>)</p></td>
+<td><p>Derived per row from mass and radius (legacy <span class="math notranslate nohighlight">\(g = 5, 10, 15, 25, 30\)</span> m s<sup>−2</sup> at <span class="math notranslate nohighlight">\(R = 2\,R_\oplus\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p>Metallicity (× solar)</p></td>
 <td><p>1, 10, 100</p></td>
 </tr>
-<tr class="row-even"><td><p>C/O ratio (× solar)</p></td>
+<tr class="row-odd"><td><p>C/O ratio (× solar)</p></td>
 <td><p>0.5, 1.0, 2.0</p></td>
 </tr>
-<tr class="row-odd"><td><p>K<sub>zz</sub> (cm<sup>2</sup> s<sup>−1</sup>)</p></td>
+<tr class="row-even"><td><p>K<sub>zz</sub> (cm<sup>2</sup> s<sup>−1</sup>)</p></td>
 <td><p>10<sup>9</sup>, 10<sup>11</sup></p></td>
 </tr>
-<tr class="row-even"><td><p>Cloud fraction</p></td>
-<td><p>0 (cloud-free), 1 (fully cloudy)</p></td>
+<tr class="row-odd"><td><p>Cloud fraction</p></td>
+<td><p>0 (cloud-free), 0.5, 0.75, 0.9, 1 (fully cloudy)</p></td>
 </tr>
-<tr class="row-odd"><td><p>f<sub>sed</sub></p></td>
+<tr class="row-even"><td><p>f<sub>sed</sub></p></td>
 <td><p>0.3, 1, 3, 6, 8</p></td>
 </tr>
-<tr class="row-even"><td><p>Insolation (S<sub>⊕</sub>)</p></td>
+<tr class="row-odd"><td><p>Insolation (S<sub>⊕</sub>)</p></td>
 <td><p>0.35, 0.70, 1.00, 1.50</p></td>
 </tr>
-<tr class="row-odd"><td><p>Phase (deg)</p></td>
+<tr class="row-even"><td><p>Phase (deg)</p></td>
 <td><p>0, 30, 60, 90, 120, 150</p></td>
 </tr>
 </tbody>
 </table>
+<p>Full Cartesian product: <strong>1,080,000</strong> spectra = <strong>180,000</strong> climate groups × <strong>6</strong>
+phases.</p>
 </section>
 <section id="cloud-parameters">
 <h2>Cloud Parameters<a class="headerlink" href="#cloud-parameters" title="Link to this heading"></a></h2>
@@ -251,6 +265,8 @@ See Mukherjee et al. (2022) for discussion of K<sub>zz</sub> parameterisation.</
 </dl>
 <p>The two values K<sub>zz</sub> = 10<sup>9</sup> and 10<sup>11</sup> cm<sup>2</sup> s<sup>−1</sup>
 bracket a wide range of mixing regimes in sub-Neptune atmospheres.</p>
+<p>Fractional cloud fractions (0.5, 0.75, 0.9) use PICASO’s native patchy-cloud
+API (clear holes with <code class="docutils literal notranslate"><span class="pre">fhole</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">-</span> <span class="pre">cloud_fraction</span></code>).</p>
 </section>
 <section id="spectral-coverage">
 <h2>Spectral Coverage<a class="headerlink" href="#spectral-coverage" title="Link to this heading"></a></h2>
@@ -281,7 +297,7 @@ bash<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/submit
 
 <span class="c1"># Full production grid</span>
 bash<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>aurora_subneptune_v0
+<span class="w">  </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>aurora_subneptune_v1
 </pre></div>
 </div>
 <p>Stage 2 waits on stage 1 via <code class="docutils literal notranslate"><span class="pre">--dependency=afterok</span></code>.  Large grids (&gt; 1,000

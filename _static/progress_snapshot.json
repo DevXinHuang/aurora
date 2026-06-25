@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-06-25T19:22:00+00:00",
+  "generated_at_utc": "2026-06-25T19:13:21+00:00",
   "grids": [
     {
       "completed": {
@@ -131,7 +131,7 @@
       "completed": {
         "qc_rows": 0,
         "stage1_climate_groups": 0,
-        "stage2_rows": 0
+        "stage2_rows": 6
       },
       "config_name": "smoke_test.yaml",
       "expected": {
@@ -144,7 +144,7 @@
       "percent": {
         "qc_rows": 0.0,
         "stage1_climate_groups": 0.0,
-        "stage2_rows": 0.0
+        "stage2_rows": 100.0
       },
       "qc_status_counts": {}
     }
@@ -156,7 +156,7 @@
   "summary": {
     "completed_qc_rows": 0,
     "completed_stage1_climate_groups": 0,
-    "completed_stage2_rows": 0,
+    "completed_stage2_rows": 6,
     "expected_stage1_climate_groups": 46834,
     "expected_stage2_rows": 279638,
     "grid_count": 7
