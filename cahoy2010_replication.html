@@ -1,0 +1,327 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cahoy et al. 2010 Replication &mdash; Aurora 0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=c2f3139d" />
+
+  
+    <link rel="canonical" href="https://devxinhuang.github.io/aurora/cahoy2010_replication.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=2709fde1"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Modeling Sub-Neptunes Near the Radius Valley" href="subneptune_models.html" />
+    <link rel="prev" title="Source Routes" href="source_routes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Aurora
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="science.html">Science Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">The Sub-Neptune Grid</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="grid_structure.html">Sub-Neptune Grid Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="progress_graph.html">Aurora Progress Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source_routes.html">Source Routes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Model Case Studies</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Cahoy et al. 2010 Replication</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#lambertian-contrast-reference">Lambertian Contrast Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grid-parameters">Grid Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-the-replication">Running the Replication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#atmosphere-and-cloud-models">Atmosphere and Cloud Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-geometric-albedo-spectrum">Example: Geometric Albedo Spectrum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#phase-curves">Phase Curves</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#comparison-with-cahoy-et-al-results">Comparison with Cahoy et al. Results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="subneptune_models.html">Modeling Sub-Neptunes Near the Radius Valley</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Aurora</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Cahoy et al. 2010 Replication</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cahoy2010_replication.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cahoy-et-al-2010-replication">
+<h1>Cahoy et al. 2010 Replication<a class="headerlink" href="#cahoy-et-al-2010-replication" title="Link to this heading"></a></h1>
+<p>Can Aurora reproduce the benchmark gas-giant reflected-light spectra from
+Cahoy, Marley &amp; Fortney (2010)?</p>
+<p>Cahoy et al. (2010) computed a grid of gas-giant reflected-light spectra for
+planets with Jovian-like bulk composition across a range of separations,
+metallicities, and phase angles using a then-standard correlated-<em>k</em> radiative
+transfer model coupled with Mie-scattering cloud prescriptions.
+Their results have been widely used as a benchmark reference for reflected-light
+modelling of directly-imaged giant planets.</p>
+<p>This page documents Aurora’s 1-to-1 replication grid
+(<code class="docutils literal notranslate"><span class="pre">aurora_cahoy2010_replication_v0</span></code>), which serves as the primary validation
+baseline confirming that the PICASO 4 / Virga pipeline reproduces the earlier
+Cahoy et al. results before Aurora moves into the sub-Neptune parameter space.</p>
+<section id="lambertian-contrast-reference">
+<h2>Lambertian Contrast Reference<a class="headerlink" href="#lambertian-contrast-reference" title="Link to this heading"></a></h2>
+<p>The planet–star contrast for a Lambertian sphere (uniform albedo spatially and
+spectrally) is given by Eqn 1 in Cahoy et al. (2010):</p>
+<div class="math notranslate nohighlight">
+\[C = A_{g} \left(\frac{R_{p}}{r}\right)^{2}
+    \frac{\sin\alpha + (\pi - \alpha)\cos\alpha}{\pi}\]</div>
+<p>where <span class="math notranslate nohighlight">\(A_{g}\)</span> is the geometric albedo, <span class="math notranslate nohighlight">\(R_{p}\)</span> is the planet
+radius, <span class="math notranslate nohighlight">\(r\)</span> is the planet–star separation in the orbital plane, and
+<span class="math notranslate nohighlight">\(\alpha\)</span> is the phase angle.  The phase factor is of order
+<span class="math notranslate nohighlight">\(10^{0}\)</span> while <span class="math notranslate nohighlight">\((R_{p}/r)^{2}\)</span> is of order <span class="math notranslate nohighlight">\(10^{-6}\)</span>, so
+the phase term dominates the observed contrast in the ranges of interest.</p>
+</section>
+<section id="grid-parameters">
+<h2>Grid Parameters<a class="headerlink" href="#grid-parameters" title="Link to this heading"></a></h2>
+<p>The replication grid spans the parameter choices made by Cahoy et al. (2010)
+for their gas-giant models:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Values</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Host star</p></td>
+<td><p>Solar-type (T<sub>eff</sub> = 5778 K, R<sub>★</sub> = 1 R<sub>☉</sub>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Planet mass</p></td>
+<td><p>1 M<sub>Jup</sub></p></td>
+</tr>
+<tr class="row-even"><td><p>Separation (AU)</p></td>
+<td><p>0.8, 1.0, 2.0, 5.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>Metallicity (× solar)</p></td>
+<td><p>1, 3, 10, 30</p></td>
+</tr>
+<tr class="row-even"><td><p>Phase (deg)</p></td>
+<td><p>0, 30, 60, 90, 120, 150, 180 (every 30°)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Cloud treatment</p></td>
+<td><p>Virga with f<sub>sed</sub> matched to Cahoy condensation levels</p></td>
+</tr>
+</tbody>
+</table>
+<p>Grid size: <strong>304 spectra</strong> across <strong>16 climate groups</strong>.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Aurora Cahoy replication grid summary</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 15.0%" />
+<col style="width: 15.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Grid name</p></th>
+<th class="head"><p>Spectra</p></th>
+<th class="head"><p>Climate groups</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aurora_cahoy2010_replication_v0</span></code></p></td>
+<td><p>304</p></td>
+<td><p>16</p></td>
+<td><p>1-to-1 Cahoy et al. 2010 replication</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="running-the-replication">
+<h2>Running the Replication<a class="headerlink" href="#running-the-replication" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Submit the two-stage replication grid</span>
+bash<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
+
+<span class="c1"># Or manually:</span>
+<span class="nb">source</span><span class="w"> </span>env/activate_aurora_picaso4_job.sh
+
+python<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/make_cahoy2010_manifest.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--out<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/manifests/cahoy2010_manifest.csv
+
+python<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/run_climate_cache_chunk.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--manifest<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/manifests/cahoy2010_manifest.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--climate-group-index<span class="w"> </span><span class="m">0</span>
+</pre></div>
+</div>
+</section>
+<section id="atmosphere-and-cloud-models">
+<h2>Atmosphere and Cloud Models<a class="headerlink" href="#atmosphere-and-cloud-models" title="Link to this heading"></a></h2>
+<p><strong>Pressure–temperature profile</strong></p>
+<p>PICASO’s built-in climate solver (<code class="docutils literal notranslate"><span class="pre">picaso_climate</span></code>) is used to converge a
+self-consistent P–T profile for each unique planet / star / orbit combination.
+Because phase is a viewing-geometry parameter, all phase angles share a single
+cached climate solution per (planet, orbit) pair.</p>
+<p><strong>Clouds with Virga</strong></p>
+<p>Virga is used to compute the cloud particle size distribution and optical
+properties.  The sedimentation efficiency f<sub>sed</sub> is set to reproduce
+the cloud-top pressures reported by Cahoy et al. (2010) for water ice,
+ammonia ice, and ammonium hydrosulfide (NH<sub>4</sub>SH) clouds at the
+separations of interest.</p>
+<p><strong>Molecular opacities</strong></p>
+<p>The atmosphere is dominated by H<sub>2</sub> and He, with the following
+molecules contributing significant opacity at the wavelengths of interest:</p>
+<ul class="simple">
+<li><p>H<sub>2</sub>O (water vapour)</p></li>
+<li><p>CH<sub>4</sub> (methane) — dominant at &gt; 1 μm for cold models</p></li>
+<li><p>NH<sub>3</sub> (ammonia) — relevant at 1.0, 1.5, and 2.0 μm</p></li>
+<li><p>H<sub>2</sub>–H<sub>2</sub> and H<sub>2</sub>–He CIA continuum</p></li>
+</ul>
+</section>
+<section id="example-geometric-albedo-spectrum">
+<h2>Example: Geometric Albedo Spectrum<a class="headerlink" href="#example-geometric-albedo-spectrum" title="Link to this heading"></a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Figures will be added once the full replication grid has been computed on HPC.
+Placeholder description below illustrates the expected output.</p>
+</div>
+<figure class="align-center" id="id2" style="width: 90%">
+<img alt="Geometric albedo spectrum for Cahoy gas-giant models" src="_images/placeholder_cahoy_spectrum.png" />
+<figcaption>
+<p><span class="caption-text"><em>Expected output: Geometric albedo as a function of wavelength for Cahoy-like
+gas-giant models at 1 AU around a solar-type star, for metallicities 1×, 3×,
+10×, and 30× solar.  Strong molecular absorption bands (H</em><sub>2</sub><em>O,
+CH</em><sub>4</sub><em>, NH</em><sub>3</sub><em>) become more prominent at higher
+metallicities.  Cloud-free cases show a steeper Rayleigh slope blueward of
+0.5 μm.</em></span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="phase-curves">
+<h2>Phase Curves<a class="headerlink" href="#phase-curves" title="Link to this heading"></a></h2>
+<p>Phase curves show how the planet–star contrast varies as the planet moves
+along its orbit.  For circular orbits around solar-type hosts, Cahoy et al.
+(2010) find that:</p>
+<ul class="simple">
+<li><p>At small phase angles (near superior conjunction) the illuminated hemisphere
+faces the observer — flux is maximum.</p></li>
+<li><p>At large phase angles (crescent phase) the illuminated sliver decreases —
+flux falls steeply.</p></li>
+<li><p>Cloud-free models decline faster with phase than cloudy models because clouds
+isotropically scatter light, reducing forward-scattering enhancement.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Phase curve plots will be populated once the replication grid run completes.</p>
+</div>
+</section>
+<section id="comparison-with-cahoy-et-al-results">
+<h2>Comparison with Cahoy et al. Results<a class="headerlink" href="#comparison-with-cahoy-et-al-results" title="Link to this heading"></a></h2>
+<p>Aurora’s validation strategy compares:</p>
+<ol class="arabic simple">
+<li><p><strong>Geometric albedo spectra</strong> at each separation and metallicity against
+Fig. 2–5 of Cahoy et al. (2010).</p></li>
+<li><p><strong>Broadband filter photometry</strong> in the optical and near-IR against their
+filter-averaged albedo tables.</p></li>
+<li><p><strong>Cloud-top pressure</strong> from the Virga output against the condensation curves
+tabulated in Cahoy et al. (2010) Appendix A.</p></li>
+</ol>
+<p>Quantitative agreement within ~5% in broadband albedo across all separations
+and metallicities is the acceptance criterion before Aurora proceeds to the
+sub-Neptune science grid.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Cahoy, K.L., Marley, M.S. &amp; Fortney, J.J. 2010, <em>ApJ</em>, 724, 189.
+<a class="reference external" href="https://doi.org/10.1088/0004-637X/724/1/189">doi:10.1088/0004-637X/724/1/189</a></p></li>
+<li><p>Batalha, N.E. et al. 2019, <em>ApJ</em>, 878, 70.
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/ab1b51">doi:10.3847/1538-4357/ab1b51</a></p></li>
+<li><p>Gao, P. et al. 2018, <em>ApJ</em>, 867, 1.
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/aad1f9">doi:10.3847/1538-4357/aad1f9</a></p></li>
+<li><p>Mukherjee, S. et al. 2022, <em>ApJ</em>, 938, 107.
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/ac8f41">doi:10.3847/1538-4357/ac8f41</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="source_routes.html" class="btn btn-neutral float-left" title="Source Routes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="subneptune_models.html" class="btn btn-neutral float-right" title="Modeling Sub-Neptunes Near the Radius Valley" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Daniel Huang. Mentor: Zarah Brown..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

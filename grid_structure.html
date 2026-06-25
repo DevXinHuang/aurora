@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sub-Neptune Grid Structure &mdash; Aurora 0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=c2f3139d" />
+
+  
+    <link rel="canonical" href="https://devxinhuang.github.io/aurora/grid_structure.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=2709fde1"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Aurora Progress Graph" href="progress_graph.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Aurora
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="science.html">Science Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">The Sub-Neptune Grid</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Sub-Neptune Grid Structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#two-stage-workflow">Two-Stage Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-axes-aurora-subneptune-v0">Parameter Axes (<code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cloud-parameters">Cloud Parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spectral-coverage">Spectral Coverage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#submitting-grids-on-hpc">Submitting Grids on HPC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#manual-stage-commands">Manual Stage Commands</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="progress_graph.html">Aurora Progress Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source_routes.html">Source Routes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Model Case Studies</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cahoy2010_replication.html">Cahoy et al. 2010 Replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="subneptune_models.html">Modeling Sub-Neptunes Near the Radius Valley</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Aurora</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Sub-Neptune Grid Structure</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/grid_structure.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sub-neptune-grid-structure">
+<h1>Sub-Neptune Grid Structure<a class="headerlink" href="#sub-neptune-grid-structure" title="Link to this heading"></a></h1>
+<p>Aurora computes reflected-light spectra for sub-Neptune planets across a
+multi-dimensional parameter space spanning host star properties, planet
+physical parameters, cloud properties, and orbital geometry.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>The production grid <code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code> contains <strong>276,480 spectra</strong>
+grouped into <strong>46,080 climate groups</strong>.  Smaller grids are available for
+pipeline validation and HPC timing tests.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Available Aurora grids</span><a class="headerlink" href="#id1" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 15.0%" />
+<col style="width: 15.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Grid name</p></th>
+<th class="head"><p>Spectra</p></th>
+<th class="head"><p>Climate groups</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">smoke_test_aurora_subneptune</span></code></p></td>
+<td><p>6</p></td>
+<td><p>2</p></td>
+<td><p>Minimal plumbing check</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hpc_validation_aurora_subneptune</span></code></p></td>
+<td><p>1,728</p></td>
+<td><p>576</p></td>
+<td><p>HPC timing, stability, and QC</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aurora_cahoy2010_replication_v0</span></code></p></td>
+<td><p>304</p></td>
+<td><p>16</p></td>
+<td><p>1-to-1 Cahoy et al. 2010 replication</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code></p></td>
+<td><p>276,480</p></td>
+<td><p>46,080</p></td>
+<td><p>Full production science grid</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="two-stage-workflow">
+<h2>Two-Stage Workflow<a class="headerlink" href="#two-stage-workflow" title="Link to this heading"></a></h2>
+<p>Each spectrum is computed in two stages to avoid redundant climate calculations.
+Phase angle is a viewing-geometry parameter only — the pressure–temperature
+profile does not change with phase.  All manifest rows that share the same
+planet, star, cloud, chemistry, and orbit parameters (but differ only in
+<code class="docutils literal notranslate"><span class="pre">phase_deg</span></code>) belong to the same <em>climate group</em> and share a single cached
+climate solution.</p>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Two-stage compute stages</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 30.0%" />
+<col style="width: 20.0%" />
+<col style="width: 35.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Stage</p></th>
+<th class="head"><p>What runs</p></th>
+<th class="head"><p>Array size</p></th>
+<th class="head"><p>Typical cost</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>1 — Climate</strong></p></td>
+<td><p>Converge PICASO climate once per <code class="docutils literal notranslate"><span class="pre">climate_group_index</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">N_climate</span></code></p></td>
+<td><p>Heavy (~15–45 min / group)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>2 — Spectrum</strong></p></td>
+<td><p>Load cached PT, compute reflected spectrum per manifest row</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">N_rows</span></code></p></td>
+<td><p>Light (~2–10 min / row)</p></td>
+</tr>
+</tbody>
+</table>
+<p>Output file layout:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>outputs/&lt;model_name&gt;/
+  climate_cache/climate_00.npz … climate_NN.npz   ← stage 1
+  nc/run_000000.nc …                              ← stage 2
+</pre></div>
+</div>
+</section>
+<section id="parameter-axes-aurora-subneptune-v0">
+<h2>Parameter Axes (<code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v0</span></code>)<a class="headerlink" href="#parameter-axes-aurora-subneptune-v0" title="Link to this heading"></a></h2>
+<p>The full production grid spans the following parameter axes:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Values</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Host star T<sub>eff</sub> / R<sub>star</sub></p></td>
+<td><p>(3500 K, 0.45 R<sub>☉</sub>), (4000 K, 0.63 R<sub>☉</sub>), (5000 K, 0.80 R<sub>☉</sub>), (7000 K, 1.70 R<sub>☉</sub>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Planet radius (R<sub>⊕</sub>)</p></td>
+<td><p>1.6, 2.0, 2.5, 3.0</p></td>
+</tr>
+<tr class="row-even"><td><p>Surface gravity (m s<sup>−2</sup>)</p></td>
+<td><p>5, 10, 15, 25</p></td>
+</tr>
+<tr class="row-odd"><td><p>Metallicity (× solar)</p></td>
+<td><p>1, 10, 100</p></td>
+</tr>
+<tr class="row-even"><td><p>C/O ratio (× solar)</p></td>
+<td><p>0.5, 1.0, 2.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>K<sub>zz</sub> (cm<sup>2</sup> s<sup>−1</sup>)</p></td>
+<td><p>10<sup>9</sup>, 10<sup>11</sup></p></td>
+</tr>
+<tr class="row-even"><td><p>Cloud fraction</p></td>
+<td><p>0 (cloud-free), 1 (fully cloudy)</p></td>
+</tr>
+<tr class="row-odd"><td><p>f<sub>sed</sub></p></td>
+<td><p>0.3, 1, 3, 6, 8</p></td>
+</tr>
+<tr class="row-even"><td><p>Insolation (S<sub>⊕</sub>)</p></td>
+<td><p>0.35, 0.70, 1.00, 1.50</p></td>
+</tr>
+<tr class="row-odd"><td><p>Phase (deg)</p></td>
+<td><p>0, 30, 60, 90, 120, 150</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="cloud-parameters">
+<h2>Cloud Parameters<a class="headerlink" href="#cloud-parameters" title="Link to this heading"></a></h2>
+<p>Cloud properties are parameterized using Virga (Batalha &amp; Rooney 2022):</p>
+<dl class="simple">
+<dt><strong>f</strong><sub>sed</sub> — <em>sedimentation efficiency</em></dt><dd><p>Controls how quickly cloud particles fall out.  A small f<sub>sed</sub>
+produces thick, vertically extended clouds with small particles; a large
+value produces thin clouds with large particles.</p>
+</dd>
+<dt><strong>K</strong><sub>zz</sub> — <em>eddy diffusion coefficient</em></dt><dd><p>Describes the strength of vertical mixing.  Larger values produce more
+vigorous mixing and sustain smaller particles at higher altitudes.
+See Mukherjee et al. (2022) for discussion of K<sub>zz</sub> parameterisation.</p>
+</dd>
+</dl>
+<p>The two values K<sub>zz</sub> = 10<sup>9</sup> and 10<sup>11</sup> cm<sup>2</sup> s<sup>−1</sup>
+bracket a wide range of mixing regimes in sub-Neptune atmospheres.</p>
+</section>
+<section id="spectral-coverage">
+<h2>Spectral Coverage<a class="headerlink" href="#spectral-coverage" title="Link to this heading"></a></h2>
+<p>Spectra are computed over the full PICASO reflected-light range (~0.3–2.5 μm),
+capturing:</p>
+<ul class="simple">
+<li><p><strong>Rayleigh scattering slope</strong> (&lt; 0.5 μm)</p></li>
+<li><p><strong>Water vapour bands</strong> (0.72, 0.82, 0.94, 1.14, 1.38, 1.87 μm)</p></li>
+<li><p><strong>Methane bands</strong> (0.89, 1.0, 1.38, 1.67, 2.30 μm)</p></li>
+<li><p><strong>Ammonia features</strong> (1.0, 1.5, 2.0 μm)</p></li>
+<li><p><strong>H</strong><sub>2</sub><strong>/He CIA continuum</strong></p></li>
+</ul>
+<p>Diagnostics are further evaluated on HWO-relevant sub-ranges to assess
+wavelength-coverage requirements for planet typing.</p>
+</section>
+<section id="submitting-grids-on-hpc">
+<h2>Submitting Grids on HPC<a class="headerlink" href="#submitting-grids-on-hpc" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Smoke test</span>
+bash<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>smoke_test_aurora_subneptune
+
+<span class="c1"># HPC validation</span>
+bash<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>hpc_validation_aurora_subneptune
+
+<span class="c1"># Cahoy 2010 replication</span>
+bash<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
+
+<span class="c1"># Full production grid</span>
+bash<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>aurora_subneptune_v0
+</pre></div>
+</div>
+<p>Stage 2 waits on stage 1 via <code class="docutils literal notranslate"><span class="pre">--dependency=afterok</span></code>.  Large grids (&gt; 1,000
+tasks) are automatically submitted in batches.</p>
+</section>
+<section id="manual-stage-commands">
+<h2>Manual Stage Commands<a class="headerlink" href="#manual-stage-commands" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>env/activate_aurora_picaso4_job.sh
+
+<span class="c1"># Generate manifest with climate_group_index</span>
+python<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/params/hpc_validation.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--out<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv
+
+<span class="c1"># Stage 1 — converge one climate group</span>
+python<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/run_climate_cache_chunk.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--manifest<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--climate-group-index<span class="w"> </span><span class="m">0</span>
+
+<span class="c1"># Stage 2 — compute one spectrum from cached climate</span>
+python<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/scripts/run_spectrum_from_cache_chunk.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--manifest<span class="w"> </span>roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--array-index<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model-name<span class="w"> </span>hpc_validation_aurora_subneptune
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="progress_graph.html" class="btn btn-neutral float-right" title="Aurora Progress Graph" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Daniel Huang. Mentor: Zarah Brown..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
