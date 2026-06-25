@@ -15,16 +15,18 @@ from .naming import cto_to_picaso_tag, make_output_path, make_run_id
 
 T_SUN_K = 5772.0
 R_SUN_AU = 0.004650467260962157
+G_SI = 6.67430e-11
+M_EARTH_KG = 5.9722e24
+R_EARTH_M = 6.371e6
 NOTEBOOK_REFERENCE = "roadrunner_egp/notebooks/path_a_full_picaso_first_order_simulation.ipynb"
 
 GRID_ROOT = Path(__file__).resolve().parents[2]
 ROADRUNNER_ROOT = GRID_ROOT.parent
 REPO_ROOT = ROADRUNNER_ROOT.parent
 
-PARAMETER_KEYS = [
+BASE_PARAMETER_KEYS = [
     "stars",
     "planet_radius_rearth",
-    "gravity_ms2",
     "metallicity_xsolar",
     "c_to_o_xsolar",
     "kzz_cm2_s",
@@ -33,6 +35,8 @@ PARAMETER_KEYS = [
     "insolation_searth",
     "phase_deg",
 ]
+GRAVITY_AXIS_KEY = "gravity_ms2"
+MASS_AXIS_KEY = "planet_mass_mearth"
 
 MANIFEST_COLUMNS = [
     "run_index",
@@ -43,6 +47,7 @@ MANIFEST_COLUMNS = [
     "star_radius_rsun",
     "stellar_luminosity_lsun",
     "planet_radius_rearth",
+    "planet_mass_mearth",
     "gravity_ms2",
     "metallicity_xsolar",
     "c_to_o_xsolar",
@@ -79,6 +84,7 @@ FLOAT_COLUMNS = {
     "star_radius_rsun",
     "stellar_luminosity_lsun",
     "planet_radius_rearth",
+    "planet_mass_mearth",
     "gravity_ms2",
     "metallicity_xsolar",
     "c_to_o_xsolar",
@@ -176,9 +182,20 @@ def load_config(path: str | Path) -> dict[str, Any]:
         config = yaml.safe_load(handle)
     if not isinstance(config, dict):
         raise ValueError(f"Config {path} did not parse to a mapping.")
-    missing = [key for key in PARAMETER_KEYS + ["model_name", "output_root"] if key not in config]
+    missing = [key for key in BASE_PARAMETER_KEYS + ["model_name", "output_root"] if key not in config]
     if missing:
         raise ValueError(f"Config {path} is missing required keys: {missing}")
+    has_gravity_axis = GRAVITY_AXIS_KEY in config
+    has_mass_axis = MASS_AXIS_KEY in config
+    if has_gravity_axis and has_mass_axis:
+        raise ValueError(
+            f"Config {path} provides both {GRAVITY_AXIS_KEY!r} and {MASS_AXIS_KEY!r}; "
+            "choose exactly one primary planet axis."
+        )
+    if not has_gravity_axis and not has_mass_axis:
+        raise ValueError(
+            f"Config {path} must provide one of {GRAVITY_AXIS_KEY!r} or {MASS_AXIS_KEY!r}."
+        )
     return config
 
 
@@ -236,12 +253,34 @@ def cloud_model_for_fraction(cloud_fraction: float) -> str:
     return "virga"
 
 
+def _planet_axis_key(config: dict[str, Any]) -> str:
+    return MASS_AXIS_KEY if MASS_AXIS_KEY in config else GRAVITY_AXIS_KEY
+
+
+def gravity_from_mass_radius_ms2(planet_mass_mearth: float, planet_radius_rearth: float) -> float:
+    mass_kg = float(planet_mass_mearth) * M_EARTH_KG
+    radius_m = float(planet_radius_rearth) * R_EARTH_M
+    if radius_m <= 0.0:
+        raise ValueError("Planet radius must be positive.")
+    return (G_SI * mass_kg) / (radius_m**2)
+
+
+def mass_from_gravity_radius_mearth(gravity_ms2: float, planet_radius_rearth: float) -> float:
+    gravity_si = float(gravity_ms2)
+    radius_m = float(planet_radius_rearth) * R_EARTH_M
+    if gravity_si <= 0.0:
+        raise ValueError("Gravity must be positive.")
+    if radius_m <= 0.0:
+        raise ValueError("Planet radius must be positive.")
+    mass_kg = gravity_si * (radius_m**2) / G_SI
+    return mass_kg / M_EARTH_KG
+
+
 def expected_grid_size(config: dict[str, Any]) -> int:
-    total = len(config["stars"])
-    for key in PARAMETER_KEYS:
-        if key == "stars":
-            continue
+    total = 1
+    for key in BASE_PARAMETER_KEYS:
         total *= len(config[key])
+    total *= len(config[_planet_axis_key(config)])
     return int(total)
 
 
@@ -272,10 +311,11 @@ def create_manifest_dataframe(config: dict[str, Any]) -> ManifestTable:
     output_root = config["output_root"]
     run_index = 0
 
+    axis_key = _planet_axis_key(config)
     products = itertools.product(
         config["stars"],
         config["planet_radius_rearth"],
-        config["gravity_ms2"],
+        config[axis_key],
         config["metallicity_xsolar"],
         config["c_to_o_xsolar"],
         config["kzz_cm2_s"],
@@ -287,7 +327,7 @@ def create_manifest_dataframe(config: dict[str, Any]) -> ManifestTable:
     for (
         star,
         planet_radius_rearth,
-        gravity_ms2,
+        primary_planet_axis_value,
         metallicity_xsolar,
         c_to_o_xsolar,
         kzz_cm2_s,
@@ -298,6 +338,14 @@ def create_manifest_dataframe(config: dict[str, Any]) -> ManifestTable:
     ) in products:
         star_teff_k = float(star["teff_k"])
         star_radius_rsun = float(star["radius_rsun"])
+        planet_radius_rearth_value = float(planet_radius_rearth)
+        axis_value = float(primary_planet_axis_value)
+        if axis_key == MASS_AXIS_KEY:
+            planet_mass_mearth = axis_value
+            gravity_ms2 = gravity_from_mass_radius_ms2(planet_mass_mearth, planet_radius_rearth_value)
+        else:
+            gravity_ms2 = axis_value
+            planet_mass_mearth = mass_from_gravity_radius_mearth(gravity_ms2, planet_radius_rearth_value)
         luminosity_lsun = stellar_luminosity_lsun(star_teff_k, star_radius_rsun)
         semi_major_au = insolation_to_semi_major_au(luminosity_lsun, insolation_searth)
         teq_k = equilibrium_temperature_k(star_teff_k, star_radius_rsun, semi_major_au)
@@ -307,7 +355,8 @@ def create_manifest_dataframe(config: dict[str, Any]) -> ManifestTable:
             "star_teff_k": star_teff_k,
             "star_radius_rsun": star_radius_rsun,
             "stellar_luminosity_lsun": luminosity_lsun,
-            "planet_radius_rearth": float(planet_radius_rearth),
+            "planet_radius_rearth": planet_radius_rearth_value,
+            "planet_mass_mearth": float(planet_mass_mearth),
             "gravity_ms2": float(gravity_ms2),
             "metallicity_xsolar": float(metallicity_xsolar),
             "c_to_o_xsolar": float(c_to_o_xsolar),

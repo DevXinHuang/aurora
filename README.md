@@ -74,9 +74,9 @@ unique atmosphere/orbit (`climate_group_index`), then compute spectra for every 
 # Example: Cahoy 2010 replication (304 spectra, 16 climates)
 bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
 
-# Example: full sub-Neptune grid (276,480 spectra, 46,080 climates)
+# Example: full sub-Neptune grid (1,080,000 spectra, 180,000 climates)
 bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
-  "$(pwd)" aurora_subneptune_v0
+  "$(pwd)" aurora_subneptune_v1
 ```
 
 ### Sub-Neptune grids (non-Cahoy)
@@ -85,18 +85,22 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 | --- | ---: | ---: | --- |
 | `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
-| `aurora_subneptune_v0` | 276,480 | 46,080 | Planned full production science grid |
+| `aurora_subneptune_v1` | 1,080,000 | 180,000 | Planned full production science grid (Zarah updates) |
+| `aurora_subneptune_v0` | 276,480 | 46,080 | Legacy full-grid baseline |
 
-Planned full `aurora_subneptune_v0` parameter axes:
+Planned full `aurora_subneptune_v1` parameter axes:
 
-- Stars (`teff_k`, `radius_rsun`): `(3500,0.45)`, `(4000,0.63)`, `(5000,0.80)`, `(7000,1.70)`
+- Stars (`teff_k`, `radius_rsun`): `(3500,0.45)`, `(4000,0.63)`, `(5000,0.80)`, `(6000,1.00)`, `(7000,1.70)`
 - `planet_radius_rearth`: `1.6, 2.0, 2.5, 3.0`
-- `gravity_ms2`: `5, 10, 15, 25`
+- `planet_mass_mearth`: `2.037, 4.073, 6.110, 10.183, 12.220` (legacy
+  `g = 5, 10, 15, 25, 30 m/s²` at `R = 2 R⊕`)
 - `metallicity_xsolar`: `1, 10, 100`
 - `c_to_o_xsolar`: `0.5, 1.0, 2.0`
 - `kzz_cm2_s`: `1e9, 1e11`
-- `cloud_fraction`: `0, 1`; `fsed`: `0.3, 1, 3, 6, 8`
+- `cloud_fraction`: `0, 0.5, 0.75, 0.9, 1`; `fsed`: `0.3, 1, 3, 6, 8`
 - `insolation_searth`: `0.35, 0.7, 1.0, 1.5`; `phase_deg`: `0, 30, 60, 90, 120, 150`
+- Gravity note: `gravity_ms2` is computed per row from mass and radius
+  (`g = GM/R²`) for PICASO; at `R = 2 R⊕` this recovers the legacy g grid.
 
 See [roadrunner_egp/aurora_subneptune_grid/README.md](roadrunner_egp/aurora_subneptune_grid/README.md)
 and [HPC_INSTALL.md](HPC_INSTALL.md) for details.

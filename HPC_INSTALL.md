@@ -345,11 +345,11 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
   ~/Documents/aurora hpc_validation_aurora_subneptune
 ```
 
-### Full science grid (276,480 spectra)
+### Full science grid (1,080,000 spectra)
 
 ```bash
 bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
-  ~/Documents/aurora aurora_subneptune_v0
+  ~/Documents/aurora aurora_subneptune_v1
 ```
 
 The submit script regenerates the manifest if missing, prints `climate_groups`,
