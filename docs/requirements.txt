@@ -1,0 +1,6 @@
+sphinx>=7.0
+sphinx-rtd-theme>=2.0
+sphinx-copybutton>=0.5
+sphinxcontrib-mermaid>=1.0
+matplotlib>=3.8
+PyYAML>=6.0

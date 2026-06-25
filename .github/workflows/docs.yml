@@ -1,0 +1,44 @@
+name: Build and deploy docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - ".readthedocs.yaml"
+      - ".github/workflows/docs.yml"
+      - "roadrunner_egp/aurora_subneptune_grid/scripts/build_progress_snapshot.py"
+      - "roadrunner_egp/aurora_subneptune_grid/params/**"
+      - "roadrunner_egp/aurora_subneptune_grid/data/qc/reports/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r docs/requirements.txt
+
+      - name: Build Aurora progress snapshot
+        run: python roadrunner_egp/aurora_subneptune_grid/scripts/build_progress_snapshot.py
+
+      - name: Build Sphinx docs
+        run: sphinx-build -b html docs docs/_build/html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html
+          force_orphan: true
