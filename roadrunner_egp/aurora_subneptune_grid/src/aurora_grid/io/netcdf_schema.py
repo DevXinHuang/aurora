@@ -261,7 +261,7 @@ def _planet_params(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def _stellar_params(row: dict[str, Any]) -> dict[str, Any]:
-    return {
+    params = {
         "steff": {"value": _float_row_value(row, "star_teff_k"), "unit": "K"},
         "rs": {"value": _float_row_value(row, "star_radius_rsun"), "unit": "R_sun"},
         "mass": {"value": _float_row_value(row, "star_mass_msun"), "unit": "M_sun"},
@@ -269,6 +269,10 @@ def _stellar_params(row: dict[str, Any]) -> dict[str, Any]:
         "feh": {"value": _float_row_value(row, "star_metallicity_feh"), "unit": "dex"},
         "luminosity": {"value": _float_row_value(row, "stellar_luminosity_lsun"), "unit": "L_sun"},
     }
+    for key in ("stellar_spectrum_filename", "stellar_spectrum_w_unit", "stellar_spectrum_f_unit"):
+        if row.get(key) not in (None, ""):
+            params[key] = {"value": str(row[key]), "unit": "label"}
+    return params
 
 
 def _orbit_params(row: dict[str, Any]) -> dict[str, Any]:
