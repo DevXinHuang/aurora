@@ -1,0 +1,117 @@
+# Cahoy validation grid — 16 coupled climates × 19 phase angles = 304 spectra
+#
+# Climate count: 2 planet classes × 2 metallicities per class × 4 separations = 16
+# Spectrum count: 16 climates × 19 phases = 304
+#
+# Planet-class bulk/atmosphere parameters are coupled (not independent Cartesian axes).
+# Separations set orbit and cloud regime together.
+
+model_name: aurora_cahoy_exact_304
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Cahoy Validation"
+notes: >-
+  Cahoy exact validation case with Jupiter and Neptune analog planet classes,
+  four separations with separation-dependent cloud mapping, custom solar spectrum,
+  and 19 reflected-light phases per unique climate.
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA if available"
+  grid_runner: "aurora_grid_factorized"
+
+factorization:
+  enabled: true
+  grid_expansion: coupled_cases
+  expected_climates: 16
+  expected_spectra: 304
+  cache_root: roadrunner_egp/aurora_subneptune_grid/cache/climates/aurora_cahoy_exact_304
+  climate_axes:
+    - planet_class_id
+    - separation_id
+    - star_teff_k
+    - star_radius_rsun
+    - stellar_spectrum_filename
+    - stellar_spectrum_w_unit
+    - stellar_spectrum_f_unit
+    - planet_radius_rearth
+    - gravity_ms2
+    - metallicity_xsolar
+    - picaso_tint_k
+    - picaso_tint_mode
+    - semi_major_au
+    - cloud_fraction
+    - cloud_model
+    - fsed
+    - kzz_cm2_s
+    - c_to_o_xsolar
+  observation_axes:
+    - phase_deg
+
+netcdf:
+  optional_variables: []
+  strict_optional: false
+
+star:
+  teff_k: 5772
+  radius_rsun: 1.0
+
+stellar_spectrum:
+  filename: roadrunner_egp/aurora_subneptune_grid/data/stellar_spectra/SOLARSPECTRUM.DAT
+  w_unit: AA
+  f_unit: erg/(s cm2 AA)
+
+planet_classes:
+  - id: jupiter_analog
+    planet_radius_rearth: 11.209
+    gravity_ms2: 25.0
+    picaso_tint_mode: fixed
+    picaso_tint_k: 100.0
+    metallicity_xsolar: [1.0, 3.16]
+    c_to_o_xsolar: 1.0
+    kzz_cm2_s: 1.0e9
+
+  - id: neptune_analog
+    planet_radius_rearth: 3.883
+    gravity_ms2: 10.0
+    picaso_tint_mode: fixed
+    picaso_tint_k: 50.0
+    metallicity_xsolar: [10.0, 31.6]
+    c_to_o_xsolar: 1.0
+    kzz_cm2_s: 1.0e9
+
+separations:
+  - id: a08_au
+    semi_major_au: 0.8
+    cloud_model: none
+    cloud_fraction: 0.0
+    fsed: null
+    notes: clear atmosphere
+
+  - id: a20_au
+    semi_major_au: 2.0
+    cloud_model: virga
+    cloud_fraction: 1.0
+    fsed: 6
+    notes: H2O-like cloud
+
+  - id: a50_au
+    semi_major_au: 5.0
+    cloud_model: virga
+    cloud_fraction: 1.0
+    fsed: 10
+    notes: H2O + NH3-like cloud
+
+  - id: a100_au
+    semi_major_au: 10.0
+    cloud_model: virga
+    cloud_fraction: 1.0
+    fsed: 10
+    notes: H2O + NH3-like cloud
+
+phase_deg: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180]
+
+output_root: roadrunner_egp/aurora_subneptune_grid/outputs/aurora_cahoy_exact_304
+cache_root: roadrunner_egp/aurora_subneptune_grid/cache/climates/aurora_cahoy_exact_304

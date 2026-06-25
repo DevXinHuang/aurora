@@ -276,6 +276,68 @@ def run_picaso_once(
     return out_ref, out_em
 
 
+def run_picaso_climate_once(
+    sys: SystemParams,
+    lam_grid_um: np.ndarray,
+    wave_range=None,
+    atmosphere_source: str | None = None,
+    cloud_model: str | None = None,
+    verbose: bool = True,
+    return_case: bool = False,
+    return_opacity: bool = False,
+):
+    """
+    Build PICASO atmosphere and run thermal spectrum at phase 0 only.
+
+    Used by the factorized climate cache stage; reflected spectra are run later.
+    """
+    assert HAVE_PICASO, "PICASO is required"
+
+    if wave_range is None:
+        lam_grid_um = np.asarray(lam_grid_um, dtype=float)
+        wave_range = [
+            float(np.nanmin(lam_grid_um)),
+            float(np.nanmax(lam_grid_um)),
+        ]
+
+    opa = jdi.opannection(wave_range=wave_range)
+
+    case = jdi.inputs()
+    g_cgs = 10 ** sys.logg_cgs
+    case.gravity(
+        gravity=g_cgs, gravity_unit=u.cm / u.s**2,
+        radius=sys.rj, radius_unit=u.R_jup,
+    )
+    case.star(
+        opa, temp=sys.tstar_k, metal=0, logg=4.44,
+        radius=sys.rstar_rsun, radius_unit=u.R_sun,
+        semi_major=sys.a_au, semi_major_unit=u.AU,
+    )
+
+    configure_picaso_atmosphere(
+        case,
+        sys,
+        atmosphere_source=atmosphere_source,
+        cloud_model=cloud_model,
+        verbose=verbose,
+    )
+
+    case.phase_angle(
+        0.0,
+        num_gangle=THERMAL_NUM_GANGLE,
+        num_tangle=THERMAL_NUM_TANGLE,
+    )
+    out_em = case.spectrum(opa, calculation="thermal", as_dict=True, full_output=True)
+
+    if return_case and return_opacity:
+        return out_em, case, opa
+    if return_case:
+        return out_em, case
+    if return_opacity:
+        return out_em, opa
+    return out_em
+
+
 # ---------------------------------------------------------------------------
 # Extract absolute fluxes
 # ---------------------------------------------------------------------------
