@@ -2,7 +2,7 @@ import os
 import sys
 
 project = "Aurora"
-copyright = "2026, Daniel Huang — Ty Robinson's HabLab, University of Arizona"
+copyright = "2026, Daniel Huang. All rights reserved."
 author = "Daniel Huang"
 release = "0.1"
 
