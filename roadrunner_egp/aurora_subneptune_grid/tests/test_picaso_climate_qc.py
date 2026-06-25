@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import sys
+import types
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +17,13 @@ for path in (GRID_ROOT / "src", ROADRUNNER_ROOT):
 
 from aurora_grid import picaso_runner  # noqa: E402
 from aurora_grid.io.netcdf_schema import build_aurora_run_dataset  # noqa: E402
-from roadrunner.runner import configure_climate_inputs, select_picaso4_preweighted_ck_file  # noqa: E402
+from roadrunner import runner as runner_module  # noqa: E402
+from roadrunner.runner import (  # noqa: E402
+    _patch_virga_calc_optics_sublayer_guard,
+    configure_climate_inputs,
+    reflected_phase_angle_rad,
+    select_picaso4_preweighted_ck_file,
+)
 from roadrunner.system import SystemParams  # noqa: E402
 
 
@@ -118,6 +125,60 @@ def test_configure_climate_inputs_sets_teff_and_initial_guess():
     assert cl_run.climate_kwargs["rfacv"] == 0.5
     assert cl_run.climate_kwargs["rfaci"] == 1.0
     assert cl_run.climate_kwargs["moistgrad"] is False
+
+
+def test_reflected_phase_angle_rad_clamps_exact_180():
+    clamped = reflected_phase_angle_rad(180.0)
+    assert clamped < np.pi
+    assert np.isclose(clamped, np.nextafter(np.pi, 0.0))
+    assert np.isclose(reflected_phase_angle_rad(179.0), np.deg2rad(179.0))
+    assert np.isclose(reflected_phase_angle_rad(0.0), 0.0)
+
+
+def test_patch_virga_calc_optics_sublayer_guard(monkeypatch):
+    fake_virga_pkg = types.ModuleType("virga")
+    fake_justdoit = types.ModuleType("virga.justdoit")
+    fake_justdoit.np = np
+
+    # Intentionally mirrors the buggy guard string from Virga.
+    source = """
+def calc_optics(nwave, qc, qt, rg, reff, ndz, radius, dr, qext, qscat, cos_qscat, sig, rmin, rmax, verbose=False):
+    nz = qc.shape[0]
+    ngas = qc.shape[1]
+    opd_layer = np.zeros((nz, ngas))
+    for igas in range(ngas):
+        ibot = nz - 3
+        if ibot >= nz -2:
+            pass
+        else:
+            opd_layer[ibot+3,igas] = opd_layer[ibot,igas] * 0.01
+    return opd_layer, None, None, None
+"""
+    exec(source, fake_justdoit.__dict__)
+
+    fake_virga_pkg.justdoit = fake_justdoit
+    monkeypatch.setitem(sys.modules, "virga", fake_virga_pkg)
+    monkeypatch.setitem(sys.modules, "virga.justdoit", fake_justdoit)
+    monkeypatch.setattr(runner_module.inspect, "getsource", lambda fn: source)
+    monkeypatch.setattr(runner_module, "_VIRGA_SUBLAYER_PATCH_APPLIED", False)
+
+    assert _patch_virga_calc_optics_sublayer_guard(verbose=False) is True
+
+    qc = np.zeros((60, 1), dtype=float)
+    qt = np.zeros_like(qc)
+    rg = np.zeros_like(qc)
+    reff = np.zeros_like(qc)
+    ndz = np.zeros_like(qc)
+    radius = np.array([1.0], dtype=float)
+    dr = np.array([1.0], dtype=float)
+    qext = np.zeros((1, 1, 1), dtype=float)
+    qscat = np.zeros_like(qext)
+    cos_qscat = np.zeros_like(qext)
+
+    opd_layer, _w0, _g0, _opd_gas = fake_justdoit.calc_optics(
+        1, qc, qt, rg, reff, ndz, radius, dr, qext, qscat, cos_qscat, 2.0, 1.0e-8, 1.0
+    )
+    assert opd_layer.shape == (60, 1)
 
 
 def _real_row() -> dict[str, object]:
