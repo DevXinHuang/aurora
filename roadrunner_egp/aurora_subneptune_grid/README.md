@@ -126,7 +126,7 @@ script above.
 ## Science goal
 
 Whether sub-Neptunes near the Fulton radius valley can masquerade as terrestrial
-worlds in reflected-light spectra (Roman CGI).
+worlds in reflected-light spectra (HWO).
 
 ## Parameter space (full grid)
 
