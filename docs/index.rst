@@ -31,6 +31,7 @@ Contents
    :caption: The Sub-Neptune Grid
 
    grid_structure
+   progress_graph
    source_routes
 
 .. toctree::
