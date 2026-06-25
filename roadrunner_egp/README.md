@@ -95,3 +95,9 @@ df = evaluate_hybrid_case(
     atmosphere_source="picaso",
 )
 ```
+
+## PICASO climate grids
+
+For large parameter sweeps on HPC, use the two-stage grid runner under
+`aurora_subneptune_grid/` (climate convergence, then cached spectra). See
+[aurora_subneptune_grid/README.md](aurora_subneptune_grid/README.md).

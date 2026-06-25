@@ -1,0 +1,31 @@
+model_name: aurora_cahoy2010_replication_v0
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Cahoy 2010 Replication"
+notes: >-
+  Cahoy et al. 2010 (ApJ 724, 189) replication: 4 planet types x 4 separations
+  x 19 phases = 304 spectra. Two-stage workflow: 16 climate convergences (one per
+  planet+separation), then 304 fast spectrum jobs reusing cached PT profiles.
+  Submit with scripts/submit_cahoy2010_two_stage.sh.
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA"
+  grid_runner: "aurora_grid"
+  atmosphere_source: "picaso_climate"
+  reference: "Cahoy et al. 2010"
+
+picaso_tint_mode: "fixed"
+picaso_tint_fixed_k: 100.0
+picaso_tint_floor_k: 50.0
+
+netcdf:
+  optional_variables: []
+  strict_optional: false
+
+# Planet radii: Jupiter analog ~1 R_Jup (11.21 R_earth), Neptune analog ~3.865 R_earth
+# (Cahoy Table 1 gas/ice giants; see make_cahoy2010_manifest.py for per-row Tint/g/met).
+
+output_root: "roadrunner_egp/aurora_subneptune_grid/outputs/aurora_cahoy2010_replication_v0"

@@ -309,6 +309,10 @@ def _run_real_picaso_model(
     source = normalize_atmosphere_source(atmosphere_source)
     cloud_fraction = float(row.get("cloud_fraction", 1.0))
     cloud_hole_fraction = float(row.get("cloud_hole_fraction", 1.0 - cloud_fraction))
+    virga_condensates = str(row.get("virga_condensates") or "").strip()
+    if not virga_condensates:
+        from roadrunner.config import PICASO_VIRGA_CONDENSATES
+        virga_condensates = PICASO_VIRGA_CONDENSATES
     system = SystemParams(
         teff_k=float(row["picaso_tint_k"]),
         logg_cgs=math.log10(float(row["gravity_ms2"]) * 100.0),
@@ -326,6 +330,7 @@ def _run_real_picaso_model(
         chem_log_mh=log_mh,
         kzz_cgs=float(row["kzz_cm2_s"]),
         virga_fsed=float(row["fsed"]),
+        virga_condensates=virga_condensates,
     )
 
     if source == "picaso_climate":
@@ -404,6 +409,107 @@ def _run_real_picaso_model(
             result["qc_diagnostics"] = {"schema_warnings": [f"exact climate QC failed: {exc}"]}
             result["picaso_metadata"]["exact_climate_qc_error"] = str(exc)
 
+    return result
+
+
+def _system_from_row(row: dict[str, Any], *, atmosphere_source: str = "picaso_climate") -> Any:
+    from roadrunner.runner import normalize_atmosphere_source
+    from roadrunner.system import SystemParams
+
+    cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
+    c_to_o = picaso_tag_to_cto(str(row["c_to_o_picaso_tag"]))
+    metallicity_xsolar = float(row["metallicity_xsolar"])
+    log_mh = math.log10(metallicity_xsolar)
+    cloud_fraction = float(row.get("cloud_fraction", 1.0))
+    cloud_hole_fraction = float(row.get("cloud_hole_fraction", 1.0 - cloud_fraction))
+    virga_condensates = str(row.get("virga_condensates") or "").strip()
+    if not virga_condensates:
+        from roadrunner.config import PICASO_VIRGA_CONDENSATES
+
+        virga_condensates = PICASO_VIRGA_CONDENSATES
+    source = normalize_atmosphere_source(atmosphere_source)
+    return SystemParams(
+        teff_k=float(row["picaso_tint_k"]),
+        logg_cgs=math.log10(float(row["gravity_ms2"]) * 100.0),
+        rj=float(row["planet_radius_rearth"]) * R_EARTH_TO_R_JUP,
+        a_au=float(row["semi_major_au"]),
+        phase_deg=float(row["phase_deg"]),
+        tstar_k=float(row["star_teff_k"]),
+        rstar_rsun=float(row["star_radius_rsun"]),
+        atmosphere_source=source,
+        cloud_model=cloud_model,
+        cloud_fraction=cloud_fraction,
+        cloud_hole_fraction=cloud_hole_fraction,
+        bond_albedo=0.0,
+        chem_c_o=c_to_o,
+        chem_log_mh=log_mh,
+        kzz_cgs=float(row["kzz_cm2_s"]),
+        virga_fsed=float(row["fsed"]),
+        virga_condensates=virga_condensates,
+    )
+
+
+def run_picaso_model_from_climate_cache(
+    row: dict[str, Any],
+    climate_cache: dict[str, Any],
+    *,
+    ck_root: str | Path | None = None,
+) -> dict[str, Any]:
+    """Spectrum-only PICASO run using a pre-converged climate PT profile."""
+    if str(ROADRUNNER_ROOT) not in sys.path:
+        sys.path.insert(0, str(ROADRUNNER_ROOT))
+
+    from roadrunner.runner import extract_planet_fluxes, run_picaso_reflected_spectrum_from_climate_profile
+
+    output_grid = wavelength_grid_um()
+    system = _system_from_row(row)
+    cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
+    cache_meta = climate_cache.get("metadata", {})
+    diagnostics = cache_meta.get("diagnostics", {})
+
+    out_ref = run_picaso_reflected_spectrum_from_climate_profile(
+        system,
+        output_grid,
+        climate_cache["pressure"],
+        climate_cache["temperature"],
+        ck_root=ck_root,
+        selected_ck_file=climate_cache["selected_ck_file"],
+        cloud_model=cloud_model,
+        verbose=False,
+    )
+    albedo, fpfs_reflection = _reflected_observables(out_ref, system, output_grid)
+    pressure = np.asarray(climate_cache["pressure"], dtype=float)
+    temperature = np.asarray(climate_cache["temperature"], dtype=float)
+
+    result: dict[str, Any] = {
+        "wavelength_um": output_grid,
+        "fpfs_reflection": fpfs_reflection,
+        "albedo": albedo,
+        "pt_profile": {
+            "pressure": pressure,
+            "temperature": temperature,
+        },
+        "picaso_out_reflected": out_ref,
+        "picaso_metadata": {
+            "dry_run": False,
+            "atmosphere_source": "picaso_climate_cached",
+            "thermal_source": "skipped_spectrum_stage",
+            "cloud_model": cloud_model,
+            "climate_group_index": int(row.get("climate_group_index", -1)),
+            "climate_cache_stage": True,
+            "climate_converged": _as_bool_scalar(diagnostics.get("climate_converged", False)),
+            "selected_ck_file": str(climate_cache["selected_ck_file"]),
+            "cahoy_reference_name": row.get("cahoy_reference_name", ""),
+        },
+        "qc_diagnostics": diagnostics,
+    }
+    try:
+        _, fp_reflected_abs, fp_thermal_abs = extract_planet_fluxes(out_ref, {}, output_grid, system)
+        result["picaso_metadata"]["has_absolute_flux_diagnostics"] = True
+        result["absolute_flux_reflected"] = fp_reflected_abs
+        result["absolute_flux_thermal"] = fp_thermal_abs
+    except Exception as exc:
+        result["picaso_metadata"]["absolute_flux_diagnostics_error"] = str(exc)
     return result
 
 

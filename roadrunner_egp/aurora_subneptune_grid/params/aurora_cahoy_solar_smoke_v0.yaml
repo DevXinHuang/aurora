@@ -3,7 +3,10 @@ model_name: aurora_cahoy_solar_smoke_v0
 author: "Daniel Huang"
 contact: "Daniel Huang"
 project: "Aurora Cahoy-Matched Solar Validation"
-notes: "Small first HPC smoke-test grid roughly matched to Cahoy et al. solar-analog reflected-light setup. Separations represented by solar-equivalent insolation: 0.8, 2, 5, and 10 AU."
+notes: >-
+  Fast Guillot PT smoke test (48 cases, ~1 min/task) — not full PICASO climate.
+  For Cahoy science spectra use aurora_cahoy2010_replication_v0 and
+  submit_cahoy2010_two_stage.sh instead.
 
 code:
   spectrum: "PICASO"

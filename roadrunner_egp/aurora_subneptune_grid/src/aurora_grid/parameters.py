@@ -38,6 +38,7 @@ MANIFEST_COLUMNS = [
     "run_index",
     "model_name",
     "run_id",
+    "climate_group_index",
     "star_teff_k",
     "star_radius_rsun",
     "stellar_luminosity_lsun",
@@ -57,6 +58,8 @@ MANIFEST_COLUMNS = [
     "equilibrium_temperature_k",
     "picaso_tint_k",
     "output_nc",
+    "cahoy_reference_name",
+    "virga_condensates",
     "status",
     "author",
     "contact",
@@ -92,7 +95,7 @@ FLOAT_COLUMNS = {
     "picaso_tint_floor_k",
 }
 
-INT_COLUMNS = {"run_index"}
+INT_COLUMNS = {"run_index", "climate_group_index"}
 BOOL_COLUMNS = {"netcdf_strict_optional"}
 
 

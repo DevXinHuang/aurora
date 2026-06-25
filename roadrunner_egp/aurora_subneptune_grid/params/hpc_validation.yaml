@@ -1,9 +1,13 @@
 # ============================================================================
-# HPC Validation Grid — 1,728 rows
+# HPC Validation Grid — 1,728 spectra / 576 climate groups
 # ============================================================================
-# A representative subset of the full 276,480-row grid for validating that
-# real PICASO runs complete successfully on the cluster before committing
-# to the full Cartesian product.
+# Representative subset of the full 276,480-row grid. Submit with:
+#
+#   bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
+#     "$(pwd)" hpc_validation_aurora_subneptune
+#
+# Stage 1 converges PICASO climate once per climate_group_index (576 jobs).
+# Stage 2 computes reflected spectra for every manifest row (1,728 jobs).
 #
 # HOW TO CUSTOMIZE THE PARAMETER SPACE
 # =====================================

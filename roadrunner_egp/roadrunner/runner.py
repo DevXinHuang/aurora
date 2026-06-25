@@ -669,16 +669,14 @@ def _compact_climate_diagnostics(
     return diagnostics
 
 
-def run_picaso_climate_model_once(
+def _setup_picaso_climate_case(
     system: SystemParams,
     output_grid: np.ndarray,
     ck_root: str | Path | None = None,
     cloud_model: str | None = None,
     verbose: bool = True,
-    return_case: bool = False,
-    return_opacity: bool = False,
-) -> tuple[Any, ...]:
-    """Run PICASO climate as the primary atmosphere, then spectra from it."""
+) -> tuple[Any, Any, Path, dict[str, Any]]:
+    """Create PICASO climate inputs, star/planet setup, and opacity connection."""
     assert HAVE_PICASO, "PICASO is required"
 
     output_grid = np.asarray(output_grid, dtype=float)
@@ -715,6 +713,92 @@ def run_picaso_climate_model_once(
         verbose=verbose,
     )
     climate_input_summary = configure_climate_inputs(cl_run, system)
+    return cl_run, opa, selected_ck_file, climate_input_summary
+
+
+def run_picaso_climate_converge_only(
+    system: SystemParams,
+    output_grid: np.ndarray,
+    ck_root: str | Path | None = None,
+    cloud_model: str | None = None,
+    verbose: bool = True,
+) -> tuple[dict[str, Any], dict[str, Any], Path]:
+    """Run PICASO climate convergence only (no reflected-light spectrum)."""
+    cl_run, opa, selected_ck_file, climate_input_summary = _setup_picaso_climate_case(
+        system,
+        output_grid,
+        ck_root=ck_root,
+        cloud_model=cloud_model,
+        verbose=verbose,
+    )
+    climate_out = cl_run.climate(opa, save_all_profiles=True, with_spec=True)
+    if not isinstance(climate_out, dict):
+        raise RuntimeError(f"PICASO climate returned {type(climate_out).__name__}, not dict")
+
+    diagnostics = _compact_climate_diagnostics(
+        climate_out,
+        selected_ck_file,
+        climate_input_summary,
+        cl_run,
+        opa,
+    )
+    return climate_out, diagnostics, selected_ck_file
+
+
+def run_picaso_reflected_spectrum_from_climate_profile(
+    system: SystemParams,
+    output_grid: np.ndarray,
+    climate_pressure: np.ndarray,
+    climate_temperature: np.ndarray,
+    *,
+    ck_root: str | Path | None = None,
+    selected_ck_file: str | Path | None = None,
+    cloud_model: str | None = None,
+    verbose: bool = False,
+) -> dict[str, Any]:
+    """Compute reflected spectrum at ``system.phase_deg`` from a converged PT profile."""
+    cl_run, opa, ck_path, _climate_input_summary = _setup_picaso_climate_case(
+        system,
+        output_grid,
+        ck_root=ck_root,
+        cloud_model=cloud_model,
+        verbose=verbose,
+    )
+    if selected_ck_file is not None:
+        ck_path = Path(selected_ck_file)
+
+    _apply_climate_profile_to_case(
+        cl_run,
+        {
+            "pressure": np.asarray(climate_pressure, dtype=float),
+            "temperature": np.asarray(climate_temperature, dtype=float),
+        },
+    )
+    cl_run.phase_angle(
+        np.deg2rad(system.phase_deg),
+        num_gangle=REFLECT_NUM_GANGLE,
+        num_tangle=REFLECT_NUM_TANGLE,
+    )
+    return cl_run.spectrum(opa, calculation="reflected", as_dict=True, full_output=True)
+
+
+def run_picaso_climate_model_once(
+    system: SystemParams,
+    output_grid: np.ndarray,
+    ck_root: str | Path | None = None,
+    cloud_model: str | None = None,
+    verbose: bool = True,
+    return_case: bool = False,
+    return_opacity: bool = False,
+) -> tuple[Any, ...]:
+    """Run PICASO climate as the primary atmosphere, then spectra from it."""
+    cl_run, opa, selected_ck_file, climate_input_summary = _setup_picaso_climate_case(
+        system,
+        output_grid,
+        ck_root=ck_root,
+        cloud_model=cloud_model,
+        verbose=verbose,
+    )
     climate_out = cl_run.climate(opa, save_all_profiles=True, with_spec=True)
     if not isinstance(climate_out, dict):
         raise RuntimeError(f"PICASO climate returned {type(climate_out).__name__}, not dict")

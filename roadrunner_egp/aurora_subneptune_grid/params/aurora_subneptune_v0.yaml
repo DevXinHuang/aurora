@@ -3,7 +3,10 @@ model_name: aurora_subneptune_v0
 author: "Daniel Huang"
 contact: "Daniel Huang"
 project: "Aurora Sub-Neptune Grid"
-notes: "First full Cartesian sub-Neptune reflected-light grid for Aurora."
+notes: >-
+  Full Cartesian sub-Neptune grid (276,480 spectra). Submit with the two-stage
+  workflow: 46,080 PICASO climate convergences, then 276,480 reflected spectra
+  from cached PT profiles. See scripts/submit_two_stage_grid.sh and README.md.
 
 code:
   spectrum: "PICASO"

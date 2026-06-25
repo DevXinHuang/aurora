@@ -1,249 +1,181 @@
 # Aurora Sub-Neptune PICASO Grid Runner
 
-This directory contains the first Aurora sub-Neptune reflected-light grid runner.
-It turns the Path A notebook workflow into normal Python modules and scripts so
-the grid can run reproducibly on a workstation or as Slurm array jobs.
+Production grid runner for Aurora Path A: sub-Neptune reflected-light spectra with
+PICASO 4 climate atmospheres and Virga clouds. Each completed spectrum is one
+restartable NetCDF file under `outputs/<model_name>/nc/`.
 
-The science question is whether sub-Neptunes near the Fulton radius valley can
-masquerade as terrestrial worlds in reflected-light spectra. Each manifest row
-is one PICASO model, and each completed model writes one restartable NetCDF file.
+## Recommended workflow: climate first, then spectra
 
-## Why Scripts
+**Do not** run full `picaso_climate` inside every array task if the manifest sweeps
+phase angle. Phase is viewing geometry only — the pressure–temperature profile does
+not change with phase.
 
-The source notebook remains the reference for the first Path A experiment, but
-the production workflow does not execute notebooks. Scripts provide stable CLI
-arguments, deterministic filenames, resumable skip behavior, and clean Slurm
-array indexing.
+| Stage | What runs | Array size | Typical cost |
+| --- | --- | --- | --- |
+| **1 — Climate** | Converge PICASO climate once per `climate_group_index` | `N_climate` | Heavy (~15–45 min / group) |
+| **2 — Spectrum** | Load cached PT, compute reflected spectrum per manifest row | `N_rows` | Light (~2–10 min / row) |
 
-## Parameter Space
+Every manifest produced by `make_manifest.py` (or `make_cahoy2010_manifest.py`)
+includes a `climate_group_index` column. Rows that share the same planet, star,
+cloud, chemistry, and orbit — but differ in `phase_deg` — share one climate group.
 
-| Parameter | Values | Steps |
-| --- | --- | ---: |
-| Host star Teff + radius | 3500 K (0.45 R_sun), 4000 K (0.63 R_sun), 5000 K (0.80 R_sun), 7000 K (1.70 R_sun) | 4 |
-| Planet radius | 1.6, 2.0, 2.5, 3.0 R_earth | 4 |
-| Surface gravity | 5, 10, 15, 25 m s-2 | 4 |
-| Atmospheric metallicity | 1, 10, 100 x solar | 3 |
-| C/O ratio | 0.5, 1.0, 2.0 x solar C/O | 3 |
-| Kzz | 1e9, 1e11 cm2 s-1 | 2 |
-| Cloud fraction | 0.0, 1.0 | 2 |
-| Sedimentation efficiency fsed | 0.3, 1, 3, 6, 8 | 5 |
-| Insolation | 0.35, 0.7, 1.0, 1.5 S_earth | 4 |
-| Phase angle | 0, 30, 60, 90, 120, 150 deg | 6 |
+```text
+outputs/<model_name>/
+  climate_cache/climate_00.npz … climate_NN.npz   ← stage 1
+  nc/run_000000.nc …                              ← stage 2 (304–276,480 files)
+```
 
-The full Cartesian grid has 276,480 simulations.
+### Submit any grid (smoke → validation → full)
 
-## Local Smoke Tests
+From the repo root:
 
 ```bash
-# Activate PICASO 4 consistently (Mac .venv-picaso4 or HPC micromamba/conda picaso4)
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
+  "$(pwd)" <model_name>
+```
+
+| `model_name` | Spectrum rows | Climate groups | Purpose |
+| --- | ---: | ---: | --- |
+| `smoke_test_aurora_subneptune` | 6 | 2 | Plumbing |
+| `hpc_validation_aurora_subneptune` | 1,728 | 576 | HPC timing / QC |
+| `aurora_cahoy2010_replication_v0` | 304 | 16 | Cahoy et al. 2010 1:1 |
+| `aurora_subneptune_v0` | 276,480 | 46,080 | Full science grid |
+
+Cahoy shortcut:
+
+```bash
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
+```
+
+Stage 2 waits on stage 1 (`--dependency=afterok`). Large grids (>1,000 tasks)
+are submitted in batches automatically.
+
+### Manual stage commands
+
+```bash
 source env/activate_aurora_picaso4_job.sh
 
-# Dry-run smoke test on Mac
-python roadrunner_egp/aurora_subneptune_grid/scripts/smoke_test.py --dry-run
-
-# Real smoke test on Mac, if the PICASO environment works
-python roadrunner_egp/aurora_subneptune_grid/scripts/smoke_test.py --real
-```
-
-`activate_aurora_picaso4_job.sh` wraps the older split setup:
-
-| | Mac (local) | HPC (Slurm) |
-| --- | --- | --- |
-| Python env | `.venv-picaso4` via `activate_local_picaso4.sh` | `micromamba`/`conda` env `picaso4` |
-| Reference paths | `env/activate_roadrunner_picaso4.sh` | same |
-| Grid extras | `env/activate_aurora_grid_runtime.sh` (`PICASO_CK_ROOT`, Virga condensates, grid `PYTHONPATH`) | same |
-
-Cahoy-matched native climate test case:
-
-```bash
-bash roadrunner_egp/aurora_subneptune_grid/scripts/run_patchy_picaso_climate_native_local.sh
-```
-
-The dry run writes toy spectra, but it uses the real manifest, naming, xarray,
-atomic write, and reopen-verification plumbing.
-
-## Manifest And Local Row Runs
-
-```bash
-# Generate full manifest
-python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
-  --config roadrunner_egp/aurora_subneptune_grid/params/aurora_subneptune_v0.yaml \
-  --out roadrunner_egp/aurora_subneptune_grid/manifests/aurora_subneptune_v0_manifest.csv
-
-# Run one row locally in dry-run mode
-python roadrunner_egp/aurora_subneptune_grid/scripts/run_grid_chunk.py \
-  --manifest roadrunner_egp/aurora_subneptune_grid/manifests/aurora_subneptune_v0_manifest.csv \
-  --array-index 0 \
-  --model-name aurora_subneptune_v0 \
-  --dry-run
-```
-
-## HPC
-
-### Step 1: Smoke test (6 jobs, ~30 min)
-
-```bash
-# Pre-generate the smoke manifest
-python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
-  --config roadrunner_egp/aurora_subneptune_grid/params/smoke_test.yaml \
-  --out roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv
-
-# Submit
-sbatch roadrunner_egp/aurora_subneptune_grid/slurm/test_aurora_subneptune_grid.slurm
-```
-
-### Step 2: Validation run (1,728 jobs, ~4 hr each)
-
-A representative subset of the full grid that covers endpoints of every
-parameter axis. Use this to validate timing, memory, and output correctness
-before committing to the full 276,480-row grid.
-
-```bash
-# Pre-generate the validation manifest
+# Generate manifest (adds climate_group_index)
 python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
   --config roadrunner_egp/aurora_subneptune_grid/params/hpc_validation.yaml \
   --out roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv
 
-# Submit all 1,728 jobs
-sbatch roadrunner_egp/aurora_subneptune_grid/slurm/validation_aurora_subneptune_grid.slurm
+# Stage 1 — one climate group locally
+python roadrunner_egp/aurora_subneptune_grid/scripts/run_climate_cache_chunk.py \
+  --manifest roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv \
+  --climate-group-index 0
+
+# Stage 2 — one spectrum row
+python roadrunner_egp/aurora_subneptune_grid/scripts/run_spectrum_from_cache_chunk.py \
+  --manifest roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv \
+  --array-index 0 \
+  --model-name hpc_validation_aurora_subneptune
 ```
 
-### Step 3: Full grid (276,480 jobs, batched)
+### Legacy single-stage (not recommended)
 
-Slurm's `MaxArraySize` typically caps arrays at ~1,000 tasks. Check your
-cluster's limit, then submit in batches:
+`run_grid_chunk.py --use-picaso-climate` still works for one-off tests but
+re-runs climate for every phase. Slurm templates `run_aurora_subneptune_grid.slurm`
+and `validation_aurora_subneptune_grid.slurm` are disabled — use
+`submit_two_stage_grid.sh` instead.
+
+Guillot fast path (`picaso_guillot`, no climate convergence) remains available via
+`run_grid_chunk.py` without caching for quick smoke tests.
+
+### Guillot smoke (not full climate)
+
+`aurora_cahoy_solar_smoke_v0` (48 cases) uses `picaso_guillot` for fast plumbing
+checks (~1 min/task). It does **not** converge PICASO climate. For science-quality
+Cahoy spectra, use `aurora_cahoy2010_replication_v0` and the two-stage submit
+script above.
+
+### Obsolete configs
+
+| Config | Why not to use |
+| --- | --- |
+| `aurora_cahoy_solar_climate_v0` | 768 single-stage runs; superseded by `aurora_cahoy2010_replication_v0` |
+| `run_aurora_subneptune_grid.slurm` | Re-runs climate per phase |
+| `run_weekend_grid_800.slurm` | Legacy weekend shard, not the production grid |
+
+---
+
+## Science goal
+
+Whether sub-Neptunes near the Fulton radius valley can masquerade as terrestrial
+worlds in reflected-light spectra (Roman CGI).
+
+## Parameter space (full grid)
+
+| Parameter | Values | Steps |
+| --- | --- | ---: |
+| Host star Teff + radius | 3500, 4000, 5000, 7000 K | 4 |
+| Planet radius | 1.6, 2.0, 2.5, 3.0 R_earth | 4 |
+| Surface gravity | 5, 10, 15, 25 m/s² | 4 |
+| Metallicity | 1, 10, 100× solar | 3 |
+| C/O | 0.5, 1.0, 2.0× solar | 3 |
+| Kzz | 1e9, 1e11 cm²/s | 2 |
+| Cloud fraction | 0, 1 | 2 |
+| fsed | 0.3, 1, 3, 6, 8 | 5 |
+| Insolation | 0.35, 0.7, 1.0, 1.5 S⊕ | 4 |
+| Phase | 0, 30, 60, 90, 120, 150° | 6 |
+
+Full Cartesian product: **276,480** spectra = **46,080** climate groups × **6** phases.
+
+## Environment
 
 ```bash
-# Check your limit
-scontrol show config | grep MaxArraySize
+source env/activate_aurora_picaso4_job.sh
+```
 
-# Pre-generate the full manifest (only once)
+| | Mac | HPC |
+| --- | --- | --- |
+| Python | `.venv-picaso4` | `micromamba` env `picaso4` |
+| Paths | `activate_roadrunner_picaso4.sh` | same |
+| Grid extras | `activate_aurora_grid_runtime.sh` | same |
+
+## Cahoy et al. 2010 replication
+
+Config: `params/aurora_cahoy2010_replication_v0.yaml`  
+Manifest: `scripts/make_cahoy2010_manifest.py` (304 rows, 16 climates)
+
+- 4 planet types (Jupiter 1×/3×, Neptune 10×/30×)
+- 4 separations (0.8, 2, 5, 10 AU) with Cahoy Table 1 clouds
+- 19 phases (0°–180° every 10°)
+- Solar spectrum: `data/stellar_spectra/SOLARSPECTRUM.DAT`
+- Each row has `cahoy_reference_name` (e.g. `Neptune_10x_2AU_60deg.dat`)
+
+## Customizing YAML configs
+
+Edit lists under `params/*.yaml`, regenerate manifest, re-submit:
+
+```bash
 python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
-  --config roadrunner_egp/aurora_subneptune_grid/params/aurora_subneptune_v0.yaml \
-  --out roadrunner_egp/aurora_subneptune_grid/manifests/aurora_subneptune_v0_manifest.csv
-
-# Submit in batches of 1,000 with max 100 running concurrently
-for start in $(seq 0 1000 276479); do
-  end=$((start + 999))
-  [ $end -gt 276479 ] && end=276479
-  sbatch --array=${start}-${end}%100 \
-    roadrunner_egp/aurora_subneptune_grid/slurm/run_aurora_subneptune_grid.slurm
-done
+  --config <your.yaml> --out <manifest.csv>
+# Prints total_rows and climate_groups
 ```
 
-The Slurm templates activate the `picaso4` conda environment, source the Aurora
-runtime paths, and run one manifest row per array task. Failed or interrupted
-arrays can be resubmitted safely — existing output files are skipped.
-
-## Customizing The Parameter Space
-
-The parameter grid is defined entirely in a YAML config file under `params/`.
-The grid is the **Cartesian product** of every list — total simulations equals
-the product of all list lengths.
-
-### Where to change things
-
-Edit the YAML config file. Each parameter is a simple list:
-
-```yaml
-# To add or remove values, just edit the list:
-planet_radius_rearth: [1.6, 2.0, 2.5, 3.0]   # 4 values
-gravity_ms2: [5, 10, 15, 25]                   # 4 values
-metallicity_xsolar: [1, 10, 100]               # 3 values
-c_to_o_xsolar: [0.5, 1.0, 2.0]                # 3 values
-kzz_cm2_s: [1.0e9, 1.0e11]                    # 2 values
-cloud_fraction: [0.0, 1.0]                     # 2 values
-fsed: [0.3, 1, 3, 6, 8]                       # 5 values
-insolation_searth: [0.35, 0.7, 1.0, 1.5]      # 4 values
-phase_deg: [0, 30, 60, 90, 120, 150]           # 6 values
-
-# Stars are a list of {teff_k, radius_rsun} pairs:
-stars:
-  - teff_k: 3500
-    radius_rsun: 0.45
-  - teff_k: 5000
-    radius_rsun: 0.80
-```
-
-### How to verify after editing
-
-```bash
-# Regenerate the manifest and check the count
-python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
-  --config <your_config.yaml> \
-  --out <your_manifest.csv>
-
-# Output tells you: total_rows, duplicate checks, first 5 rows
-```
-
-### Then update the Slurm script
-
-Change `#SBATCH --array=0-N` where N = total_rows − 1, and make sure
-`--model-name` matches the `model_name` in your YAML.
-
-### Available configs
-
-| Config | Rows | Purpose |
-| --- | ---: | --- |
-| `params/smoke_test.yaml` | 6 | Quick plumbing check |
-| `params/hpc_validation.yaml` | 1,728 | Representative HPC validation |
-| `params/aurora_subneptune_v0.yaml` | 276,480 | Full science grid |
-
-## Inspect And Inventory Outputs
-
-```bash
-python roadrunner_egp/aurora_subneptune_grid/scripts/inspect_output.py path/to/file.nc
-
-python roadrunner_egp/aurora_subneptune_grid/scripts/combine_outputs.py \
-  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune \
-  --out roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_inventory.csv
-```
-
-## Post-Run QC And Triage
-
-Each per-run NetCDF uses the `aurora_subneptune_netcdf` schema. After jobs
-finish, run post-run QC to validate files, write CSV reports, and generate the
-diagnostic plots used for review:
+## Post-run QC
 
 ```bash
 python roadrunner_egp/aurora_subneptune_grid/scripts/run_postrun_qc.py \
-  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune/nc \
-  --grid-manifest roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv
+  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/<model>/nc \
+  --grid-manifest roadrunner_egp/aurora_subneptune_grid/manifests/<model>_manifest.csv
 ```
 
-This writes `qc_summary.csv`, `qc_flags.csv`, diagnostic PNGs, and a rerun
-manifest when `--grid-manifest` is supplied. To review plots in the browser:
-
-```bash
-python roadrunner_egp/aurora_subneptune_grid/scripts/run_postrun_qc.py \
-  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune/nc \
-  --grid-manifest roadrunner_egp/aurora_subneptune_grid/manifests/smoke_test_manifest.csv \
-  --serve
-```
-
-To build a spectra-only Zarr collection after all jobs finish:
-
-```bash
-python roadrunner_egp/aurora_subneptune_grid/scripts/collect_picaso_model_store.py \
-  --output-root roadrunner_egp/aurora_subneptune_grid/outputs/smoke_test_aurora_subneptune \
-  --overwrite
-```
-
-Developer tests can be run from the repository root with:
+## Tests
 
 ```bash
 PYTHONPATH=roadrunner_egp/aurora_subneptune_grid/src:roadrunner_egp \
   pytest roadrunner_egp/aurora_subneptune_grid/tests
 ```
 
-## Output Naming
+## Key scripts
 
-Every output filename includes `model_name`, physical parameter tags, and a
-deterministic short SHA1 `run_id`. Existing files are skipped by default, so a
-failed or interrupted array can be resubmitted safely. Passing `--overwrite` is
-required to replace an existing NetCDF file.
-
-Each NetCDF stores the spectrum plus JSON metadata attrs for planet, star, orbit,
-cloud, grid, source manifest row, source notebook reference, and git commit.
-When PICASO's model-preservation xarray path is available, the file also stores
-the reusable PICASO pressure, temperature, chemistry, and cloud fields.
+| Script | Role |
+| --- | --- |
+| `make_manifest.py` | Cartesian manifest + `climate_group_index` |
+| `make_cahoy2010_manifest.py` | Cahoy 304-row manifest |
+| `run_climate_cache_chunk.py` | Stage 1 |
+| `run_spectrum_from_cache_chunk.py` | Stage 2 |
+| `submit_two_stage_grid.sh` | Submit both Slurm stages |
+| `run_grid_chunk.py` | Legacy single-row (Guillot or full climate) |

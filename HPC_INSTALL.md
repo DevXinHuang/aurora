@@ -309,3 +309,59 @@ python validation/validate_picaso4_against_legacy.py
 ```
 
 This script compares PICASO4 against the old frozen PICASO 3.4 baseline. On HPC, the old local Mac baseline may not exist, so this script may need adjustment before it can fully run there. The first required HPC check is that PICASO4 imports and RoadRunner sees the copied `science_inputs/` data.
+
+## 13. Submit PICASO Grid Jobs (climate → spectrum)
+
+Aurora grid runs use **two Slurm stages** so PICASO climate is not repeated for
+every phase angle:
+
+1. **Climate** — one job per `climate_group_index` (converged PT saved to
+   `outputs/<model>/climate_cache/climate_XX.npz`)
+2. **Spectrum** — one job per manifest row (loads cache, computes reflected
+   spectrum at that `phase_deg`)
+
+Activate the grid environment on a compute node:
+
+```bash
+cd ~/Documents/aurora
+source env/activate_aurora_picaso4_job.sh
+```
+
+### Quick tests
+
+```bash
+# 6 spectra, 2 climates
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
+  ~/Documents/aurora smoke_test_aurora_subneptune
+
+# Cahoy 2010 replication: 304 spectra, 16 climates
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
+```
+
+### Validation grid before the full run
+
+```bash
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
+  ~/Documents/aurora hpc_validation_aurora_subneptune
+```
+
+### Full science grid (276,480 spectra)
+
+```bash
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
+  ~/Documents/aurora aurora_subneptune_v0
+```
+
+The submit script regenerates the manifest if missing, prints `climate_groups`,
+and batches arrays larger than 1,000 tasks.
+
+Monitor:
+
+```bash
+squeue -u "$USER"
+ls roadrunner_egp/aurora_subneptune_grid/outputs/<model>/climate_cache/*.npz | wc -l
+find roadrunner_egp/aurora_subneptune_grid/outputs/<model>/nc -name '*.nc' | wc -l
+```
+
+Full documentation:
+[roadrunner_egp/aurora_subneptune_grid/README.md](roadrunner_egp/aurora_subneptune_grid/README.md)

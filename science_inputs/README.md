@@ -10,6 +10,16 @@ This folder holds the local RoadRunner/EGP input data used by the PICASO4 migrat
 
 Use `env/activate_roadrunner_picaso4.sh` to point notebooks and scripts at this local copy.
 
+## Aurora PICASO grids (Route A)
+
+The production sub-Neptune and Cahoy replication grids under
+`roadrunner_egp/aurora_subneptune_grid/` do **not** read these SLGRID files.
+They converge PICASO climate atmospheres on the fly, cache the PT profiles, then
+compute reflected spectra. See
+[aurora_subneptune_grid/README.md](../roadrunner_egp/aurora_subneptune_grid/README.md).
+
+Route C (SLGRID PT + EGP thermal) still uses the files below.
+
 ## Naming Convention
 
 Most science files use this shared prefix:

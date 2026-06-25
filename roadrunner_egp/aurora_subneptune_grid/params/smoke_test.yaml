@@ -3,7 +3,9 @@ model_name: smoke_test_aurora_subneptune
 author: "Daniel Huang"
 contact: "Daniel Huang"
 project: "Aurora Sub-Neptune Grid"
-notes: "Tiny smoke test before running on HPC."
+notes: >-
+  Tiny smoke test (6 spectra, 2 climates). Submit with submit_two_stage_grid.sh
+  before larger HPC runs.
 
 code:
   spectrum: "PICASO"

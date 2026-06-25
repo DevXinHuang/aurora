@@ -64,3 +64,20 @@ python validation/validate_picaso4_against_legacy.py
 ```
 
 The validation script compares Aurora's isolated PICASO 4 results against the frozen PICASO 3.4 baseline and writes generated run products under `validation/outputs/`.
+
+## PICASO grid runs (HPC)
+
+Large reflected-light grids use a **two-stage** workflow: converge climate once per
+unique atmosphere/orbit (`climate_group_index`), then compute spectra for every phase.
+
+```bash
+# Example: Cahoy 2010 replication (304 spectra, 16 climates)
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
+
+# Example: full sub-Neptune grid (276,480 spectra, 46,080 climates)
+bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
+  "$(pwd)" aurora_subneptune_v0
+```
+
+See [roadrunner_egp/aurora_subneptune_grid/README.md](roadrunner_egp/aurora_subneptune_grid/README.md)
+and [HPC_INSTALL.md](HPC_INSTALL.md) for details.
