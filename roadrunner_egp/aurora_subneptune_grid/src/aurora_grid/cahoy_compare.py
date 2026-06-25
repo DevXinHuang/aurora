@@ -48,11 +48,28 @@ class CahoyCompareMetrics:
 
 def _manifest_lookup(manifest_path: str | Path) -> dict[int, dict[str, Any]]:
     table = read_manifest_csv(manifest_path)
-    return {int(row["run_index"]): dict(row) for row in table.rows}
+    lookup: dict[int, dict[str, Any]] = {}
+    for row in table.rows:
+        raw_index = row.get("run_index", row.get("spectrum_index"))
+        if raw_index is None:
+            raise KeyError(f"Manifest row lacks run_index/spectrum_index: {row}")
+        lookup[int(raw_index)] = dict(row)
+    return lookup
+
+
+def _existing_run_indices(lookup: dict[int, dict[str, Any]], nc_root: Path) -> set[int]:
+    """Return manifest run indices with a visible NetCDF output."""
+    existing: set[int] = set()
+    for run_index, row in lookup.items():
+        nc_path = resolve_repo_path(row["output_nc"])
+        fallback_path = nc_root / Path(row["output_nc"]).name
+        if nc_path.exists() or fallback_path.exists():
+            existing.add(run_index)
+    return existing
 
 
 def _cahoy_name_from_dataset(ds: xr.Dataset) -> str | None:
-    raw = ds.attrs.get("source_manifest_row")
+    raw = _decode_hdf5_attr(ds.attrs.get("source_manifest_row"))
     if not raw:
         return None
     try:
@@ -66,7 +83,7 @@ def _cahoy_name_from_dataset(ds: xr.Dataset) -> str | None:
 def _run_index_from_dataset(ds: xr.Dataset) -> int | None:
     if "run_index" in ds:
         return int(ds["run_index"].values)
-    raw = ds.attrs.get("source_manifest_row")
+    raw = _decode_hdf5_attr(ds.attrs.get("source_manifest_row"))
     if not raw:
         return None
     try:
@@ -78,22 +95,67 @@ def _run_index_from_dataset(ds: xr.Dataset) -> int | None:
     return int(row["run_index"])
 
 
-def load_aurora_albedo_spectrum(nc_path: str | Path) -> dict[str, Any]:
-    path = Path(nc_path)
-    with xr.open_dataset(path) as ds:
-        wavelength_um = np.asarray(ds["wavelength_um"].values, dtype=float)
-        albedo = np.asarray(ds["geometric_albedo"].values, dtype=float)
-        phase_deg = float(ds["phase_angle_deg"].values) if "phase_angle_deg" in ds else float("nan")
-        run_index = _run_index_from_dataset(ds)
-        cahoy_name = _cahoy_name_from_dataset(ds)
+def _decode_hdf5_attr(value: Any) -> Any:
+    if isinstance(value, bytes | np.bytes_):
+        return value.decode("utf-8")
+    if isinstance(value, np.ndarray) and value.shape == ():
+        return _decode_hdf5_attr(value.item())
+    return value
+
+
+def _load_aurora_albedo_spectrum_h5py(nc_path: Path) -> dict[str, Any]:
+    try:
+        import h5py
+    except ImportError as exc:
+        raise ImportError(
+            "Reading NetCDF4/HDF5 spectra requires either xarray's netcdf4/h5netcdf "
+            "backend or h5py."
+        ) from exc
+
+    with h5py.File(nc_path, "r") as handle:
+        attrs = {key: _decode_hdf5_attr(value) for key, value in handle.attrs.items()}
+        raw_row = attrs.get("source_manifest_row")
+        row = None
+        if raw_row:
+            try:
+                row = json.loads(raw_row) if isinstance(raw_row, str) else dict(raw_row)
+            except (TypeError, json.JSONDecodeError):
+                row = None
+
+        run_index = int(handle["run_index"][()]) if "run_index" in handle else None
+        cahoy_name = str(row["cahoy_reference_name"]) if row and row.get("cahoy_reference_name") else None
         return {
-            "path": path,
-            "wavelength_um": wavelength_um,
-            "albedo": albedo,
-            "phase_deg": phase_deg,
+            "path": nc_path,
+            "wavelength_um": np.asarray(handle["wavelength_um"][()], dtype=float),
+            "albedo": np.asarray(handle["geometric_albedo"][()], dtype=float),
+            "phase_deg": float(handle["phase_angle_deg"][()]) if "phase_angle_deg" in handle else float("nan"),
             "run_index": run_index,
             "cahoy_reference_name": cahoy_name,
         }
+
+
+def load_aurora_albedo_spectrum(nc_path: str | Path) -> dict[str, Any]:
+    path = Path(nc_path)
+    try:
+        with xr.open_dataset(path) as ds:
+            wavelength_um = np.asarray(ds["wavelength_um"].values, dtype=float)
+            albedo = np.asarray(ds["geometric_albedo"].values, dtype=float)
+            phase_deg = float(ds["phase_angle_deg"].values) if "phase_angle_deg" in ds else float("nan")
+            run_index = _run_index_from_dataset(ds)
+            cahoy_name = _cahoy_name_from_dataset(ds)
+            return {
+                "path": path,
+                "wavelength_um": wavelength_um,
+                "albedo": albedo,
+                "phase_deg": phase_deg,
+                "run_index": run_index,
+                "cahoy_reference_name": cahoy_name,
+            }
+    except ValueError as exc:
+        message = str(exc)
+        if "IO backends" not in message and "currently installed IO backends" not in message:
+            raise
+        return _load_aurora_albedo_spectrum_h5py(path)
 
 
 def interpolate_aurora_to_cahoy_grid(
@@ -211,12 +273,16 @@ def compare_manifest_outputs(
     *,
     reference_root: str | Path | None = None,
     max_cases: int | None = None,
+    existing_only: bool = False,
 ) -> list[tuple[CahoyCompareMetrics, dict[str, np.ndarray] | None, str | None]]:
     lookup = _manifest_lookup(manifest_path)
     nc_root = Path(nc_root)
     results: list[tuple[CahoyCompareMetrics, dict[str, np.ndarray] | None, str | None]] = []
 
     run_indices = sorted(lookup)
+    if existing_only:
+        existing = _existing_run_indices(lookup, nc_root)
+        run_indices = [run_index for run_index in run_indices if run_index in existing]
     if max_cases is not None:
         run_indices = run_indices[: max_cases]
 

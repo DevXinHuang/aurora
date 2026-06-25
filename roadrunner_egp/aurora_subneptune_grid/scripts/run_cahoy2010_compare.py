@@ -49,6 +49,11 @@ def parse_args() -> argparse.Namespace:
         help="Write metrics CSV/JSON and optional plots here.",
     )
     parser.add_argument("--max-cases", type=int, default=None, help="Limit number of manifest rows (debug).")
+    parser.add_argument(
+        "--existing-only",
+        action="store_true",
+        help="Compare only manifest rows whose run_*.nc files already exist.",
+    )
     parser.add_argument("--plot", action="store_true", help="Write per-case overlay plots for compared spectra.")
     parser.add_argument("--plot-limit", type=int, default=24, help="Max number of plots when --plot is set.")
     parser.add_argument("--single-nc", default=None, help="Compare one NetCDF instead of scanning the manifest.")
@@ -63,6 +68,11 @@ def _write_metrics_csv(path: Path, records: list[dict]) -> None:
         writer = csv.DictWriter(handle, fieldnames=list(records[0].keys()))
         writer.writeheader()
         writer.writerows(records)
+
+
+def _count_manifest_rows(path: str | Path) -> int:
+    with Path(path).open("r", encoding="utf-8", newline="") as handle:
+        return sum(1 for _ in csv.DictReader(handle))
 
 
 def _plot_case(out_path: Path, metrics, arrays) -> None:
@@ -119,6 +129,7 @@ def main() -> int:
         args.nc_root,
         reference_root=reference_root,
         max_cases=args.max_cases,
+        existing_only=args.existing_only,
     )
     records = metrics_to_records(results)
     _write_metrics_csv(out_dir / "cahoy_compare_metrics.csv", records)
@@ -131,10 +142,13 @@ def main() -> int:
         "manifest": str(args.manifest),
         "reference_root": str(reference_root),
         "nc_root": str(args.nc_root),
-        "n_rows": len(results),
+        "n_manifest_rows": _count_manifest_rows(args.manifest),
+        "n_existing_nc": len(list(Path(args.nc_root).glob("run_*.nc"))),
+        "n_rows_checked": len(results),
         "n_compared": len(ok),
         "n_missing_nc": missing,
         "n_failed": failed,
+        "existing_only": bool(args.existing_only),
     }
     if ok:
         rmses = [item[0].rmse for item in ok]
