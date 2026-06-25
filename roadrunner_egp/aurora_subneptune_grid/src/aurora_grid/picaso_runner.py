@@ -459,7 +459,11 @@ def run_picaso_model_from_climate_cache(
     if str(ROADRUNNER_ROOT) not in sys.path:
         sys.path.insert(0, str(ROADRUNNER_ROOT))
 
-    from roadrunner.runner import extract_planet_fluxes, run_picaso_reflected_spectrum_from_climate_profile
+    from roadrunner.runner import (
+        extract_planet_fluxes,
+        run_picaso_reflected_spectrum_from_climate_profile,
+        run_picaso_reflected_spectrum_from_converged_case,
+    )
 
     output_grid = wavelength_grid_um()
     system = _system_from_row(row)
@@ -467,28 +471,38 @@ def run_picaso_model_from_climate_cache(
     cache_meta = climate_cache.get("metadata", {})
     diagnostics = cache_meta.get("diagnostics", {})
 
-    out_ref = run_picaso_reflected_spectrum_from_climate_profile(
-        system,
-        output_grid,
-        climate_cache["pressure"],
-        climate_cache["temperature"],
-        ck_root=ck_root,
-        selected_ck_file=climate_cache["selected_ck_file"],
-        cloud_model=cloud_model,
-        verbose=False,
-    )
+    if climate_cache.get("cl_run") is not None:
+        out_ref = run_picaso_reflected_spectrum_from_converged_case(
+            climate_cache["cl_run"],
+            system,
+            output_grid,
+            climate_cache["selected_ck_file"],
+        )
+    else:
+        out_ref = run_picaso_reflected_spectrum_from_climate_profile(
+            system,
+            output_grid,
+            climate_cache["pressure"],
+            climate_cache["temperature"],
+            ck_root=ck_root,
+            selected_ck_file=climate_cache["selected_ck_file"],
+            cloud_model=cloud_model,
+            verbose=False,
+        )
     albedo, fpfs_reflection = _reflected_observables(out_ref, system, output_grid)
     pressure = np.asarray(climate_cache["pressure"], dtype=float)
     temperature = np.asarray(climate_cache["temperature"], dtype=float)
+    climate_out_dict = {"pressure": pressure, "temperature": temperature}
+    if climate_cache.get("cl_run") is not None:
+        pt_profile = _climate_pt_profile(climate_cache["cl_run"], climate_out_dict)
+    else:
+        pt_profile = {"pressure": pressure, "temperature": temperature}
 
     result: dict[str, Any] = {
         "wavelength_um": output_grid,
         "fpfs_reflection": fpfs_reflection,
         "albedo": albedo,
-        "pt_profile": {
-            "pressure": pressure,
-            "temperature": temperature,
-        },
+        "pt_profile": pt_profile,
         "picaso_out_reflected": out_ref,
         "picaso_metadata": {
             "dry_run": False,
@@ -503,6 +517,8 @@ def run_picaso_model_from_climate_cache(
         },
         "qc_diagnostics": diagnostics,
     }
+    if climate_cache.get("cl_run") is not None:
+        result["picaso_case"] = climate_cache["cl_run"]
     try:
         _, fp_reflected_abs, fp_thermal_abs = extract_planet_fluxes(out_ref, {}, output_grid, system)
         result["picaso_metadata"]["has_absolute_flux_diagnostics"] = True
@@ -510,6 +526,8 @@ def run_picaso_model_from_climate_cache(
         result["absolute_flux_thermal"] = fp_thermal_abs
     except Exception as exc:
         result["picaso_metadata"]["absolute_flux_diagnostics_error"] = str(exc)
+        result["absolute_flux_reflected"] = np.zeros(output_grid.size, dtype=float)
+        result["absolute_flux_thermal"] = np.zeros(output_grid.size, dtype=float)
     return result
 
 

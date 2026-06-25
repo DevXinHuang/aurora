@@ -51,7 +51,7 @@ def main() -> int:
 
     system = _system_from_row(row)
     cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
-    climate_out, diagnostics, selected_ck_file = run_picaso_climate_converge_only(
+    climate_out, diagnostics, selected_ck_file, cl_run = run_picaso_climate_converge_only(
         system,
         wavelength_grid_um(),
         ck_root=args.ck_root,
@@ -71,6 +71,7 @@ def main() -> int:
         selected_ck_file=str(selected_ck_file),
         diagnostics=diagnostics,
         row=row,
+        cl_run=cl_run,
     )
     print(f"wrote: {cache_file}")
     print(f"climate_group_index: {args.climate_group_index}")

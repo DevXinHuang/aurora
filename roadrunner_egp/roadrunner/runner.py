@@ -722,8 +722,12 @@ def run_picaso_climate_converge_only(
     ck_root: str | Path | None = None,
     cloud_model: str | None = None,
     verbose: bool = True,
-) -> tuple[dict[str, Any], dict[str, Any], Path]:
-    """Run PICASO climate convergence only (no reflected-light spectrum)."""
+) -> tuple[dict[str, Any], dict[str, Any], Path, Any]:
+    """Run PICASO climate convergence only (no reflected-light spectrum).
+
+    Returns ``(climate_out, diagnostics, selected_ck_file, cl_run)``. The
+    converged ``cl_run`` object must be preserved for fast spectrum-only reruns.
+    """
     cl_run, opa, selected_ck_file, climate_input_summary = _setup_picaso_climate_case(
         system,
         output_grid,
@@ -742,7 +746,38 @@ def run_picaso_climate_converge_only(
         cl_run,
         opa,
     )
-    return climate_out, diagnostics, selected_ck_file
+    return climate_out, diagnostics, selected_ck_file, cl_run
+
+
+def run_picaso_reflected_spectrum_from_converged_case(
+    cl_run: Any,
+    system: SystemParams,
+    output_grid: np.ndarray,
+    selected_ck_file: str | Path,
+) -> dict[str, Any]:
+    """Compute reflected spectrum from an in-memory converged PICASO climate case."""
+    output_grid = np.asarray(output_grid, dtype=float)
+    opa = jdi.opannection(
+        ck_db=str(selected_ck_file),
+        wave_range=[float(np.nanmin(output_grid)), float(np.nanmax(output_grid))],
+        method="preweighted",
+    )
+    cl_run.star(
+        opa,
+        temp=system.tstar_k,
+        metal=0,
+        logg=4.44,
+        radius=system.rstar_rsun,
+        radius_unit=u.R_sun,
+        semi_major=system.a_au,
+        semi_major_unit=u.AU,
+    )
+    cl_run.phase_angle(
+        np.deg2rad(system.phase_deg),
+        num_gangle=REFLECT_NUM_GANGLE,
+        num_tangle=REFLECT_NUM_TANGLE,
+    )
+    return cl_run.spectrum(opa, calculation="reflected", as_dict=True, full_output=True)
 
 
 def run_picaso_reflected_spectrum_from_climate_profile(
@@ -872,15 +907,17 @@ def extract_planet_fluxes(out_ref: dict, out_em: dict,
     )(lam_grid_um)
 
     # --- thermal ---
-    wno_em    = out_em["wavenumber"]
-    lam_cm_em = 1.0 / wno_em
-    wl_em_um  = lam_cm_em * 1e4
-
-    fp_th_raw   = out_em["thermal"]           # erg/cm²/s/cm
-    fp_th_per_um = fp_th_raw * 1e-4           # → per µm
-    fp_thermal  = interp1d(
-        wl_em_um, fp_th_per_um, bounds_error=False, fill_value=0.0,
-    )(lam_grid_um)
+    if isinstance(out_em, dict) and "wavenumber" in out_em and "thermal" in out_em:
+        wno_em = out_em["wavenumber"]
+        lam_cm_em = 1.0 / wno_em
+        wl_em_um = lam_cm_em * 1e4
+        fp_th_raw = out_em["thermal"]
+        fp_th_per_um = fp_th_raw * 1e-4
+        fp_thermal = interp1d(
+            wl_em_um, fp_th_per_um, bounds_error=False, fill_value=0.0,
+        )(lam_grid_um)
+    else:
+        fp_thermal = np.zeros_like(lam_grid_um, dtype=float)
 
     # clean NaNs
     fp_reflected = np.nan_to_num(fp_reflected, nan=0.0, posinf=0.0, neginf=0.0)
