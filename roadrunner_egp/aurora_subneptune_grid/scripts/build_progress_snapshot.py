@@ -72,7 +72,7 @@ class GridProgress:
         return {
             "model_name": self.model_name,
             "config_name": self.config_name,
-            "output_root": str(self.output_root),
+            "output_root": _format_path_for_snapshot(self.output_root),
             "expected": {
                 "stage1_climate_groups": self.expected_climate_groups,
                 "stage2_rows": self.expected_rows,
@@ -96,6 +96,16 @@ def _pct(done: int, total: int) -> float:
     if total <= 0:
         return 0.0
     return 100.0 * float(done) / float(total)
+
+
+def _format_path_for_snapshot(path_value: Path) -> str:
+    path = Path(path_value)
+    if not path.is_absolute():
+        return path.as_posix()
+    try:
+        return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def parse_args() -> argparse.Namespace:
@@ -360,8 +370,8 @@ def _write_snapshot(
     snapshot = {
         "generated_at_utc": generated_at,
         "sources": {
-            "params_dir": str(params_dir),
-            "qc_reports_dir": str(qc_reports_dir),
+            "params_dir": _format_path_for_snapshot(params_dir),
+            "qc_reports_dir": _format_path_for_snapshot(qc_reports_dir),
         },
         "summary": {
             "grid_count": len(rows),
