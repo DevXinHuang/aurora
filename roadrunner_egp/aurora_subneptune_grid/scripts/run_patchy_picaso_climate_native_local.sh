@@ -27,12 +27,24 @@ python - <<'PY'
 import json
 import xarray as xr
 
+
+def _decode_json_mapping(value):
+    current = value
+    while isinstance(current, str):
+        text = current.strip()
+        if not text:
+            return {}
+        try:
+            current = json.loads(text)
+        except json.JSONDecodeError:
+            return {}
+    return current if isinstance(current, dict) else {}
+
+
 p = "roadrunner_egp/aurora_subneptune_grid/outputs/patchy_picaso_climate_native/nc/run_000000.nc"
 ds = xr.open_dataset(p)
-grid_params = ds.attrs.get("grid_params", {})
-if isinstance(grid_params, str):
-    grid_params = json.loads(grid_params)
-meta = grid_params.get("picaso_metadata", {})
+grid_params = _decode_json_mapping(ds.attrs.get("grid_params", {}))
+meta = _decode_json_mapping(grid_params.get("picaso_metadata", {}))
 if meta.get("dry_run"):
     raise SystemExit("ERROR: output is a dry-run toy spectrum, not a real PICASO climate run.")
 print(ds)
