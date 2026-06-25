@@ -200,7 +200,7 @@ def main():
     ax.text(
         0.5,
         0.932,
-        "ReflectX-style schematic based on Daniel Huang's AABC proposal and the timestep/RoadRunner PICASO workflow",
+        "Aurora schematic based on Daniel Huang's AABC proposal and the timestep/RoadRunner PICASO workflow",
         ha="center",
         va="center",
         fontsize=12.2,
