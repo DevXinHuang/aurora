@@ -35,6 +35,7 @@ PICASO4_CK_FEH_VALUES = np.array(
 )
 PICASO4_CK_CO_VALUES = np.array([0.14, 0.27, 0.46, 0.55, 0.82, 1.10], dtype=float)
 PICASO4_SOLAR_C_TO_O = 0.55
+PHASE_ANGLE_PI_EPS_RAD = 1.0e-6
 _VIRGA_SUBLAYER_PATCH_APPLIED = False
 
 
@@ -143,12 +144,14 @@ def normalize_cloud_model(cloud_model: str | None) -> str:
 def reflected_phase_angle_rad(phase_deg: float) -> float:
     """Return a reflected-light-safe phase angle in radians.
 
-    PICASO's reflected phase geometry has a singularity exactly at 180 degrees
-    (cos(phase)+1 == 0). Clamp to the nearest representable value below pi.
+    PICASO's reflected phase geometry has a singularity at 180 degrees
+    (cos(phase)+1 == 0). Use a finite epsilon below pi because some downstream
+    code paths reduce precision and can still hit the singularity if we only
+    use ``np.nextafter``.
     """
     phase_rad = float(np.deg2rad(float(phase_deg)))
-    if np.isclose(phase_rad, np.pi, rtol=0.0, atol=1.0e-12):
-        return float(np.nextafter(np.pi, 0.0))
+    if phase_rad >= np.pi or np.isclose(phase_rad, np.pi, rtol=0.0, atol=1.0e-12):
+        return float(np.pi - PHASE_ANGLE_PI_EPS_RAD)
     return phase_rad
 
 
@@ -180,16 +183,23 @@ def _patch_virga_calc_optics_sublayer_guard(verbose: bool = False) -> bool:
     except (OSError, TypeError):
         return False
 
-    if "if ibot >= nz -4:" in source:
+    patched_guard_pattern = r"^\s*if\s+ibot\s*>=\s*nz\s*-\s*4\s*:"
+    if re.search(patched_guard_pattern, source, flags=re.MULTILINE):
         setattr(calc_optics, "_aurora_sublayer_guard_patch", True)
         _VIRGA_SUBLAYER_PATCH_APPLIED = True
         return True
 
-    old_guard = "if ibot >= nz -2:"
-    if old_guard not in source:
+    old_guard_pattern = r"^(\s*)if\s+ibot\s*>=\s*nz\s*-\s*2\s*:"
+    if not re.search(old_guard_pattern, source, flags=re.MULTILINE):
         return False
 
-    patched_source = source.replace(old_guard, "if ibot >= nz -4:", 1)
+    patched_source = re.sub(
+        old_guard_pattern,
+        r"\1if ibot >= nz - 4:",
+        source,
+        count=1,
+        flags=re.MULTILINE,
+    )
     try:
         exec(compile(patched_source, calc_optics.__code__.co_filename, "exec"), virga_jdi.__dict__)
     except Exception:

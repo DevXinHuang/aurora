@@ -130,7 +130,7 @@ def test_configure_climate_inputs_sets_teff_and_initial_guess():
 def test_reflected_phase_angle_rad_clamps_exact_180():
     clamped = reflected_phase_angle_rad(180.0)
     assert clamped < np.pi
-    assert np.isclose(clamped, np.nextafter(np.pi, 0.0))
+    assert np.isclose(clamped, np.pi - runner_module.PHASE_ANGLE_PI_EPS_RAD)
     assert np.isclose(reflected_phase_angle_rad(179.0), np.deg2rad(179.0))
     assert np.isclose(reflected_phase_angle_rad(0.0), 0.0)
 
@@ -148,7 +148,7 @@ def calc_optics(nwave, qc, qt, rg, reff, ndz, radius, dr, qext, qscat, cos_qscat
     opd_layer = np.zeros((nz, ngas))
     for igas in range(ngas):
         ibot = nz - 3
-        if ibot >= nz -2:
+        if ibot >= nz-2:
             pass
         else:
             opd_layer[ibot+3,igas] = opd_layer[ibot,igas] * 0.01
