@@ -41,6 +41,30 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 | `aurora_cahoy2010_replication_v0` | 304 | 16 | Cahoy et al. 2010 1:1 |
 | `aurora_subneptune_v0` | 276,480 | 46,080 | Full science grid |
 
+### Sub-Neptune grid sets (non-Cahoy)
+
+The two non-Cahoy grids currently used for development/testing are:
+
+| Grid | Spectra | Climate groups | Role |
+| --- | ---: | ---: | --- |
+| `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check before larger runs |
+| `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
+
+Planned final production run is `aurora_subneptune_v0`:
+
+| Parameter | Values |
+| --- | --- |
+| Host star Teff + radius | 3500/0.45, 4000/0.63, 5000/0.80, 7000/1.70 |
+| Planet radius (R_earth) | 1.6, 2.0, 2.5, 3.0 |
+| Surface gravity (m/s²) | 5, 10, 15, 25 |
+| Metallicity (x solar) | 1, 10, 100 |
+| C/O (x solar) | 0.5, 1.0, 2.0 |
+| Kzz (cm²/s) | 1e9, 1e11 |
+| Cloud fraction | 0, 1 |
+| fsed | 0.3, 1, 3, 6, 8 |
+| Insolation (S_earth) | 0.35, 0.7, 1.0, 1.5 |
+| Phase (deg) | 0, 30, 60, 90, 120, 150 |
+
 Cahoy shortcut:
 
 ```bash
@@ -161,6 +185,26 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/run_postrun_qc.py \
   --output-root roadrunner_egp/aurora_subneptune_grid/outputs/<model>/nc \
   --grid-manifest roadrunner_egp/aurora_subneptune_grid/manifests/<model>_manifest.csv
 ```
+
+## Cahoy 2010 validation (after replication run)
+
+Install reference spectra once:
+
+```bash
+bash roadrunner_egp/aurora_subneptune_grid/scripts/install_cahoy2010_reference.sh
+```
+
+Batch compare all finished NetCDF files:
+
+```bash
+python roadrunner_egp/aurora_subneptune_grid/scripts/run_cahoy2010_compare.py --plot
+```
+
+Or open the notebook:
+
+`roadrunner_egp/aurora_subneptune_grid/notebooks/compare_cahoy2010_spectra.ipynb`
+
+Outputs land in `outputs/aurora_cahoy2010_replication_v0/cahoy_compare/`.
 
 ## Tests
 

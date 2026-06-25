@@ -79,5 +79,24 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
   "$(pwd)" aurora_subneptune_v0
 ```
 
+### Sub-Neptune grids (non-Cahoy)
+
+| Grid | Spectra | Climate groups | Role |
+| --- | ---: | ---: | --- |
+| `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check |
+| `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
+| `aurora_subneptune_v0` | 276,480 | 46,080 | Planned full production science grid |
+
+Planned full `aurora_subneptune_v0` parameter axes:
+
+- Stars (`teff_k`, `radius_rsun`): `(3500,0.45)`, `(4000,0.63)`, `(5000,0.80)`, `(7000,1.70)`
+- `planet_radius_rearth`: `1.6, 2.0, 2.5, 3.0`
+- `gravity_ms2`: `5, 10, 15, 25`
+- `metallicity_xsolar`: `1, 10, 100`
+- `c_to_o_xsolar`: `0.5, 1.0, 2.0`
+- `kzz_cm2_s`: `1e9, 1e11`
+- `cloud_fraction`: `0, 1`; `fsed`: `0.3, 1, 3, 6, 8`
+- `insolation_searth`: `0.35, 0.7, 1.0, 1.5`; `phase_deg`: `0, 30, 60, 90, 120, 150`
+
 See [roadrunner_egp/aurora_subneptune_grid/README.md](roadrunner_egp/aurora_subneptune_grid/README.md)
 and [HPC_INSTALL.md](HPC_INSTALL.md) for details.
