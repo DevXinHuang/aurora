@@ -22,7 +22,7 @@ cloud, chemistry, and orbit — but differ in `phase_deg` — share one climate 
 ```text
 outputs/<model_name>/
   climate_cache/climate_00.npz … climate_NN.npz   ← stage 1
-  nc/run_000000.nc …                              ← stage 2 (304–276,480 files)
+  nc/run_000000.nc …                              ← stage 2 (304–1,080,000 files)
 ```
 
 ### Submit any grid (smoke → validation → full)
@@ -39,7 +39,8 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 | `smoke_test_aurora_subneptune` | 6 | 2 | Plumbing |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | HPC timing / QC |
 | `aurora_cahoy2010_replication_v0` | 304 | 16 | Cahoy et al. 2010 1:1 |
-| `aurora_subneptune_v0` | 276,480 | 46,080 | Full science grid |
+| `aurora_subneptune_v1` | 1,080,000 | 180,000 | Full science grid (Zarah updates) |
+| `aurora_subneptune_v0` | 276,480 | 46,080 | Legacy full-grid baseline |
 
 ### Sub-Neptune grid sets (non-Cahoy)
 
@@ -50,20 +51,24 @@ The two non-Cahoy grids currently used for development/testing are:
 | `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check before larger runs |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
 
-Planned final production run is `aurora_subneptune_v0`:
+Planned final production run is `aurora_subneptune_v1`:
 
 | Parameter | Values |
 | --- | --- |
-| Host star Teff + radius | 3500/0.45, 4000/0.63, 5000/0.80, 7000/1.70 |
+| Host star Teff + radius | 3500/0.45, 4000/0.63, 5000/0.80, 6000/1.00, 7000/1.70 |
 | Planet radius (R_earth) | 1.6, 2.0, 2.5, 3.0 |
-| Surface gravity (m/s²) | 5, 10, 15, 25 |
+| Planet mass (M_earth) | 2.037, 4.073, 6.110, 10.183, 12.220 |
 | Metallicity (x solar) | 1, 10, 100 |
 | C/O (x solar) | 0.5, 1.0, 2.0 |
 | Kzz (cm²/s) | 1e9, 1e11 |
-| Cloud fraction | 0, 1 |
+| Cloud fraction | 0, 0.5, 0.75, 0.9, 1 |
 | fsed | 0.3, 1, 3, 6, 8 |
 | Insolation (S_earth) | 0.35, 0.7, 1.0, 1.5 |
 | Phase (deg) | 0, 30, 60, 90, 120, 150 |
+
+Gravity note: `gravity_ms2` is computed per row from mass and radius
+(`g = GM/R²`) for PICASO. Mass values match legacy `g = 5–30 m/s²` at
+`R = 2 R⊕` and are stored in manifest/NetCDF for comparison to measured values.
 
 Cahoy shortcut:
 
@@ -132,18 +137,18 @@ worlds in reflected-light spectra (Roman CGI).
 
 | Parameter | Values | Steps |
 | --- | --- | ---: |
-| Host star Teff + radius | 3500, 4000, 5000, 7000 K | 4 |
+| Host star Teff + radius | 3500, 4000, 5000, 6000, 7000 K | 5 |
 | Planet radius | 1.6, 2.0, 2.5, 3.0 R_earth | 4 |
-| Surface gravity | 5, 10, 15, 25 m/s² | 4 |
+| Planet mass | 2.037, 4.073, 6.110, 10.183, 12.220 M_earth | 5 |
 | Metallicity | 1, 10, 100× solar | 3 |
 | C/O | 0.5, 1.0, 2.0× solar | 3 |
 | Kzz | 1e9, 1e11 cm²/s | 2 |
-| Cloud fraction | 0, 1 | 2 |
+| Cloud fraction | 0, 0.5, 0.75, 0.9, 1 | 5 |
 | fsed | 0.3, 1, 3, 6, 8 | 5 |
 | Insolation | 0.35, 0.7, 1.0, 1.5 S⊕ | 4 |
 | Phase | 0, 30, 60, 90, 120, 150° | 6 |
 
-Full Cartesian product: **276,480** spectra = **46,080** climate groups × **6** phases.
+Full Cartesian product: **1,080,000** spectra = **180,000** climate groups × **6** phases.
 
 ## Environment
 

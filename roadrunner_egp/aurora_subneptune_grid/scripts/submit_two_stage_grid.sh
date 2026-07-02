@@ -10,7 +10,7 @@
 #   bash .../submit_two_stage_grid.sh "$(pwd)" smoke_test_aurora_subneptune
 #   bash .../submit_two_stage_grid.sh "$(pwd)" hpc_validation_aurora_subneptune
 #   bash .../submit_two_stage_grid.sh "$(pwd)" aurora_cahoy2010_replication_v0
-#   bash .../submit_two_stage_grid.sh "$(pwd)" aurora_subneptune_v0   # batched — see README
+#   bash .../submit_two_stage_grid.sh "$(pwd)" aurora_subneptune_v1   # batched — see README
 
 set -eo pipefail
 
