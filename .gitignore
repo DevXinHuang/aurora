@@ -68,3 +68,4 @@ picaso4_reference/**/*.zip
 roadrunner_egp/aurora_subneptune_grid/outputs/
 *.nc
 *.png
+!docs/_static/*.png
