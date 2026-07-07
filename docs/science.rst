@@ -63,10 +63,11 @@ spectroscopy under HWO-relevant conditions.
 
 1. Build a forward-model grid of sub-Neptune reflected-light spectra varying:
 
-   * Host star type (FGK)
+   * Host star type across the supported 3500, 4000, 5000, 6000, and 7000 K points
    * HZ-relevant separations / insolation regimes
-   * Heavy-element enrichment (metallicity ≈ 1–10\ :sup:`3`\ × solar)
-   * Cloud-top pressure, sedimentation efficiency, and mixing strength
+   * Planet mass and radius, with surface gravity derived as :math:`g = GM/R^2`
+   * Heavy-element enrichment (metallicity = 1, 10, and 100× solar)
+   * Cloud coverage, sedimentation efficiency, and mixing strength
 
 2. Assemble comparison spectra for:
 
@@ -96,7 +97,7 @@ diagnostics and statistical similarity under assumed measurement noise floors:
   statistically indistinguishable at realistic uncertainties
 
 The output will be a mapped *confusion region* in
-(enrichment, cloud-top pressure, separation, host-star type) parameter space,
+(enrichment, cloud coverage, mass-radius, separation, host-star type) parameter space,
 along with a set of recommended wavelength windows that best reduce ambiguity.
 
 Interdisciplinary Relevance
@@ -115,7 +116,8 @@ Expected Deliverables
 ---------------------
 
 1. A documented library / grid of sub-Neptune reflected-light spectra across
-   FGK hosts, HZ-relevant separations, enrichment, and cloud parameters.
+   the supported host-star grid, HZ-relevant separations, mass-radius values,
+   enrichment, and cloud parameters.
 2. Quantitative identification of the most diagnostic spectral regions that
    discriminate sub-Neptunes from terrestrial/abiotic analogs.
 3. Wavelength-coverage guidance for planet-typing in future direct-imaging

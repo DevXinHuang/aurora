@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,15 +12,83 @@ from .naming import picaso_tag_to_cto
 from .parameters import ROADRUNNER_ROOT
 
 
-WAVELENGTH_MIN_UM = 0.3
-WAVELENGTH_MAX_UM = 2.5
-WAVELENGTH_POINTS = 2201
+LEGACY_WAVELENGTH_MIN_UM = 0.3
+LEGACY_WAVELENGTH_MAX_UM = 2.5
+LEGACY_WAVELENGTH_POINTS = 2201
+PICASO_MAX_WAVELENGTH_MIN_UM = 0.3
+PICASO_MAX_WAVELENGTH_MAX_UM = 15.0
+PICASO_MAX_RESOLUTION = 15000.0
 R_EARTH_TO_R_JUP = 0.0892141056
 R_EARTH_AU = 4.263521245e-5
 
 
-def wavelength_grid_um() -> np.ndarray:
-    return np.linspace(WAVELENGTH_MIN_UM, WAVELENGTH_MAX_UM, WAVELENGTH_POINTS)
+def _row_value(row: dict[str, Any] | None, key: str, default: Any = None) -> Any:
+    if row is None:
+        return default
+    value = row.get(key, default)
+    if value in (None, ""):
+        return default
+    return value
+
+
+def _env_or_row(row: dict[str, Any] | None, key: str, env_name: str, default: Any = None) -> Any:
+    env_value = os.environ.get(env_name)
+    if env_value not in (None, ""):
+        return env_value
+    return _row_value(row, key, default)
+
+
+def _constant_resolution_grid(min_um: float, max_um: float, resolution: float) -> np.ndarray:
+    if min_um <= 0.0:
+        raise ValueError(f"wavelength_min_um must be positive for constant-resolution grids; got {min_um!r}.")
+    if max_um <= min_um:
+        raise ValueError(f"wavelength_max_um must exceed wavelength_min_um; got {min_um!r}, {max_um!r}.")
+    if resolution <= 0.0:
+        raise ValueError(f"wavelength_resolution must be positive; got {resolution!r}.")
+    n_points = int(math.ceil(math.log(max_um / min_um) * resolution)) + 1
+    return np.geomspace(min_um, max_um, n_points)
+
+
+def wavelength_grid_um(row: dict[str, Any] | None = None) -> np.ndarray:
+    """Return the configured output wavelength grid in microns.
+
+    The legacy fallback matches older Aurora manifests. New manifests can set
+    ``wavelength_grid_mode=constant_resolution`` with ``wavelength_resolution``
+    to use the PICASO resampled-opacity maximum grid.
+    """
+    mode = str(
+        _env_or_row(row, "wavelength_grid_mode", "AURORA_WAVELENGTH_GRID_MODE", "uniform_wavelength")
+    ).strip().lower()
+    if mode in {"picaso_max", "picaso_resampled_max", "max"}:
+        mode = "constant_resolution"
+        default_min = PICASO_MAX_WAVELENGTH_MIN_UM
+        default_max = PICASO_MAX_WAVELENGTH_MAX_UM
+        default_resolution = PICASO_MAX_RESOLUTION
+    else:
+        default_min = LEGACY_WAVELENGTH_MIN_UM
+        default_max = LEGACY_WAVELENGTH_MAX_UM
+        default_resolution = PICASO_MAX_RESOLUTION
+
+    min_um = float(_env_or_row(row, "wavelength_min_um", "AURORA_WAVELENGTH_MIN_UM", default_min))
+    max_um = float(_env_or_row(row, "wavelength_max_um", "AURORA_WAVELENGTH_MAX_UM", default_max))
+    if mode == "constant_resolution":
+        resolution = float(
+            _env_or_row(row, "wavelength_resolution", "AURORA_WAVELENGTH_RESOLUTION", default_resolution)
+        )
+        return _constant_resolution_grid(min_um, max_um, resolution)
+
+    if mode in {"uniform_wavelength", "linear", "legacy"}:
+        points = int(_env_or_row(row, "wavelength_points", "AURORA_WAVELENGTH_POINTS", LEGACY_WAVELENGTH_POINTS))
+        if points < 2:
+            raise ValueError(f"wavelength_points must be at least 2; got {points!r}.")
+        if max_um <= min_um:
+            raise ValueError(f"wavelength_max_um must exceed wavelength_min_um; got {min_um!r}, {max_um!r}.")
+        return np.linspace(min_um, max_um, points)
+
+    raise ValueError(
+        f"Unsupported wavelength_grid_mode {mode!r}; choose 'uniform_wavelength', "
+        "'constant_resolution', or 'picaso_max'."
+    )
 
 
 def _interp_native_to_grid(
@@ -133,7 +202,7 @@ def _as_bool_scalar(value: Any) -> bool:
 
 
 def _dry_run_model(row: dict[str, Any]) -> dict[str, Any]:
-    wavelength = np.linspace(WAVELENGTH_MIN_UM, WAVELENGTH_MAX_UM, 128)
+    wavelength = wavelength_grid_um(row)
     radius_au = float(row["planet_radius_rearth"]) * R_EARTH_AU
     semi_major_au = float(row["semi_major_au"])
     cloud_boost = 1.0 + 0.45 * float(row["cloud_fraction"])
@@ -300,7 +369,7 @@ def _run_real_picaso_model(
     )
     from roadrunner.system import SystemParams
 
-    output_grid = wavelength_grid_um()
+    output_grid = wavelength_grid_um(row)
     cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
     c_to_o = picaso_tag_to_cto(str(row["c_to_o_picaso_tag"]))
     metallicity_xsolar = float(row["metallicity_xsolar"])
@@ -465,7 +534,7 @@ def run_picaso_model_from_climate_cache(
         run_picaso_reflected_spectrum_from_converged_case,
     )
 
-    output_grid = wavelength_grid_um()
+    output_grid = wavelength_grid_um(row)
     system = _system_from_row(row)
     cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
     cache_meta = climate_cache.get("metadata", {})

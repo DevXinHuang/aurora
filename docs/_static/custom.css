@@ -5,7 +5,7 @@
     max-width: 960px;
 }
 
-/* Style important/note boxes similarly to ReflectX */
+/* Style important/note boxes with Aurora defaults */
 .admonition.important > .admonition-title {
     background: #6ab0de;
 }

@@ -21,7 +21,7 @@ from .stellar_spectrum import configure_picaso_star, stellar_spectrum_attrs
 
 def _merge_row(spectrum_row: dict[str, Any], climate_row: dict[str, Any]) -> dict[str, Any]:
     merged = dict(climate_row)
-    merged.update(spectrum_row)
+    merged.update({key: value for key, value in spectrum_row.items() if value not in (None, "")})
     merged["run_index"] = int(spectrum_row.get("spectrum_index", spectrum_row.get("run_index", 0)))
     merged["run_id"] = str(spectrum_row.get("spectrum_run_id", spectrum_row.get("run_id", "")))
     merged["phase_deg"] = float(spectrum_row["phase_deg"])
@@ -58,7 +58,7 @@ def _run_real_spectrum_from_cache(spectrum_row: dict[str, Any], climate_cache_pa
     climate_row = row_from_climate_cache(state)
     merged = _merge_row(spectrum_row, climate_row)
     system = _climate_row_to_system(merged, phase_deg=float(spectrum_row["phase_deg"]))
-    output_grid = wavelength_grid_um()
+    output_grid = wavelength_grid_um(merged)
     wave_range = [float(np.nanmin(output_grid)), float(np.nanmax(output_grid))]
     opa = jdi.opannection(wave_range=wave_range)
 

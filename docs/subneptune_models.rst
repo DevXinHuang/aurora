@@ -9,13 +9,16 @@ science targets of Aurora.  These planets straddle the transition between
 rocky super-Earths and volatile-rich sub-Neptunes, and their reflected-light
 spectra can closely mimic those of terrestrial planets when cloud decks mute
 absorption features and high metallicity compresses scale heights.
+The current production grid extends this radius-valley core to 3.0
+R\ :sub:`⊕`, uses planet mass and radius as the primary planet axes, and derives
+surface gravity per model row as :math:`g = GM/R^2`.
 
 This page describes the Aurora sub-Neptune model framework and previews the
 expected science output.
 
 .. important::
 
-   Full model results will be posted here once the ``aurora_subneptune_v0``
+   Full model results will be posted here once the ``aurora_subneptune_v1``
    production grid completes on HPC.  The descriptions below document the
    model setup and expected outputs.
 
@@ -35,6 +38,19 @@ Each Aurora sub-Neptune model has the following characteristics:
 * **Clouds from Virga:** Virga computes the cloud microphysics (particle size
   distribution, column optical depth) given the P–T profile, gravity, and
   mixing strength K\ :sub:`zz`.
+
+Current Production Parameter Space
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The supported ``aurora_subneptune_v1`` grid contains 1,080,000 spectra: five
+host-star points (3500/0.45, 4000/0.63, 5000/0.80, 6000/1.00, and 7000/1.70
+in K/R\ :sub:`☉`), four radii (1.6, 2.0, 2.5, 3.0 R\ :sub:`⊕`), five masses
+(2.037, 4.073, 6.110, 10.183, 12.220 M\ :sub:`⊕`), three metallicities
+(1, 10, 100× solar), three C/O ratios (0.5, 1.0, 2.0× solar), two
+K\ :sub:`zz` values (10\ :sup:`9`, 10\ :sup:`11` cm\ :sup:`2` s\ :sup:`−1`),
+five cloud fractions (0, 0.5, 0.75, 0.9, 1), five f\ :sub:`sed` values
+(0.3, 1, 3, 6, 8), four insolation values (0.35, 0.70, 1.00, 1.50
+S\ :sub:`⊕`), and six phase angles (0, 30, 60, 90, 120, 150°).
 
 Expected Cloud Species
 ~~~~~~~~~~~~~~~~~~~~~~

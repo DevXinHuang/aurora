@@ -14,7 +14,7 @@ terrestrial worlds in low-resolution reflected-light spectroscopy.
 .. important::
 
    This project is under active development.  Grid results will be released
-   publicly once the full ``aurora_subneptune_v0`` run completes on HPC.
+   publicly once the full ``aurora_subneptune_v1`` run completes on HPC.
 
 Contents
 --------

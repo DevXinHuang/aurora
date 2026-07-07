@@ -136,7 +136,7 @@ def main():
         0.48,
         10.25,
         0.22,
-        "ReflectX-style schematic based on Daniel Huang's AABC proposal and the timestep/RoadRunner PICASO workflow",
+        "Aurora schematic based on Daniel Huang's AABC proposal and the timestep/RoadRunner PICASO workflow",
         size=10.5,
         color="#56616a",
         align=PP_ALIGN.CENTER,

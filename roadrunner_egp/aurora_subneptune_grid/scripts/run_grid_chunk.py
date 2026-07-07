@@ -84,6 +84,14 @@ def _select_rows(dataframe, args: argparse.Namespace):
     return selected
 
 
+def _status_label(result: object) -> str:
+    if isinstance(result, dict):
+        value = result.get("status", "")
+    else:
+        value = result
+    return str(value or "").strip().lower()
+
+
 def main() -> int:
     args = parse_args()
     dataframe = read_manifest_csv(args.manifest)
@@ -124,7 +132,7 @@ def main() -> int:
         print("final_status:")
         print(result)
 
-    failed = [status for status in statuses if str(status.get("status", "")).startswith("error")]
+    failed = [status for status in statuses if _status_label(status).startswith(("error", "fail"))]
     return 1 if failed else 0
 
 

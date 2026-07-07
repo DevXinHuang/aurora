@@ -27,7 +27,7 @@ For machine-readable details, see
 Aurora Route Flowchart
 ----------------------
 
-The workflow below mirrors the ReflectX-style route selection used in Aurora's
+The workflow below mirrors Aurora's route selection used in the
 RoadRunner/PICASO decision flow.
 
 .. mermaid::

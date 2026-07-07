@@ -19,6 +19,11 @@ G_SI = 6.67430e-11
 M_EARTH_KG = 5.9722e24
 R_EARTH_M = 6.371e6
 NOTEBOOK_REFERENCE = "roadrunner_egp/notebooks/path_a_full_picaso_first_order_simulation.ipynb"
+DEFAULT_WAVELENGTH_GRID_MODE = "constant_resolution"
+DEFAULT_WAVELENGTH_MIN_UM = 0.3
+DEFAULT_WAVELENGTH_MAX_UM = 2.5
+DEFAULT_WAVELENGTH_RESOLUTION = 15000.0
+DEFAULT_WAVELENGTH_POINTS = 2201
 
 GRID_ROOT = Path(__file__).resolve().parents[2]
 ROADRUNNER_ROOT = GRID_ROOT.parent
@@ -76,6 +81,11 @@ MANIFEST_COLUMNS = [
     "picaso_tint_floor_k",
     "netcdf_optional_variables",
     "netcdf_strict_optional",
+    "wavelength_grid_mode",
+    "wavelength_min_um",
+    "wavelength_max_um",
+    "wavelength_resolution",
+    "wavelength_points",
     "source_notebook_reference",
 ]
 
@@ -99,9 +109,12 @@ FLOAT_COLUMNS = {
     "picaso_tint_k",
     "picaso_tint_fixed_k",
     "picaso_tint_floor_k",
+    "wavelength_min_um",
+    "wavelength_max_um",
+    "wavelength_resolution",
 }
 
-INT_COLUMNS = {"run_index", "climate_group_index"}
+INT_COLUMNS = {"run_index", "climate_group_index", "wavelength_points"}
 BOOL_COLUMNS = {"netcdf_strict_optional"}
 
 
@@ -290,6 +303,18 @@ def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
         netcdf_config = {}
     if not isinstance(netcdf_config, dict):
         raise ValueError("Config key 'netcdf' must be a mapping when provided.")
+    wavelength_grid = netcdf_config.get("wavelength_grid", {})
+    if wavelength_grid is None:
+        wavelength_grid = {}
+    if not isinstance(wavelength_grid, dict):
+        raise ValueError("Config key 'netcdf.wavelength_grid' must be a mapping when provided.")
+    grid_mode = str(wavelength_grid.get("mode", DEFAULT_WAVELENGTH_GRID_MODE))
+    wavelength_min_um = float(wavelength_grid.get("min_um", DEFAULT_WAVELENGTH_MIN_UM))
+    wavelength_max_um = float(wavelength_grid.get("max_um", DEFAULT_WAVELENGTH_MAX_UM))
+    wavelength_resolution = float(wavelength_grid.get("resolution", DEFAULT_WAVELENGTH_RESOLUTION))
+    wavelength_points = int(wavelength_grid.get("points", DEFAULT_WAVELENGTH_POINTS))
+    if grid_mode.strip().lower() in {"constant_resolution", "picaso_max", "picaso_resampled_max", "max"}:
+        wavelength_points = int(math.ceil(math.log(wavelength_max_um / wavelength_min_um) * wavelength_resolution)) + 1
     return {
         "author": config.get("author", ""),
         "contact": config.get("contact", ""),
@@ -301,6 +326,11 @@ def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
         "picaso_tint_floor_k": float(config.get("picaso_tint_floor_k", 100.0)),
         "netcdf_optional_variables": json.dumps(netcdf_config.get("optional_variables", []), sort_keys=True),
         "netcdf_strict_optional": bool(netcdf_config.get("strict_optional", False)),
+        "wavelength_grid_mode": grid_mode,
+        "wavelength_min_um": wavelength_min_um,
+        "wavelength_max_um": wavelength_max_um,
+        "wavelength_resolution": wavelength_resolution,
+        "wavelength_points": wavelength_points,
         "source_notebook_reference": NOTEBOOK_REFERENCE,
     }
 
