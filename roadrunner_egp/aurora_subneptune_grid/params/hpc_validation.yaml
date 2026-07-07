@@ -55,6 +55,11 @@ picaso_tint_floor_k: 100.0
 netcdf:
   optional_variables: []
   strict_optional: false
+  wavelength_grid:
+    mode: constant_resolution
+    min_um: 0.3
+    max_um: 2.5
+    resolution: 15000
 
 # ---- Stars: 3 representative host stars (cool M, solar-like K, hot F) ----
 stars:

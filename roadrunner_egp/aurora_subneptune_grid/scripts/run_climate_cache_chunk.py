@@ -50,7 +50,7 @@ def main() -> int:
     cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
     climate_out, diagnostics, selected_ck_file, cl_run = run_picaso_climate_converge_only(
         system,
-        wavelength_grid_um(),
+        wavelength_grid_um(row),
         ck_root=args.ck_root,
         cloud_model=cloud_model,
         verbose=True,
