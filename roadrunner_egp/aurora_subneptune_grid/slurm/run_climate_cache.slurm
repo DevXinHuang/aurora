@@ -23,6 +23,9 @@ GRID_ROOT="roadrunner_egp/aurora_subneptune_grid"
 
 mkdir -p "$GRID_ROOT/logs"
 
+export NUMBA_CACHE_DIR="${SLURM_TMPDIR:-/tmp}/aurora_numba_cache_${SLURM_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
+mkdir -p "$NUMBA_CACHE_DIR"
+
 export AURORA_FORCE_CONDA=1
 module load micromamba/2.0.2-2
 export MAMBA_ROOT_PREFIX="${MAMBA_ROOT_PREFIX:-${HOME}/.local/share/mamba}"
