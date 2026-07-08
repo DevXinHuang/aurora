@@ -36,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--poll-seconds", type=int, default=300)
     parser.add_argument("--post-wave-sleep-seconds", type=int, default=30)
     parser.add_argument("--max-retries", type=int, default=2)
+    parser.add_argument("--max-array-tasks", type=int, default=950)
     parser.add_argument("--stop-failure-fraction", type=float, default=0.50)
     parser.add_argument("--submit-retry-seconds", type=int, default=300)
     parser.add_argument("--adopt-first-job-id", default="")
@@ -155,6 +156,9 @@ def wait_for_job(job_id: str, *, repo_root: Path, poll_seconds: int, log_path: P
     while True:
         result = run(["squeue", "-h", "-j", str(job_id)], cwd=repo_root)
         if result.returncode != 0:
+            if "Invalid job id specified" in result.stderr:
+                log(f"job left queue: {job_id}", log_path)
+                return
             log(f"squeue failed for job={job_id}: {result.stderr.strip()!r}; retrying", log_path)
             time.sleep(poll_seconds)
             continue
@@ -220,31 +224,43 @@ def main() -> int:
         missing = missing_indices(output_root, indices)
         attempt = 0
         while missing and attempt <= args.max_retries:
-            job_id = submit_array(
-                repo_root=repo_root,
-                slurm_script=slurm_script,
-                model=args.model,
-                manifest=manifest,
-                indices=missing,
-                throttle=args.throttle,
-                wave=wave,
-                attempt=attempt,
-                log_path=log_path,
-                retry_seconds=args.submit_retry_seconds,
-            )
-            write_state(
-                state_path,
-                status="wave_running",
-                wave=wave,
-                wave_start=start,
-                wave_end=end,
-                expected_count=expected_count,
-                missing_before_submit=len(missing),
-                job_id=job_id,
-                attempt=attempt,
-                manifest=str(manifest),
-            )
-            wait_for_job(job_id, repo_root=repo_root, poll_seconds=args.poll_seconds, log_path=log_path)
+            attempt_missing = list(missing)
+            chunks = [
+                attempt_missing[offset : offset + args.max_array_tasks]
+                for offset in range(0, len(attempt_missing), args.max_array_tasks)
+            ]
+            for chunk_index, chunk in enumerate(chunks):
+                chunk = missing_indices(output_root, chunk)
+                if not chunk:
+                    continue
+                job_id = submit_array(
+                    repo_root=repo_root,
+                    slurm_script=slurm_script,
+                    model=args.model,
+                    manifest=manifest,
+                    indices=chunk,
+                    throttle=args.throttle,
+                    wave=wave,
+                    attempt=attempt,
+                    log_path=log_path,
+                    retry_seconds=args.submit_retry_seconds,
+                )
+                write_state(
+                    state_path,
+                    status="wave_running",
+                    wave=wave,
+                    wave_start=start,
+                    wave_end=end,
+                    expected_count=expected_count,
+                    missing_before_submit=len(missing),
+                    submitted_count=len(chunk),
+                    chunk_index=chunk_index,
+                    chunk_count=len(chunks),
+                    job_id=job_id,
+                    attempt=attempt,
+                    manifest=str(manifest),
+                )
+                wait_for_job(job_id, repo_root=repo_root, poll_seconds=args.poll_seconds, log_path=log_path)
             time.sleep(args.post_wave_sleep_seconds)
             missing = missing_indices(output_root, indices)
             log(f"wave={wave:03d} attempt={attempt} missing_after={len(missing)}", log_path)
