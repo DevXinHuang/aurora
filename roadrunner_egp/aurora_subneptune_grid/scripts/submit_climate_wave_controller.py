@@ -43,6 +43,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--state-path", required=True)
     parser.add_argument("--log-path", required=True)
     parser.add_argument("--failed-indices-path", required=True)
+    parser.add_argument("--skip-indices-path", default="")
     return parser.parse_args()
 
 
@@ -78,13 +79,29 @@ def read_wave_indices(path: Path) -> list[int]:
         return [int(row["climate_group_index"]) for row in reader]
 
 
+def read_skip_indices(path: Path | None) -> set[int]:
+    if path is None or not path.exists():
+        return set()
+    skipped: set[int] = set()
+    with path.open(newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            value = row.get("climate_group_index")
+            if value not in (None, ""):
+                skipped.add(int(value))
+    return skipped
+
+
 def cache_path(output_root: Path, climate_group_index: int) -> Path:
     return output_root / "climate_cache" / f"climate_{int(climate_group_index):02d}.npz"
 
 
-def missing_indices(output_root: Path, indices: list[int]) -> list[int]:
+def missing_indices(output_root: Path, indices: list[int], skip_indices: set[int] | None = None) -> list[int]:
+    skip_indices = skip_indices or set()
     missing: list[int] = []
     for index in indices:
+        if index in skip_indices:
+            continue
         path = cache_path(output_root, index)
         if not path.exists() or path.stat().st_size <= 0:
             missing.append(index)
@@ -192,12 +209,16 @@ def main() -> int:
     state_path = Path(args.state_path).expanduser().resolve()
     log_path = Path(args.log_path).expanduser().resolve()
     failed_indices_path = Path(args.failed_indices_path).expanduser().resolve()
+    skip_indices_path = Path(args.skip_indices_path).expanduser().resolve() if args.skip_indices_path else None
+    skip_indices = read_skip_indices(skip_indices_path)
 
     log(
         f"controller start waves={args.start_wave:03d}-{args.end_wave:03d} "
         f"throttle={args.throttle} adopt_first_job_id={args.adopt_first_job_id or 'none'}",
         log_path,
     )
+    if skip_indices_path:
+        log(f"skip indices path={skip_indices_path} count={len(skip_indices)}", log_path)
     failed_indices_path.parent.mkdir(parents=True, exist_ok=True)
     failed_indices_path.write_text("", encoding="utf-8")
 
@@ -205,6 +226,8 @@ def main() -> int:
         manifest, start, end = wave_file(wave_dir, wave)
         indices = read_wave_indices(manifest)
         expected_count = len(indices)
+        skipped_count = sum(1 for index in indices if index in skip_indices)
+        runnable_count = expected_count - skipped_count
         write_state(
             state_path,
             status="wave_started",
@@ -212,16 +235,22 @@ def main() -> int:
             wave_start=start,
             wave_end=end,
             expected_count=expected_count,
+            runnable_count=runnable_count,
+            skipped_count=skipped_count,
             manifest=str(manifest),
         )
-        log(f"wave={wave:03d} expected={expected_count} range={start}-{end}", log_path)
+        log(
+            f"wave={wave:03d} expected={expected_count} runnable={runnable_count} "
+            f"skipped={skipped_count} range={start}-{end}",
+            log_path,
+        )
 
         if wave == args.start_wave and args.adopt_first_job_id:
             log(f"adopting existing wave={wave:03d} job_id={args.adopt_first_job_id}", log_path)
             wait_for_job(args.adopt_first_job_id, repo_root=repo_root, poll_seconds=args.poll_seconds, log_path=log_path)
             time.sleep(args.post_wave_sleep_seconds)
 
-        missing = missing_indices(output_root, indices)
+        missing = missing_indices(output_root, indices, skip_indices)
         attempt = 0
         while missing and attempt <= args.max_retries:
             attempt_missing = list(missing)
@@ -230,7 +259,7 @@ def main() -> int:
                 for offset in range(0, len(attempt_missing), args.max_array_tasks)
             ]
             for chunk_index, chunk in enumerate(chunks):
-                chunk = missing_indices(output_root, chunk)
+                chunk = missing_indices(output_root, chunk, skip_indices)
                 if not chunk:
                     continue
                 job_id = submit_array(
@@ -252,6 +281,8 @@ def main() -> int:
                     wave_start=start,
                     wave_end=end,
                     expected_count=expected_count,
+                    runnable_count=runnable_count,
+                    skipped_count=skipped_count,
                     missing_before_submit=len(missing),
                     submitted_count=len(chunk),
                     chunk_index=chunk_index,
@@ -262,13 +293,13 @@ def main() -> int:
                 )
                 wait_for_job(job_id, repo_root=repo_root, poll_seconds=args.poll_seconds, log_path=log_path)
             time.sleep(args.post_wave_sleep_seconds)
-            missing = missing_indices(output_root, indices)
+            missing = missing_indices(output_root, indices, skip_indices)
             log(f"wave={wave:03d} attempt={attempt} missing_after={len(missing)}", log_path)
             attempt += 1
 
         if missing:
             append_failures(failed_indices_path, wave, missing)
-            failure_fraction = len(missing) / max(1, expected_count)
+            failure_fraction = len(missing) / max(1, runnable_count)
             log(f"wave={wave:03d} unresolved_missing={len(missing)} fraction={failure_fraction:.3f}", log_path)
             if failure_fraction >= args.stop_failure_fraction:
                 write_state(
@@ -280,7 +311,7 @@ def main() -> int:
                 )
                 return 2
 
-        complete_count = expected_count - len(missing)
+        complete_count = runnable_count - len(missing)
         write_state(
             state_path,
             status="wave_complete",
@@ -288,24 +319,31 @@ def main() -> int:
             wave_start=start,
             wave_end=end,
             expected_count=expected_count,
+            runnable_count=runnable_count,
+            skipped_count=skipped_count,
             complete_count=complete_count,
             unresolved_missing=len(missing),
             failed_indices_path=str(failed_indices_path),
         )
-        log(f"wave={wave:03d} complete={complete_count}/{expected_count}", log_path)
+        log(
+            f"wave={wave:03d} complete={complete_count}/{runnable_count} "
+            f"skipped={skipped_count} total={expected_count}",
+            log_path,
+        )
 
     final_missing: list[int] = []
     for wave in range(args.start_wave, args.end_wave + 1):
         manifest, _, _ = wave_file(wave_dir, wave)
-        final_missing.extend(missing_indices(output_root, read_wave_indices(manifest)))
+        final_missing.extend(missing_indices(output_root, read_wave_indices(manifest), skip_indices))
     append_failures(failed_indices_path, -1, final_missing)
     write_state(
         state_path,
         status="all_waves_complete",
         final_missing=len(final_missing),
+        skipped_count=len(skip_indices),
         failed_indices_path=str(failed_indices_path),
     )
-    log(f"all waves complete final_missing={len(final_missing)}", log_path)
+    log(f"all waves complete final_missing={len(final_missing)} skipped={len(skip_indices)}", log_path)
     return 0 if not final_missing else 3
 
 
