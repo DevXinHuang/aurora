@@ -26,7 +26,7 @@ netcdf:
   wavelength_grid:
     mode: constant_resolution
     min_um: 0.3
-    max_um: 2.5
+    max_um: 15.0
     resolution: 15000
 
 stars:
