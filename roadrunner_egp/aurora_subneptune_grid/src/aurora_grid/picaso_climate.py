@@ -96,7 +96,7 @@ def _run_real_picaso_climate(row: dict[str, Any]) -> dict[str, Any]:
 
     assert HAVE_PICASO, "PICASO is required"
 
-    output_grid = wavelength_grid_um()
+    output_grid = wavelength_grid_um(row)
     cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
     system = _climate_row_to_system(row, phase_deg=0.0)
     wave_range = [float(np.nanmin(output_grid)), float(np.nanmax(output_grid))]

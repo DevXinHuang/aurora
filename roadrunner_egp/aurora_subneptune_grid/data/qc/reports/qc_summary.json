@@ -1,0 +1,33 @@
+[
+  {
+    "bottom_temperature": 534.5261465163516,
+    "fail_reasons": "",
+    "file_path": "roadrunner_egp/aurora_subneptune_grid/outputs/aurora_cahoy_exact_304/nc/run_000000.nc",
+    "has_cloud_asy": true,
+    "has_cloud_opd": true,
+    "has_cloud_ssa": true,
+    "has_geometric_albedo": true,
+    "has_pressure": true,
+    "has_reflected_planet_star_flux_ratio": true,
+    "has_temperature": true,
+    "has_wavelength": true,
+    "max_abs_fnet_irfnet": "",
+    "max_adiabat_ratio": "",
+    "max_brightness_temperature": "",
+    "n_adiabat_violations": "",
+    "n_chemistry_vars": 0,
+    "pressure_max": 31.622776601683793,
+    "pressure_min": 1e-06,
+    "rerun_recommended": false,
+    "run_id": "84070f0c0671",
+    "run_index": 0,
+    "severity": "warning",
+    "status": "warning",
+    "storage_level": "aurora_schema_v1",
+    "temperature_max": 534.5261465163516,
+    "temperature_min": 268.6300267379565,
+    "warning_reasons": "Exact PICASO climate diagnostics unavailable for this run mode; no moistgrad, flux-balance, or spectrum_output fields were returned.",
+    "wavelength_max": 2.5,
+    "wavelength_min": 0.3
+  }
+]

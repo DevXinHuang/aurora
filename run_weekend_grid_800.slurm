@@ -1,7 +1,7 @@
 #!/bin/bash
 # LEGACY exploratory weekend shard — not the production grid runner.
 # For science grids use the two-stage workflow:
-#   bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh "$(pwd)" aurora_subneptune_v0
+#   bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh "$(pwd)" aurora_subneptune_v1
 #SBATCH --job-name=aurora_weekend
 #SBATCH --account=tdrobin
 #SBATCH --partition=standard

@@ -8,9 +8,10 @@ physical parameters, cloud properties, and orbital geometry.
 Overview
 --------
 
-The production grid ``aurora_subneptune_v0`` contains **276,480 spectra**
-grouped into **46,080 climate groups**.  Smaller grids are available for
-pipeline validation and HPC timing tests.
+The production grid ``aurora_subneptune_v1`` contains **1,080,000 spectra**
+grouped into **180,000 climate groups**.  Smaller grids are available for
+pipeline validation and HPC timing tests.  The earlier ``aurora_subneptune_v0``
+grid remains available as a legacy baseline.
 
 .. list-table:: Available Aurora grids
    :header-rows: 1
@@ -32,10 +33,14 @@ pipeline validation and HPC timing tests.
      - 304
      - 16
      - 1-to-1 Cahoy et al. 2010 replication
+   * - ``aurora_subneptune_v1``
+     - 1,080,000
+     - 180,000
+     - Full production science grid (current)
    * - ``aurora_subneptune_v0``
      - 276,480
      - 46,080
-     - Full production science grid
+     - Legacy full-grid baseline
 
 Two-Stage Workflow
 ------------------
@@ -70,10 +75,12 @@ Output file layout::
      climate_cache/climate_00.npz … climate_NN.npz   ← stage 1
      nc/run_000000.nc …                              ← stage 2
 
-Parameter Axes (``aurora_subneptune_v0``)
+Parameter Axes (``aurora_subneptune_v1``)
 -----------------------------------------
 
-The full production grid spans the following parameter axes:
+The full production grid spans the following parameter axes.  **Planet mass and
+radius are the primary axes** (for comparison to measured values).  Surface
+gravity is computed per row as :math:`g = GM/R^2` and passed to PICASO.
 
 .. list-table::
    :header-rows: 1
@@ -82,11 +89,13 @@ The full production grid spans the following parameter axes:
    * - Parameter
      - Values
    * - Host star T\ :sub:`eff` / R\ :sub:`star`
-     - (3500 K, 0.45 R\ :sub:`☉`), (4000 K, 0.63 R\ :sub:`☉`), (5000 K, 0.80 R\ :sub:`☉`), (7000 K, 1.70 R\ :sub:`☉`)
+     - (3500 K, 0.45 R\ :sub:`☉`), (4000 K, 0.63 R\ :sub:`☉`), (5000 K, 0.80 R\ :sub:`☉`), (6000 K, 1.00 R\ :sub:`☉`), (7000 K, 1.70 R\ :sub:`☉`)
    * - Planet radius (R\ :sub:`⊕`)
      - 1.6, 2.0, 2.5, 3.0
+   * - Planet mass (M\ :sub:`⊕`)
+     - 2.037, 4.073, 6.110, 10.183, 12.220
    * - Surface gravity (m s\ :sup:`−2`)
-     - 5, 10, 15, 25
+     - Derived per row from mass and radius (legacy :math:`g = 5, 10, 15, 25, 30` m s\ :sup:`−2` at :math:`R = 2\,R_\oplus`)
    * - Metallicity (× solar)
      - 1, 10, 100
    * - C/O ratio (× solar)
@@ -94,13 +103,16 @@ The full production grid spans the following parameter axes:
    * - K\ :sub:`zz` (cm\ :sup:`2` s\ :sup:`−1`)
      - 10\ :sup:`9`, 10\ :sup:`11`
    * - Cloud fraction
-     - 0 (cloud-free), 1 (fully cloudy)
+     - 0 (cloud-free), 0.5, 0.75, 0.9, 1 (fully cloudy)
    * - f\ :sub:`sed`
      - 0.3, 1, 3, 6, 8
    * - Insolation (S\ :sub:`⊕`)
      - 0.35, 0.70, 1.00, 1.50
    * - Phase (deg)
      - 0, 30, 60, 90, 120, 150
+
+Full Cartesian product: **1,080,000** spectra = **180,000** climate groups × **6**
+phases.
 
 Cloud Parameters
 ----------------
@@ -119,6 +131,9 @@ Cloud properties are parameterized using Virga (Batalha & Rooney 2022):
 
 The two values K\ :sub:`zz` = 10\ :sup:`9` and 10\ :sup:`11` cm\ :sup:`2` s\ :sup:`−1`
 bracket a wide range of mixing regimes in sub-Neptune atmospheres.
+
+Fractional cloud fractions (0.5, 0.75, 0.9) use PICASO's native patchy-cloud
+API (clear holes with ``fhole = 1 - cloud_fraction``).
 
 Spectral Coverage
 -----------------
@@ -153,7 +168,7 @@ Submitting Grids on HPC
 
    # Full production grid
    bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
-     "$(pwd)" aurora_subneptune_v0
+     "$(pwd)" aurora_subneptune_v1
 
 Stage 2 waits on stage 1 via ``--dependency=afterok``.  Large grids (> 1,000
 tasks) are automatically submitted in batches.

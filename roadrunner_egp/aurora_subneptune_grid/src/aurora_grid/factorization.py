@@ -42,8 +42,11 @@ DEFAULT_CLIMATE_AXES = (
 
 DEFAULT_OBSERVATION_AXES = (
     "phase_deg",
+    "wavelength_grid_mode",
     "wavelength_min_um",
     "wavelength_max_um",
+    "wavelength_resolution",
+    "wavelength_points",
     "resolving_power",
     "instrument_bandpass",
 )
@@ -114,6 +117,11 @@ SPECTRUM_MANIFEST_COLUMNS = (
     "insolation_searth",
     "semi_major_au",
     "picaso_tint_k",
+    "wavelength_grid_mode",
+    "wavelength_min_um",
+    "wavelength_max_um",
+    "wavelength_resolution",
+    "wavelength_points",
 )
 
 CLIMATE_SPECTRUM_MAP_COLUMNS = (
@@ -146,8 +154,11 @@ CLIMATE_KEY_EXCLUDE_KEYS = {
     "netcdf_optional_variables",
     "netcdf_strict_optional",
     "source_notebook_reference",
+    "wavelength_grid_mode",
     "wavelength_min_um",
     "wavelength_max_um",
+    "wavelength_resolution",
+    "wavelength_points",
     "resolving_power",
     "instrument_bandpass",
 }
@@ -326,6 +337,11 @@ def create_factorized_manifests(config: dict[str, Any]) -> FactorizedManifests:
             "insolation_searth": row["insolation_searth"],
             "semi_major_au": row["semi_major_au"],
             "picaso_tint_k": row["picaso_tint_k"],
+            "wavelength_grid_mode": row.get("wavelength_grid_mode", ""),
+            "wavelength_min_um": row.get("wavelength_min_um", ""),
+            "wavelength_max_um": row.get("wavelength_max_um", ""),
+            "wavelength_resolution": row.get("wavelength_resolution", ""),
+            "wavelength_points": row.get("wavelength_points", ""),
         }
         spectrum_rows.append(spectrum_row)
         map_entry = map_rows[climate_key]

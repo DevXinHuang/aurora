@@ -1,7 +1,7 @@
 # ============================================================================
 # HPC Validation Grid — 1,728 spectra / 576 climate groups
 # ============================================================================
-# Representative subset of the full 276,480-row grid. Submit with:
+# Representative subset of the full 1,080,000-row grid. Submit with:
 #
 #   bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 #     "$(pwd)" hpc_validation_aurora_subneptune
@@ -18,7 +18,7 @@
 #
 # To change what gets run, simply edit the lists. For example:
 #
-#   • Add a value:        gravity_ms2: [5, 10, 15, 25]   → 4 values
+#   • Add a value:        gravity_ms2: [5, 10, 15, 25, 30] → 5 values
 #   • Remove a value:     gravity_ms2: [10, 25]           → 2 values
 #   • Single value:       gravity_ms2: [10]               → 1 value (held fixed)
 #
@@ -39,7 +39,7 @@ author: "Daniel Huang"
 contact: "Daniel Huang"
 project: "Aurora Sub-Neptune Grid"
 notes: >-
-  HPC validation run: representative 1,728-row subset of the full grid.
+  HPC validation run: representative 1,728-row subset of the full v1 grid.
   Covers endpoint and midpoint values for each parameter axis.
 
 code:
@@ -55,6 +55,11 @@ picaso_tint_floor_k: 100.0
 netcdf:
   optional_variables: []
   strict_optional: false
+  wavelength_grid:
+    mode: constant_resolution
+    min_um: 0.3
+    max_um: 2.5
+    resolution: 15000
 
 # ---- Stars: 3 representative host stars (cool M, solar-like K, hot F) ----
 stars:
