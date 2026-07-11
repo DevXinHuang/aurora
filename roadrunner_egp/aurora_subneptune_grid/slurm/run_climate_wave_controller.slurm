@@ -22,6 +22,7 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/submit_climate_wave_control
   --wave-dir "$RUN_ROOT/manifests/climate_waves" \
   --output-root "$RUN_ROOT" \
   --model "aurora_subneptune_v1_dhuang" \
+  --mode "${CLIMATE_CONTROLLER_MODE:-rolling}" \
   --start-wave "${START_WAVE:-0}" \
   --end-wave "${END_WAVE:-180}" \
   --throttle "${CLIMATE_WAVE_THROTTLE:-999}" \
@@ -29,6 +30,9 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/submit_climate_wave_control
   --post-wave-sleep-seconds "${CLIMATE_WAVE_POST_SLEEP_SECONDS:-30}" \
   --max-retries "${CLIMATE_WAVE_MAX_RETRIES:-2}" \
   --max-array-tasks "${CLIMATE_WAVE_MAX_ARRAY_TASKS:-998}" \
+  --qos "${CLIMATE_QOS:-part_qos_standard}" \
+  --qos-submit-limit "${CLIMATE_QOS_SUBMIT_LIMIT:-1000}" \
+  --time-limits "${CLIMATE_TIME_LIMITS:-02:00:00,03:00:00,04:00:00}" \
   --adopt-first-job-id "${ADOPT_FIRST_JOB_ID:-}" \
   --state-path "$RUN_ROOT/controller/state.json" \
   --log-path "$RUN_ROOT/controller/controller.log" \

@@ -40,8 +40,14 @@ eval "$(micromamba shell hook --shell bash)"
 micromamba activate picaso4
 source env/activate_aurora_picaso4_job.sh
 
+CLIMATE_ARGS=(--manifest "$MANIFEST")
+if [[ -n "${CLIMATE_INDEX_MAP:-}" ]]; then
+  CLIMATE_ARGS+=(--climate-index-map "$CLIMATE_INDEX_MAP" --array-task-id "${SLURM_ARRAY_TASK_ID}")
+else
+  CLIMATE_ARGS+=(--climate-group-index "${SLURM_ARRAY_TASK_ID}")
+fi
+
 python "$GRID_ROOT/scripts/run_climate_cache_chunk.py" \
-  --manifest "$MANIFEST" \
-  --climate-group-index "${SLURM_ARRAY_TASK_ID}" \
+  "${CLIMATE_ARGS[@]}" \
   --ck-root "$PICASO_CK_ROOT" \
   --overwrite
