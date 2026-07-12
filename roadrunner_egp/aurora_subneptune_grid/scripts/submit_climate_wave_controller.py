@@ -264,7 +264,7 @@ def submit_array(
 
 def qos_snapshot(repo_root: Path, qos: str) -> list[tuple[str, str, str, str]]:
     result = run(
-        ["squeue", "-h", "-r", "-u", os.environ.get("USER", ""), "-q", qos, "-o", "%A|%a|%j|%T"],
+        ["squeue", "-h", "-r", "-u", os.environ.get("USER", ""), "-q", qos, "-o", "%F|%K|%j|%T"],
         cwd=repo_root,
     )
     if result.returncode != 0:
@@ -387,6 +387,7 @@ def run_controller(args: argparse.Namespace) -> int:
     started = time.monotonic()
     submitted_total = 0
     failed_total = 0
+    absent_since: dict[str, float] = {}
     log(
         f"controller start mode={args.mode} waves={args.start_wave:03d}-{args.end_wave:03d} "
         f"runnable={len(runnable)} cached={initial_cache_count} pending={len(pending)} "
@@ -399,7 +400,12 @@ def run_controller(args: argparse.Namespace) -> int:
         active_job_ids = {row[0] for row in snapshot}
         for job_id in list(active):
             if job_id in active_job_ids:
+                absent_since.pop(job_id, None)
                 continue
+            first_absent = absent_since.setdefault(job_id, time.monotonic())
+            if time.monotonic() - first_absent < args.post_wave_sleep_seconds:
+                continue
+            absent_since.pop(job_id, None)
             submission = active.pop(job_id)
             retry, failed = retry_or_fail(submission, output_root, args.max_retries)
             if retry:
@@ -407,18 +413,18 @@ def run_controller(args: argparse.Namespace) -> int:
             if failed:
                 append_failures(failed_path, failed)
                 failed_total += len(failed)
-            missing_fraction = (len(retry) + len(failed)) / max(1, len(submission.items))
+            failed_fraction = len(failed) / max(1, len(submission.items))
             log(
                 f"job complete job_id={job_id} tasks={len(submission.items)} "
                 f"retry={len(retry)} failed={len(failed)}",
                 log_path,
             )
-            if missing_fraction >= args.stop_failure_fraction:
+            if failed_fraction >= args.stop_failure_fraction:
                 write_state(
                     state_path,
                     status="stopped_large_failure",
                     job_id=job_id,
-                    missing_fraction=missing_fraction,
+                    failed_fraction=failed_fraction,
                     retry_count=len(retry),
                     failed_count=len(failed),
                 )

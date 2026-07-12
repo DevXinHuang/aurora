@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from collections import deque
 from pathlib import Path
@@ -93,3 +94,32 @@ def test_discovery_maps_active_local_ids_without_duplicates(tmp_path: Path):
     active = controller.discover_active_submissions(snapshot, catalog, tmp_path)
 
     assert [item.climate_group_index for item in active["123"].items] == [10000, 10002]
+
+
+def test_qos_snapshot_uses_array_parent_and_task_ids(monkeypatch, tmp_path: Path):
+    seen_command = []
+
+    def fake_run(command, *, cwd, env=None):
+        seen_command.extend(command)
+        return subprocess.CompletedProcess(command, 0, "123|7|aurora_clim_w010|RUNNING\n", "")
+
+    monkeypatch.setattr(controller, "run", fake_run)
+
+    assert controller.qos_snapshot(tmp_path, "part_qos_standard") == [
+        ("123", "7", "aurora_clim_w010", "RUNNING")
+    ]
+    assert seen_command[-1] == "%F|%K|%j|%T"
+
+
+def test_retryable_missing_items_do_not_count_as_exhausted_failures(tmp_path: Path):
+    manifest = tmp_path / "wave.csv"
+    output_root = tmp_path / "output"
+    submission = controller.ActiveSubmission(
+        "123",
+        [controller.WorkItem(index, 0, manifest, attempt=0) for index in range(10)],
+    )
+
+    retry, failed = controller.retry_or_fail(submission, output_root, max_retries=2)
+
+    assert len(retry) == 10
+    assert failed == []
