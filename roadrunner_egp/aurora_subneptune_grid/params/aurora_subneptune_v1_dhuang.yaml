@@ -1,0 +1,55 @@
+model_name: aurora_subneptune_v1_dhuang
+
+author: "Daniel Huang"
+contact: "Daniel Huang"
+project: "Aurora Sub-Neptune Grid"
+notes: >-
+  Full Cartesian sub-Neptune grid (1,080,000 spectra). Submit with the two-stage
+  workflow: 180,000 PICASO climate convergences, then 1,080,000 reflected spectra
+  from cached PT profiles. Planet mass and radius are the primary axes (Zarah
+  request). gravity_ms2 is computed per row as g = GM/R^2 for PICASO runtime.
+  Mass values match the legacy g = 5, 10, 15, 25, 30 m/s^2 grid at R = 2 R_earth.
+
+code:
+  spectrum: "PICASO"
+  climate: "PICASO"
+  cloud: "PICASO/VIRGA if available"
+  grid_runner: "aurora_grid"
+
+picaso_tint_mode: "equilibrium"
+picaso_tint_fixed_k: 1000.0
+picaso_tint_floor_k: 100.0
+
+netcdf:
+  optional_variables: []
+  strict_optional: false
+  wavelength_grid:
+    mode: constant_resolution
+    min_um: 0.3
+    max_um: 15.0
+    resolution: 15000
+
+stars:
+  - teff_k: 3500
+    radius_rsun: 0.45
+  - teff_k: 4000
+    radius_rsun: 0.63
+  - teff_k: 5000
+    radius_rsun: 0.80
+  - teff_k: 6000
+    radius_rsun: 1.00
+  - teff_k: 7000
+    radius_rsun: 1.70
+
+planet_radius_rearth: [1.6, 2.0, 2.5, 3.0]
+# M_earth values equivalent to legacy g (5,10,15,25,30 m/s^2) at R = 2 R_earth
+planet_mass_mearth: [2.037, 4.073, 6.110, 10.183, 12.220]
+metallicity_xsolar: [1, 10, 100]
+c_to_o_xsolar: [0.5, 1.0, 2.0]
+kzz_cm2_s: [1.0e9, 1.0e11]
+cloud_fraction: [0.0, 0.5, 0.75, 0.9, 1.0]
+fsed: [0.3, 1, 3, 6, 8]
+insolation_searth: [0.35, 0.7, 1.0, 1.5]
+phase_deg: [0, 30, 60, 90, 120, 150]
+
+output_root: "/groups/tdrobin/dhuang/aurora_subneptune_v1_dhuang"

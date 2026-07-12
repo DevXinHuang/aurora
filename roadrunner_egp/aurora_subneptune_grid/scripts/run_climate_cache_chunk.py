@@ -23,25 +23,50 @@ from aurora_grid.picaso_runner import _system_from_row, wavelength_grid_um
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Stage 1: converge PICASO climate for one climate_group_index.")
     parser.add_argument("--manifest", required=True)
-    parser.add_argument("--climate-group-index", type=int, required=True)
+    parser.add_argument("--climate-group-index", type=int)
+    parser.add_argument("--climate-index-map")
+    parser.add_argument("--array-task-id", type=int)
     parser.add_argument("--ck-root", default=None)
     parser.add_argument("--overwrite", action="store_true")
     return parser.parse_args()
+
+
+def resolve_climate_group_index(
+    climate_group_index: int | None,
+    climate_index_map: str | None,
+    array_task_id: int | None,
+) -> int:
+    if climate_index_map:
+        if array_task_id is None:
+            raise ValueError("--array-task-id is required with --climate-index-map")
+        indices = [line.strip() for line in Path(climate_index_map).read_text(encoding="utf-8").splitlines() if line.strip()]
+        if array_task_id < 0 or array_task_id >= len(indices):
+            raise IndexError(f"Array task ID {array_task_id} is outside index map with {len(indices)} entries")
+        return int(indices[array_task_id])
+    if climate_group_index is None:
+        raise ValueError("Provide --climate-group-index or --climate-index-map with --array-task-id")
+    return int(climate_group_index)
 
 
 def main() -> int:
     args = parse_args()
     from roadrunner.runner import run_picaso_climate_converge_only
 
+    climate_group_index = resolve_climate_group_index(
+        args.climate_group_index,
+        args.climate_index_map,
+        args.array_task_id,
+    )
+
     table = read_manifest_csv(args.manifest)
-    matches = [row for row in table.rows if int(row["climate_group_index"]) == int(args.climate_group_index)]
+    matches = [row for row in table.rows if int(row["climate_group_index"]) == climate_group_index]
     if not matches:
-        raise ValueError(f"No manifest rows for climate_group_index={args.climate_group_index}")
+        raise ValueError(f"No manifest rows for climate_group_index={climate_group_index}")
 
     row = dict(matches[0])
     row["phase_deg"] = float(min(float(r["phase_deg"]) for r in matches))
     output_root = str(Path(row["output_nc"]).parent.parent)
-    cache_file = climate_cache_path(output_root, args.climate_group_index)
+    cache_file = climate_cache_path(output_root, climate_group_index)
     if cache_file.exists() and not args.overwrite:
         print(f"skipped_exists: {cache_file}")
         return 0
@@ -62,7 +87,7 @@ def main() -> int:
 
     save_climate_cache(
         cache_file,
-        climate_group_index=args.climate_group_index,
+        climate_group_index=climate_group_index,
         pressure=pressure,
         temperature=temperature,
         selected_ck_file=str(selected_ck_file),
@@ -71,7 +96,7 @@ def main() -> int:
         cl_run=cl_run,
     )
     print(f"wrote: {cache_file}")
-    print(f"climate_group_index: {args.climate_group_index}")
+    print(f"climate_group_index: {climate_group_index}")
     print(f"rows_in_group: {len(matches)}")
     print(f"climate_converged: {diagnostics.get('climate_converged')}")
     return 0
