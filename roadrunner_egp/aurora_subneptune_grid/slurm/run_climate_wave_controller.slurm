@@ -36,5 +36,6 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/submit_climate_wave_control
   --adopt-first-job-id "${ADOPT_FIRST_JOB_ID:-}" \
   --state-path "$RUN_ROOT/controller/state.json" \
   --log-path "$RUN_ROOT/controller/controller.log" \
+  --task-log-dir "$RUN_ROOT/logs" \
   --failed-indices-path "$RUN_ROOT/controller/failed_climate_indices.csv" \
   --skip-indices-path "${CLIMATE_WAVE_SKIP_INDICES_PATH:-$RUN_ROOT/controller/unsupported_climate_indices.csv}"

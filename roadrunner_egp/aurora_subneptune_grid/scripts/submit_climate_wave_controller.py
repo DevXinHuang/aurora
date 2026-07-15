@@ -58,6 +58,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--time-limits", default="02:00:00,03:00:00,04:00:00")
     parser.add_argument("--state-path", required=True)
     parser.add_argument("--log-path", required=True)
+    parser.add_argument("--task-log-dir", default="")
     parser.add_argument("--failed-indices-path", required=True)
     parser.add_argument("--skip-indices-path", default="")
     parser.add_argument("--submission-dir", default="")
@@ -227,6 +228,7 @@ def submit_array(
     time_limit: str,
     submission_dir: Path,
     log_path: Path,
+    task_log_dir: Path,
     run_command: Callable[..., subprocess.CompletedProcess[str]] = run,
 ) -> ActiveSubmission | None:
     mapping_path = write_index_map(submission_dir, items)
@@ -239,6 +241,8 @@ def submit_array(
         f"--array={array_spec}",
         f"--job-name=aurora_clim_w{items[0].wave:03d}",
         f"--time={time_limit}",
+        f"--output={task_log_dir}/%x_%A_%a.out",
+        f"--error={task_log_dir}/%x_%A_%a.err",
         "--export=ALL,MODEL,MANIFEST,CLIMATE_INDEX_MAP",
         str(slurm_script),
     ]
@@ -360,6 +364,11 @@ def run_controller(args: argparse.Namespace) -> int:
     state_path = Path(args.state_path).expanduser().resolve()
     log_path = Path(args.log_path).expanduser().resolve()
     failed_path = Path(args.failed_indices_path).expanduser().resolve()
+    task_log_dir = (
+        Path(args.task_log_dir).expanduser().resolve()
+        if args.task_log_dir
+        else output_root / "logs"
+    )
     skip_path = Path(args.skip_indices_path).expanduser().resolve() if args.skip_indices_path else None
     submission_dir = (
         Path(args.submission_dir).expanduser().resolve()
@@ -367,6 +376,7 @@ def run_controller(args: argparse.Namespace) -> int:
         else state_path.parent / "submissions"
     )
     submission_dir.mkdir(parents=True, exist_ok=True)
+    task_log_dir.mkdir(parents=True, exist_ok=True)
     failed_path.parent.mkdir(parents=True, exist_ok=True)
     failed_path.touch(exist_ok=True)
 
@@ -448,6 +458,7 @@ def run_controller(args: argparse.Namespace) -> int:
                 time_limit=time_limits[chunk[0].attempt],
                 submission_dir=submission_dir,
                 log_path=log_path,
+                task_log_dir=task_log_dir,
             )
             if submission is None:
                 restore_submission_chunk(pending, chunk)
