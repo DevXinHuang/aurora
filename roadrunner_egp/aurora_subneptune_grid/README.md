@@ -22,7 +22,7 @@ cloud, chemistry, and orbit — but differ in `phase_deg` — share one climate 
 ```text
 outputs/<model_name>/
   climate_cache/climate_00.npz … climate_NN.npz   ← stage 1
-  nc/run_000000.nc …                              ← stage 2 (304–1,080,000 files)
+  nc/run_000000.nc …                              ← stage 2 (304–960,000 supported files)
 ```
 
 ### Submit any grid (smoke → validation → full)
@@ -39,7 +39,7 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 | `smoke_test_aurora_subneptune` | 6 | 2 | Plumbing |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | HPC timing / QC |
 | `aurora_cahoy2010_replication_v0` | 304 | 16 | Cahoy et al. 2010 1:1 |
-| `aurora_subneptune_v1` | 1,080,000 | 180,000 | Full science grid (Zarah updates) |
+| `aurora_subneptune_v1` | 960,000 | 160,000 | Supported science grid (Zarah updates) |
 | `aurora_subneptune_v0` | 276,480 | 46,080 | Legacy full-grid baseline |
 
 ### Sub-Neptune grid sets (non-Cahoy)
@@ -50,6 +50,12 @@ The two non-Cahoy grids currently used for development/testing are:
 | --- | ---: | ---: | --- |
 | `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check before larger runs |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
+
+The nominal v1 axes define 1,080,000 spectra and 180,000 climate groups.
+Production excludes `metallicity_xsolar = 100` with `c_to_o_xsolar = 2.0`
+because PICASO 4 does not provide the required
+`sonora_2121grid_feh2.0_co1.10.hdf5` correlated-k table. The supported final
+production run is therefore 960,000 spectra in 160,000 climate groups.
 
 Planned final production run is `aurora_subneptune_v1`:
 
@@ -148,7 +154,10 @@ worlds in reflected-light spectra (HWO).
 | Insolation | 0.35, 0.7, 1.0, 1.5 S⊕ | 4 |
 | Phase | 0, 30, 60, 90, 120, 150° | 6 |
 
-Full Cartesian product: **1,080,000** spectra = **180,000** climate groups × **6** phases.
+Nominal Cartesian product: **1,080,000** spectra = **180,000** climate groups ×
+**6** phases. Excluding the unsupported 100× metallicity / 2× C/O pair removes
+**20,000** climate groups and **120,000** spectra, leaving **160,000** supported
+climate groups and **960,000** supported spectra.
 
 ## Environment
 

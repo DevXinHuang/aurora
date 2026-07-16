@@ -33,7 +33,6 @@ DEFAULT_TIMESTAMP_OUT = REPO_ROOT / "docs" / "_static" / "progress_snapshot_time
 PARAMETER_KEYS = (
     "stars",
     "planet_radius_rearth",
-    "gravity_ms2",
     "metallicity_xsolar",
     "c_to_o_xsolar",
     "kzz_cm2_s",
@@ -42,6 +41,7 @@ PARAMETER_KEYS = (
     "insolation_searth",
     "phase_deg",
 )
+PLANET_BULK_KEYS = ("planet_mass_mearth", "gravity_ms2")
 
 
 @dataclass
@@ -137,20 +137,55 @@ def _param_len(config: dict[str, Any], key: str) -> int:
     return len(value)
 
 
+def _cartesian_parameter_keys(config: dict[str, Any]) -> tuple[str, ...]:
+    planet_bulk_key = next((key for key in PLANET_BULK_KEYS if key in config), None)
+    if planet_bulk_key is None:
+        raise ValueError(
+            "Cartesian grid config must define planet_mass_mearth or gravity_ms2"
+        )
+    return (*PARAMETER_KEYS, planet_bulk_key)
+
+
 def _expected_rows(config: dict[str, Any]) -> int:
-    total = 1
-    for key in PARAMETER_KEYS:
-        total *= _param_len(config, key)
-    return int(total)
+    return _expected_climate_groups(config) * _param_len(config, "phase_deg")
 
 
 def _expected_climate_groups(config: dict[str, Any]) -> int:
     total = 1
-    for key in PARAMETER_KEYS:
+    for key in _cartesian_parameter_keys(config):
         if key == "phase_deg":
             continue
         total *= _param_len(config, key)
-    return int(total)
+
+    unsupported_pairs = config.get("unsupported_chemistry_pairs", [])
+    if unsupported_pairs in (None, []):
+        return int(total)
+    if not isinstance(unsupported_pairs, list):
+        raise ValueError("unsupported_chemistry_pairs must be a list")
+
+    metallicities = set(config.get("metallicity_xsolar", []))
+    c_to_o_values = set(config.get("c_to_o_xsolar", []))
+    unique_pairs: set[tuple[Any, Any]] = set()
+    for pair in unsupported_pairs:
+        if not isinstance(pair, dict):
+            raise ValueError("each unsupported chemistry pair must be a mapping")
+        metallicity = pair.get("metallicity_xsolar")
+        c_to_o = pair.get("c_to_o_xsolar")
+        if metallicity not in metallicities or c_to_o not in c_to_o_values:
+            raise ValueError(
+                "unsupported chemistry pair is outside the configured axes: "
+                f"metallicity_xsolar={metallicity}, c_to_o_xsolar={c_to_o}"
+            )
+        unique_pairs.add((metallicity, c_to_o))
+
+    chemistry_pair_count = _param_len(config, "metallicity_xsolar") * _param_len(
+        config, "c_to_o_xsolar"
+    )
+    if len(unique_pairs) >= chemistry_pair_count:
+        raise ValueError("unsupported chemistry pairs exclude the entire chemistry grid")
+
+    groups_per_chemistry_pair = total // chemistry_pair_count
+    return int(total - len(unique_pairs) * groups_per_chemistry_pair)
 
 
 def _is_aurora_model(model_name: str) -> bool:
@@ -161,7 +196,9 @@ def _is_aurora_model(model_name: str) -> bool:
 
 
 def _expected_counts(config: dict[str, Any]) -> tuple[int, int]:
-    if all(key in config for key in PARAMETER_KEYS):
+    if all(key in config for key in PARAMETER_KEYS) and any(
+        key in config for key in PLANET_BULK_KEYS
+    ):
         return _expected_rows(config), _expected_climate_groups(config)
 
     factorization = config.get("factorization")
