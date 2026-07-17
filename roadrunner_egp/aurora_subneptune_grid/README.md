@@ -67,6 +67,7 @@ Planned final production run is `aurora_subneptune_v1`:
 | Metallicity (x solar) | 1, 10, 100 |
 | C/O (x solar) | 0.5, 1.0, 2.0 |
 | Kzz (cm²/s) | 1e9, 1e11 |
+| Virga candidate condensates | H2O, CH4, NH3 |
 | Cloud fraction | 0, 0.5, 0.75, 0.9, 1 |
 | fsed | 0.3, 1, 3, 6, 8 |
 | Insolation (S_earth) | 0.35, 0.7, 1.0, 1.5 |

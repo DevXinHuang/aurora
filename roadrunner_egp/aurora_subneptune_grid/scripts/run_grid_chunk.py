@@ -30,6 +30,7 @@ DISPLAY_COLUMNS = [
     "c_to_o_picaso_tag",
     "kzz_cm2_s",
     "cloud_fraction",
+    "virga_condensates",
     "fsed",
     "insolation_searth",
     "phase_deg",

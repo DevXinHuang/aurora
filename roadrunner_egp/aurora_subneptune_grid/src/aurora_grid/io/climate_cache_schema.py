@@ -87,6 +87,7 @@ def _param_dicts_from_row(row: dict[str, Any]) -> dict[str, dict[str, Any]]:
         "cloud_params": {
             "cloud_fraction": float(row["cloud_fraction"]),
             "cloud_model": str(row.get("cloud_model", "")),
+            "virga_condensates": str(row.get("virga_condensates", "")),
             "fsed": float(row["fsed"]) if row.get("fsed") not in (None, "") else None,
         },
     }

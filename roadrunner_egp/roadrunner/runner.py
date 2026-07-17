@@ -18,6 +18,7 @@ from astropy.constants import R_jup, R_sun, au
 
 from .config import (
     ATM_NLAYERS,
+    DEFAULT_PICASO_VIRGA_CONDENSATES,
     HAVE_PICASO,
     jdi,
     blackbody,
@@ -217,11 +218,16 @@ def _patch_virga_calc_optics_sublayer_guard(verbose: bool = False) -> bool:
 
 def _virga_condensates(value):
     """Normalize Virga condensates from string/list into a list PICASO accepts."""
+    fallback = [
+        part
+        for part in re.split(r"[,;\s]+", DEFAULT_PICASO_VIRGA_CONDENSATES)
+        if part
+    ]
     if value is None:
-        return ["MgSiO3"]
+        return fallback
     if isinstance(value, str):
         parts = [part for part in re.split(r"[,;\s]+", value.strip()) if part]
-        return parts or ["MgSiO3"]
+        return parts or fallback
     try:
         return list(value)
     except TypeError:

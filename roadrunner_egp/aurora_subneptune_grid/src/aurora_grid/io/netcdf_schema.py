@@ -288,6 +288,7 @@ def _cld_params(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "cloud_fraction": {"value": _float_row_value(row, "cloud_fraction"), "unit": "unitless"},
         "cloud_model": {"value": str(row.get("cloud_model", "")), "unit": "label"},
+        "virga_condensates": {"value": str(row.get("virga_condensates", "")), "unit": "label"},
         "fsed": {"value": _float_row_value(row, "fsed"), "unit": "unitless"},
         "kzz": {"value": _float_row_value(row, "kzz_cm2_s"), "unit": "cm2 s-1"},
     }

@@ -94,6 +94,7 @@ def _cld_params(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "cloud_fraction": {"value": float(row["cloud_fraction"]), "unit": "unitless"},
         "cloud_model": {"value": str(row.get("cloud_model", "")), "unit": "label"},
+        "virga_condensates": {"value": str(row.get("virga_condensates", "")), "unit": "label"},
         "fsed": {"value": float(row["fsed"]), "unit": "unitless"},
         "kzz": {"value": float(row["kzz_cm2_s"]), "unit": "cm2 s-1"},
     }

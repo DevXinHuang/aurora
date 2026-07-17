@@ -28,6 +28,7 @@ DISPLAY_COLUMNS = [
     "metallicity_xsolar",
     "picaso_tint_k",
     "cloud_fraction",
+    "virga_condensates",
     "fsed",
     "semi_major_au",
     "climate_cache_nc",
