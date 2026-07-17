@@ -51,10 +51,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--atmosphere-source",
         choices=("picaso_guillot", "picaso_climate"),
-        default="picaso_guillot",
-        help="Primary atmosphere mode: fast Guillot spectrum path or converged PICASO climate-first path.",
+        default="picaso_climate",
+        help=(
+            "Atmosphere mode. Default: picaso_climate, which runs PICASO "
+            "radiative-convective climate convergence before the spectra. "
+            "picaso_guillot is a legacy smoke-test path with no climate convergence."
+        ),
     )
-    parser.add_argument("--use-picaso-climate", action="store_true", help="Shortcut for --atmosphere-source picaso_climate.")
+    parser.add_argument(
+        "--use-picaso-climate",
+        action="store_true",
+        help=(
+            "Deprecated compatibility flag; picaso_climate is now the default. "
+            "Prefer omitting this flag."
+        ),
+    )
     parser.add_argument("--picaso-ck-root", help="Root containing PICASO 4 preweighted CK opacity files.")
     parser.add_argument("--start-index", type=int, help="Inclusive run_index start.")
     parser.add_argument("--end-index", type=int, help="Exclusive run_index end.")
@@ -113,6 +124,13 @@ def main() -> int:
     if args.use_picaso_climate:
         args.atmosphere_source = "picaso_climate"
     print(f"atmosphere_source: {args.atmosphere_source}")
+    if args.atmosphere_source == "picaso_guillot":
+        print(
+            "WARNING: picaso_guillot is a legacy smoke-test mode. It uses an "
+            "analytic Guillot P-T profile and does NOT run PICASO "
+            "radiative-convective climate convergence; do not use it for "
+            "science grid production."
+        )
     print(f"run_exact_climate_qc: {args.run_exact_climate_qc}")
     print(f"overwrite: {args.overwrite}")
 

@@ -1,0 +1,10 @@
+axis_key,axis_label,values_touched,values_total,reach_percent
+stars,Stellar anchor,1,5,20.0
+planet_radius_rearth,Planet radius,4,4,100.0
+planet_mass_mearth,Planet mass,5,5,100.0
+metallicity_xsolar,Metallicity,3,3,100.0
+c_to_o_xsolar,C/O,3,3,100.0
+kzz_cm2_s,Kzz,2,2,100.0
+cloud_fraction,Cloud fraction,5,5,100.0
+fsed,f_sed,5,5,100.0
+insolation_searth,Insolation,4,4,100.0

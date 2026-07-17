@@ -18,7 +18,9 @@ for path in (GRID_ROOT / "src", ROADRUNNER_ROOT):
 from aurora_grid import picaso_runner  # noqa: E402
 from aurora_grid.io.netcdf_schema import build_aurora_run_dataset  # noqa: E402
 from roadrunner import runner as runner_module  # noqa: E402
+from roadrunner.config import ATM_NLAYERS  # noqa: E402
 from roadrunner.runner import (  # noqa: E402
+    _jupiter_cloud_profile_for_nlevel,
     _patch_virga_calc_optics_sublayer_guard,
     configure_climate_inputs,
     reflected_phase_angle_rad,
@@ -41,6 +43,18 @@ def _system(metallicity_xsolar: float, c_to_o_xsolar: float) -> SystemParams:
         chem_c_o=c_to_o_xsolar,
         chem_log_mh=math.log10(metallicity_xsolar),
     )
+
+
+def test_default_atmosphere_uses_91_pressure_levels():
+    assert ATM_NLAYERS == 91
+
+
+def test_jupiter_fallback_is_resampled_to_90_cloud_layers():
+    profile = _jupiter_cloud_profile_for_nlevel(ATM_NLAYERS)
+
+    assert profile.shape == ((ATM_NLAYERS - 1) * 196, 3)
+    assert set(profile.columns) == {"opd", "w0", "g0"}
+    assert np.isfinite(profile.to_numpy()).all()
 
 
 @pytest.mark.parametrize(
@@ -310,7 +324,42 @@ def test_picaso_climate_mode_uses_converged_pt_and_saves_schema(monkeypatch):
     assert dataset.attrs["selected_ck_file"].endswith("sonora_2121grid_feh1.0_co0.55.hdf5")
 
 
-def test_run_real_picaso_model_default_does_not_run_exact_climate_qc(monkeypatch):
+def test_run_real_picaso_model_default_routes_to_converged_climate(monkeypatch):
+    expected = {"route": "picaso_climate"}
+
+    def fake_climate_route(row, **kwargs):
+        assert kwargs["system"].atmosphere_source == "picaso_climate"
+        return expected
+
+    def fail_legacy_route(*args, **kwargs):
+        raise AssertionError("default must not use the legacy Guillot route")
+
+    import roadrunner.runner as runner
+
+    monkeypatch.setattr(picaso_runner, "_run_real_picaso_climate_model", fake_climate_route)
+    monkeypatch.setattr(runner, "run_picaso_once", fail_legacy_route)
+
+    result = picaso_runner._run_real_picaso_model(_real_row())
+
+    assert result is expected
+
+
+def test_run_picaso_model_default_passes_converged_climate_source(monkeypatch):
+    selected_sources = []
+
+    def fake_real_model(row, **kwargs):
+        selected_sources.append(kwargs["atmosphere_source"])
+        return {"route": kwargs["atmosphere_source"]}
+
+    monkeypatch.setattr(picaso_runner, "_run_real_picaso_model", fake_real_model)
+
+    result = picaso_runner.run_picaso_model(_real_row())
+
+    assert result == {"route": "picaso_climate"}
+    assert selected_sources == ["picaso_climate"]
+
+
+def test_explicit_legacy_guillot_does_not_run_exact_climate_qc(monkeypatch):
     output_grid = picaso_runner.wavelength_grid_um()
     out_ref = {
         "wavenumber": 1.0e4 / output_grid,
@@ -354,8 +403,13 @@ def test_run_real_picaso_model_default_does_not_run_exact_climate_qc(monkeypatch
         "fsed": 3.0,
     }
 
-    result = picaso_runner._run_real_picaso_model(row)
+    result = picaso_runner._run_real_picaso_model(
+        row,
+        atmosphere_source="picaso_guillot",
+    )
 
     assert "qc_diagnostics" not in result
+    assert result["picaso_metadata"]["climate_converged"] is False
+    assert result["picaso_metadata"]["legacy_guillot_profile"] is True
     assert result["wavelength_um"].shape == output_grid.shape
     np.testing.assert_allclose(result["fpfs_reflection"], 1.0e-8)

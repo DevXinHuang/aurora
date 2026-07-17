@@ -110,20 +110,37 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/run_spectrum_from_cache_chu
 
 ### Legacy single-stage (not recommended)
 
-`run_grid_chunk.py --use-picaso-climate` still works for one-off tests but
+`run_grid_chunk.py` now defaults to `picaso_climate`: PICASO initializes the
+P–T profile, performs radiative-convective climate convergence, and then runs
+the spectra. This is scientifically correct for a one-off test, but it
 re-runs climate for every phase. Slurm templates `run_aurora_subneptune_grid.slurm`
-and `validation_aurora_subneptune_grid.slurm` are disabled — use
-`submit_two_stage_grid.sh` instead.
+and `validation_aurora_subneptune_grid.slurm` are disabled — use the cached
+two-stage `submit_two_stage_grid.sh` workflow for production.
 
-Guillot fast path (`picaso_guillot`, no climate convergence) remains available via
-`run_grid_chunk.py` without caching for quick smoke tests.
+The former `--use-picaso-climate` switch is now redundant and remains only for
+command compatibility.
 
-### Guillot smoke (not full climate)
+This follows PICASO's documented climate API:
 
-`aurora_cahoy_solar_smoke_v0` (48 cases) uses `picaso_guillot` for fast plumbing
-checks (~1 min/task). It does **not** converge PICASO climate. For science-quality
-Cahoy spectra, use `aurora_cahoy2010_replication_v0` and the two-stage submit
-script above.
+- [`jdi.inputs(calculation="planet", climate=True)`](https://natashabatalha.github.io/picaso/picaso.html#picaso.justdoit.inputs)
+  enables the iterative temperature-pressure calculation.
+- The [PICASO exoplanet climate tutorial](https://natashabatalha.github.io/picaso/notebooks/climate/12b_Exoplanet.html)
+  describes Guillot as an **initial P–T guess**, followed by
+  `inputs_climate(...)` and `cl_run.climate(...)` to find the converged
+  solution. It also recommends 51–91 pressure levels; Aurora now uses the
+  upper end of that documented range: 91 pressure levels (90 layers).
+
+### Legacy Guillot smoke only — do not use for science
+
+The old fast path requires the explicit option
+`--atmosphere-source picaso_guillot`. It still runs PICASO radiative transfer
+for the spectrum, but uses the analytic Guillot P–T profile directly and does
+**not** run PICASO radiative-convective climate convergence.
+
+`aurora_cahoy_solar_smoke_v0` (48 cases) is retained only for fast plumbing
+checks (~1 min/task) with that explicit legacy option. Do **not** use its
+output for science. For science-quality Cahoy spectra, use
+`aurora_cahoy2010_replication_v0` and the two-stage submit script above.
 
 ### Obsolete configs
 
@@ -194,6 +211,47 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
 ```
 
 ## Post-run QC
+
+Download the production Stage 1 cache from the `tdrobin/dhuang` group disk
+using the resumable file-transfer helper:
+
+```bash
+bash roadrunner_egp/aurora_subneptune_grid/scripts/download_climate_cache_from_hpc.sh
+```
+
+Stage 1 climate caches (`.npz` plus paired `_case.pkl`) use the cache-native
+checks. For a complete brightness-aware rebuild, first extract one parameter
+row per cached climate from the production manifest with
+`scripts/extract_climate_parameters.py`, then run:
+
+```bash
+.venv-picaso4/bin/python \
+  roadrunner_egp/aurora_subneptune_grid/scripts/rebuild_brightness_qc.py \
+  --cache-dir roadrunner_egp/aurora_subneptune_grid/outputs/<model>/climate_cache \
+  --parameter-csv /path/to/climate_parameters.csv \
+  --workers 4
+```
+
+This preserves the source cache and creates resumable derived sidecars with
+the full 196-point brightness-temperature curve. It reruns the P–T, adiabat,
+flux-balance, convergence, and brightness-depth checks; writes before/after
+survival and transition reports; and saves a four-panel diagnostic for every
+final non-pass climate in `qc.brightness-staging`.
+
+After checking `rebuild_validation.json` and representative plots, atomically
+replace the older generated QC directory:
+
+```bash
+.venv-picaso4/bin/python \
+  roadrunner_egp/aurora_subneptune_grid/scripts/rebuild_brightness_qc.py \
+  --cache-dir roadrunner_egp/aurora_subneptune_grid/outputs/<model>/climate_cache \
+  --parameter-csv /path/to/climate_parameters.csv \
+  --replace-only --replace
+```
+
+For interactive inspection, open `notebooks/qc_climate_cache.ipynb`.
+
+Final Stage 2 NetCDF products continue to use the post-run workflow:
 
 ```bash
 python roadrunner_egp/aurora_subneptune_grid/scripts/run_postrun_qc.py \

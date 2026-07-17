@@ -1,0 +1,354 @@
+{
+  "snapshot_utc": "2026-07-16T15:48:18Z",
+  "model_name": "aurora_subneptune_v1_dhuang",
+  "config_path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/params/aurora_subneptune_v1_dhuang.yaml",
+  "cache_dir": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache",
+  "climate_axis_order": [
+    "stars",
+    "planet_radius_rearth",
+    "planet_mass_mearth",
+    "metallicity_xsolar",
+    "c_to_o_xsolar",
+    "kzz_cm2_s",
+    "cloud_fraction",
+    "fsed",
+    "insolation_searth"
+  ],
+  "climate_axis_sizes": [
+    5,
+    4,
+    5,
+    3,
+    3,
+    2,
+    5,
+    5,
+    4
+  ],
+  "expected_climate_groups": 180000,
+  "expected_spectral_rows": 1080000,
+  "phase_values_excluded_from_climate": [
+    0,
+    30,
+    60,
+    90,
+    120,
+    150
+  ],
+  "npz_files": 27627,
+  "pkl_files": 27627,
+  "paired_npz_pkl": 27627,
+  "usable_paired_npz_pkl": 27595,
+  "orphan_npz_files": 0,
+  "orphan_pkl_files": 0,
+  "zero_byte_pkl_files": 0,
+  "usable_climate_groups": 27595,
+  "usable_coverage_percent": 15.330556,
+  "problem_npz_files": 32,
+  "highest_usable_index": 31719,
+  "frontier_percent": 17.622222,
+  "missing_within_frontier": 4125,
+  "audit_counts": {
+    "opened": 27627,
+    "valid_schema": 27627,
+    "metadata_index_match": 27627,
+    "finite_profiles": 27627,
+    "converged": 27595,
+    "out_of_range": 0
+  },
+  "first_star_label": "3500 K / 0.45 R_sun",
+  "first_star_completed": 27595,
+  "expected_per_star": 36000,
+  "first_star_completion_percent": 76.652778,
+  "parameter_value_reach": [
+    {
+      "axis_key": "stars",
+      "axis_label": "Stellar anchor",
+      "values_touched": 1,
+      "values_total": 5,
+      "reach_percent": 20.0
+    },
+    {
+      "axis_key": "planet_radius_rearth",
+      "axis_label": "Planet radius",
+      "values_touched": 4,
+      "values_total": 4,
+      "reach_percent": 100.0
+    },
+    {
+      "axis_key": "planet_mass_mearth",
+      "axis_label": "Planet mass",
+      "values_touched": 5,
+      "values_total": 5,
+      "reach_percent": 100.0
+    },
+    {
+      "axis_key": "metallicity_xsolar",
+      "axis_label": "Metallicity",
+      "values_touched": 3,
+      "values_total": 3,
+      "reach_percent": 100.0
+    },
+    {
+      "axis_key": "c_to_o_xsolar",
+      "axis_label": "C/O",
+      "values_touched": 3,
+      "values_total": 3,
+      "reach_percent": 100.0
+    },
+    {
+      "axis_key": "kzz_cm2_s",
+      "axis_label": "Kzz",
+      "values_touched": 2,
+      "values_total": 2,
+      "reach_percent": 100.0
+    },
+    {
+      "axis_key": "cloud_fraction",
+      "axis_label": "Cloud fraction",
+      "values_touched": 5,
+      "values_total": 5,
+      "reach_percent": 100.0
+    },
+    {
+      "axis_key": "fsed",
+      "axis_label": "f_sed",
+      "values_touched": 5,
+      "values_total": 5,
+      "reach_percent": 100.0
+    },
+    {
+      "axis_key": "insolation_searth",
+      "axis_label": "Insolation",
+      "values_touched": 4,
+      "values_total": 4,
+      "reach_percent": 100.0
+    }
+  ],
+  "npz_problems": [
+    {
+      "climate_group_index": 6736,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_6736.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 6756,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_6756.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 6776,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_6776.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 6796,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_6796.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8532,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8532.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8536,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8536.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8537,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8537.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8538,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8538.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8552,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8552.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8556,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8556.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8557,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8557.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8558,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8558.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8572,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8572.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8576,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8576.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8577,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8577.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8578,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8578.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8592,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8592.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8596,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8596.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8597,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8597.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8598,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8598.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8732,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8732.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8736,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8736.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8737,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8737.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8752,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8752.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8756,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8756.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8757,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8757.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8772,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8772.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8776,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8776.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8777,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8777.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8792,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8792.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8796,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8796.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    },
+    {
+      "climate_group_index": 8797,
+      "path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1_dhuang/climate_cache/climate_8797.npz",
+      "issues": [
+        "climate_converged is 0"
+      ]
+    }
+  ]
+}
