@@ -1,0 +1,6 @@
+family,question,variant,palette,output
+P-T,How do Tint and quench depths change the structure?,faceted multi-series line,Tint categorical,figures/pt_*.{png,pdf}
+Spectra,How does Tint change each observable?,faceted multi-series line,Tint categorical,figures/spectra_*.{png,pdf}
+Abundance,Where does each species quench?,faceted log-profile line,Tint categorical,figures/abundance_*.{png,pdf}
+Residual,Where is Tint detectable?,multi-series line with benchmark,case categorical,figures/residual_*.{png,pdf}
+Case comparison,Does insolation or gravity control sensitivity?,faceted bar,case categorical,figures/case_metric_*.{png,pdf}

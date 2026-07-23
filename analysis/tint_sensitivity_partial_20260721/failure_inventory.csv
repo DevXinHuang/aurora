@@ -1,0 +1,25 @@
+log_file,job_id,run_index,stage,category
+23344745_0.err,23344745,0,preflight,Returned profile omitted kz
+23344745_10.err,23344745,10,preflight,Planet radius unavailable to transmission
+23344745_11.err,23344745,11,preflight,Planet radius unavailable to transmission
+23344745_12.err,23344745,12,preflight,Planet radius unavailable to transmission
+23344745_13.err,23344745,13,preflight,Planet radius unavailable to transmission
+23344745_14.err,23344745,14,preflight,Planet radius unavailable to transmission
+23344745_16.err,23344745,16,preflight,Planet radius unavailable to transmission
+23344745_17.err,23344745,17,preflight,Planet radius unavailable to transmission
+23344745_8.err,23344745,8,preflight,Planet radius unavailable to transmission
+23344788_0.err,23344788,0,preflight,Planet radius unavailable to transmission
+23344816_0.err,23344816,0,preflight,Planet radius unavailable to transmission
+23345257_24.err,23345257,24,production,Quench point below pressure grid
+23345257_25.err,23345257,25,production,Quench point below pressure grid
+23345257_26.err,23345257,26,production,Quench point below pressure grid
+23345257_27.err,23345257,27,production,Quench point below pressure grid
+23345257_28.err,23345257,28,production,Quench point below pressure grid
+23345257_29.err,23345257,29,production,Quench point below pressure grid
+23345257_30.err,23345257,30,production,Quench point below pressure grid
+23345257_31.err,23345257,31,production,Quench point below pressure grid
+23345257_32.err,23345257,32,production,Quench point below pressure grid
+23345257_33.err,23345257,33,production,Quench point below pressure grid
+23345257_34.err,23345257,34,production,Quench point below pressure grid
+23345257_35.err,23345257,35,production,Quench point below pressure grid
+23348342_27.err,23348342,27,corrected production,Virga particle root below physical floor

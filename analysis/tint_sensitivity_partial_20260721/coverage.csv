@@ -1,0 +1,4 @@
+case_id,valid_models,converged_models,expected_models,coverage_rate,nonconverged_models
+gj_1214b_low,12,9,12,1.0,3
+gj_1214b_observed,2,2,12,0.16666666666666666,0
+k2_18b_observed,12,8,12,1.0,4

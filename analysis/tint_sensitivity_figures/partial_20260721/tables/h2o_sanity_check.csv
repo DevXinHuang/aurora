@@ -1,0 +1,9 @@
+case_id,cloud_id,metallicity_xsolar,h2o_abs_change_dex_at_1mbar,advisory_over_0p1_dex,both_endpoints_converged
+k2_18b_observed,cloud_free,1.0,0.006561745954193121,False,True
+k2_18b_observed,cloud_free,100.0,0.03584903346010293,False,True
+k2_18b_observed,fully_cloudy_virga,1.0,0.006571087691439992,False,False
+k2_18b_observed,fully_cloudy_virga,100.0,0.046889974082868324,False,True
+gj_1214b_low,cloud_free,1.0,0.006590853096857696,False,True
+gj_1214b_low,cloud_free,100.0,0.039449519509235254,False,True
+gj_1214b_low,fully_cloudy_virga,1.0,0.006584854065558421,False,False
+gj_1214b_low,fully_cloudy_virga,100.0,0.04327619410145789,False,True

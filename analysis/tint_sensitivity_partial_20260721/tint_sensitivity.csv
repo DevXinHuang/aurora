@@ -1,0 +1,9 @@
+case_id,cloud,metallicity_xsolar,pair_label,rms_transmission_change_ppm,maximum_transmission_change_ppm,temperature_1bar_change_k,both_endpoints_converged
+gj_1214b_low,cloudy,100.0,gj 1214b low | cloudy | 100x,9.261813212992044,9.942651601868146,79.52130927886026,True
+gj_1214b_low,clear,100.0,gj 1214b low | clear | 100x,6.372048054577219,7.081112554004672,62.22643315052494,True
+k2_18b_observed,cloudy,100.0,k2 18b observed | cloudy | 100x,4.218624897092252,5.723860405344207,19.52076811919551,True
+k2_18b_observed,clear,100.0,k2 18b observed | clear | 100x,4.089690441668009,4.287958753312372,53.89269288893672,True
+gj_1214b_low,clear,1.0,gj 1214b low | clear | 1x,2.170510305264722,2.3116653435199286,5.703023756774371,True
+gj_1214b_low,cloudy,1.0,gj 1214b low | cloudy | 1x,2.1446274445777513,2.2815408972543145,5.520531482134459,False
+k2_18b_observed,cloudy,1.0,k2 18b observed | cloudy | 1x,1.5928399082733042,1.7316953111138482,5.115289470686832,False
+k2_18b_observed,clear,1.0,k2 18b observed | clear | 1x,1.5925017010150013,1.730156912018669,5.095286910327445,True

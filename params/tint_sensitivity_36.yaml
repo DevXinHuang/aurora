@@ -1,0 +1,71 @@
+experiment:
+  name: tint_sensitivity_36
+  description: Coupled three-planet-case PICASO Tint sensitivity experiment
+
+cases:
+  - id: k2_18b_observed
+    label: K2-18 b observed
+    planet_mass_mearth: 8.63
+    planet_radius_rearth: 2.61
+    gravity_ms2: 12.41
+    equilibrium_temperature_k: 255.0
+  - id: gj_1214b_low
+    label: GJ 1214 b low
+    planet_mass_mearth: 8.17
+    planet_radius_rearth: 2.74
+    gravity_ms2: 10.65
+    equilibrium_temperature_k: 255.0
+  - id: gj_1214b_observed
+    label: GJ 1214 b observed
+    planet_mass_mearth: 8.17
+    planet_radius_rearth: 2.74
+    gravity_ms2: 10.65
+    equilibrium_temperature_k: 500.0
+
+axes:
+  tint_k: [25.0, 50.0, 100.0]
+  metallicity_xsolar: [1.0, 100.0]
+  cloud:
+    - id: cloud_free
+      cloud_model: none
+      cloud_fraction: 0.0
+      fsed: 3.0
+    - id: fully_cloudy_virga
+      cloud_model: virga
+      cloud_fraction: 1.0
+      fsed: 3.0
+
+fixed:
+  star_teff_k: 3500.0
+  star_radius_rsun: 0.45
+  c_to_o_xsolar: 1.0
+  c_to_o_absolute: 0.55
+  kzz_cm2_s: 1.0e+10
+  phase_angle_deg: 0.0
+  virga_condensates: [H2O, CH4, NH3]
+  chemistry_initialization: visscher_2121_equilibrium
+  diseq_chem: true
+  self_consistent_kzz: false
+  quench: true
+  redistribution_factor: 0.5
+  bond_albedo_for_orbit: 0.0
+  pressure_levels: 61
+  climate_retry_attempts: 2
+
+wavelength:
+  minimum_um: 0.6
+  maximum_um: 15.0
+  resolving_power: 1000.0
+
+paths:
+  reference_data: picaso4_reference
+  opacity_directory: picaso4_reference/opacities
+  virga_directory: picaso4_reference/virga/virga
+  output_directory: outputs/tint_sensitivity_36
+
+slurm:
+  account: tdrobin
+  partition: standard
+  time: "08:00:00"
+  memory: 8G
+  concurrency: 4

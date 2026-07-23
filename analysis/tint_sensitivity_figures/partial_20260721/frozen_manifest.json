@@ -1,0 +1,354 @@
+{
+  "created_utc": "2026-07-21T17:45:06.326996Z",
+  "mode": "partial",
+  "expected_models": 36,
+  "included_models": 29,
+  "nonconverged_indices": [
+    2,
+    6,
+    7,
+    10,
+    14,
+    18,
+    22,
+    26
+  ],
+  "corrected_thermal_indices": [],
+  "sources": [
+    {
+      "run_index": 0,
+      "run_id": "00_k2_18b_observed_tint025_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/00_k2_18b_observed_tint025_cloud_free_mh001x.nc",
+      "sha256": "e1b1e529a6da42fb98a0618c58ef38cfd625138d6cbf1373396a9e169bf0829a",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 1,
+      "run_id": "01_k2_18b_observed_tint025_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/01_k2_18b_observed_tint025_cloud_free_mh100x.nc",
+      "sha256": "20444469d4557a6c7a8066d656a25e82b470289b1b25029e753a5d277c77121e",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 2,
+      "run_id": "02_k2_18b_observed_tint025_fully_cloudy_virga_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/02_k2_18b_observed_tint025_fully_cloudy_virga_mh001x.nc",
+      "sha256": "e3233d9580a6c6e1c216262772d9d37764489df8b82fdf5ce9599842369e5a09",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 3,
+      "run_id": "03_k2_18b_observed_tint025_fully_cloudy_virga_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/03_k2_18b_observed_tint025_fully_cloudy_virga_mh100x.nc",
+      "sha256": "b3b9abd5cacc2e4f9839da4dd786feca276da17fadebf86398f0a750b8e1b2b8",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 4,
+      "run_id": "04_k2_18b_observed_tint050_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/04_k2_18b_observed_tint050_cloud_free_mh001x.nc",
+      "sha256": "5cbc9e719aa8c00f3a47de2cb1adbb739a5491516a6664b4b91e759d76802171",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 5,
+      "run_id": "05_k2_18b_observed_tint050_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/05_k2_18b_observed_tint050_cloud_free_mh100x.nc",
+      "sha256": "2f99739dc513579637bc6c3cef78831500dcc77b031e2e0c5f66d09572e78678",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 6,
+      "run_id": "06_k2_18b_observed_tint050_fully_cloudy_virga_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/06_k2_18b_observed_tint050_fully_cloudy_virga_mh001x.nc",
+      "sha256": "e71f28b9b827a07c9f0c5385f6eb252b9b0cb63d16c1b951631c5320c79bb695",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 7,
+      "run_id": "07_k2_18b_observed_tint050_fully_cloudy_virga_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/07_k2_18b_observed_tint050_fully_cloudy_virga_mh100x.nc",
+      "sha256": "ab619b70f2d02c03e676566a5d6fd975fbd6d5639e9d579afd49c64d79bce409",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 8,
+      "run_id": "08_k2_18b_observed_tint100_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/08_k2_18b_observed_tint100_cloud_free_mh001x.nc",
+      "sha256": "cfbc9fe060cd030eb8264c0ea20b4df7c7eccb54969cd813b30f285dfe4dab94",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 9,
+      "run_id": "09_k2_18b_observed_tint100_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/09_k2_18b_observed_tint100_cloud_free_mh100x.nc",
+      "sha256": "b0f42803835aacd3e71871285fff7e09a119f1ecfa21e0e6daa9a4593edd80d9",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 10,
+      "run_id": "10_k2_18b_observed_tint100_fully_cloudy_virga_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/10_k2_18b_observed_tint100_fully_cloudy_virga_mh001x.nc",
+      "sha256": "32332b73d4c6e3baf3d9cc1daca60526382b0b40dec4a6656adf2298e85f42eb",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 11,
+      "run_id": "11_k2_18b_observed_tint100_fully_cloudy_virga_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/11_k2_18b_observed_tint100_fully_cloudy_virga_mh100x.nc",
+      "sha256": "1b747a76afb4c4ac1f552b95d03e17d1a417eb8fbb9836472d0baf83316f9571",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 12,
+      "run_id": "12_gj_1214b_low_tint025_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/12_gj_1214b_low_tint025_cloud_free_mh001x.nc",
+      "sha256": "270d7bf583d3cddd0ee49d40e26869e2cb03b1da98145353a27e3d750f3d6464",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 13,
+      "run_id": "13_gj_1214b_low_tint025_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/13_gj_1214b_low_tint025_cloud_free_mh100x.nc",
+      "sha256": "6d6f4a2c1255616072c6dcfebc24f82df903172820e010a96e8ae30ae2e684ee",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 14,
+      "run_id": "14_gj_1214b_low_tint025_fully_cloudy_virga_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/14_gj_1214b_low_tint025_fully_cloudy_virga_mh001x.nc",
+      "sha256": "94c4e571301b22ffda1817d743dc6e4f3bc1fd938734e9df24203e1243b32ce9",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 15,
+      "run_id": "15_gj_1214b_low_tint025_fully_cloudy_virga_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/15_gj_1214b_low_tint025_fully_cloudy_virga_mh100x.nc",
+      "sha256": "6df71d7ca8764f44eacbe94b7220b0e37434d6cc07e1cccdac0b7db7b3dbb2e1",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 16,
+      "run_id": "16_gj_1214b_low_tint050_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/16_gj_1214b_low_tint050_cloud_free_mh001x.nc",
+      "sha256": "bd55134e493329b6953d0a4834eb4b94021b79f03924aa0c88f15efcd3adc79e",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 17,
+      "run_id": "17_gj_1214b_low_tint050_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/17_gj_1214b_low_tint050_cloud_free_mh100x.nc",
+      "sha256": "a082405bb212210ed32a90848695cea762dab13da9f2ec36fefcc018417438f8",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 18,
+      "run_id": "18_gj_1214b_low_tint050_fully_cloudy_virga_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/18_gj_1214b_low_tint050_fully_cloudy_virga_mh001x.nc",
+      "sha256": "2d728633fe099fcb1b8debc476e725572518da2595c3ab833b3c017afb812304",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 19,
+      "run_id": "19_gj_1214b_low_tint050_fully_cloudy_virga_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/19_gj_1214b_low_tint050_fully_cloudy_virga_mh100x.nc",
+      "sha256": "93ba2790d4baa47f934e1f5114a1f7a67a78de4d1f4f56efb4a0e4b5af1d99c1",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 20,
+      "run_id": "20_gj_1214b_low_tint100_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/20_gj_1214b_low_tint100_cloud_free_mh001x.nc",
+      "sha256": "2845c5766e4cb8743620432a18a6fd1eb3100fcd6696a6a8059d5050d36ea717",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 21,
+      "run_id": "21_gj_1214b_low_tint100_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/21_gj_1214b_low_tint100_cloud_free_mh100x.nc",
+      "sha256": "b2b55449fbc2d86a92ee8c5f50d8bf51a59736b5fdb447466c6e43cf529cca9b",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 22,
+      "run_id": "22_gj_1214b_low_tint100_fully_cloudy_virga_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/22_gj_1214b_low_tint100_fully_cloudy_virga_mh001x.nc",
+      "sha256": "0373aa29064aad3dccbc39ed50dac9aeeacddaf6329b320f01ac8c62bcb5a1de",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 23,
+      "run_id": "23_gj_1214b_low_tint100_fully_cloudy_virga_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/23_gj_1214b_low_tint100_fully_cloudy_virga_mh100x.nc",
+      "sha256": "0c8c3ad38bd9a30aeb15b4c07865f25af0097b61f581526f301521faa945f037",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 24,
+      "run_id": "24_gj_1214b_observed_tint025_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/24_gj_1214b_observed_tint025_cloud_free_mh001x.nc",
+      "sha256": "1f7d0ff2d619b823c65d83b68e137e88982cb75ba50390a4ab130104475cca59",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 25,
+      "run_id": "25_gj_1214b_observed_tint025_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/25_gj_1214b_observed_tint025_cloud_free_mh100x.nc",
+      "sha256": "e3f378c3de1daefa2d0de934bbf089dca4933a1a7dd71e82a3c8636a2432358f",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 26,
+      "run_id": "26_gj_1214b_observed_tint025_fully_cloudy_virga_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/26_gj_1214b_observed_tint025_fully_cloudy_virga_mh001x.nc",
+      "sha256": "fba0ef8085d647a7d86252761c9bd884220c9b1d8e3d330624f8a03bc695cf98",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 27,
+      "run_id": "27_gj_1214b_observed_tint025_fully_cloudy_virga_mh100x",
+      "included": false,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/27_gj_1214b_observed_tint025_fully_cloudy_virga_mh100x.nc",
+      "sha256": null,
+      "exclusion_reasons": [
+        "missing NetCDF"
+      ]
+    },
+    {
+      "run_index": 28,
+      "run_id": "28_gj_1214b_observed_tint050_cloud_free_mh001x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/28_gj_1214b_observed_tint050_cloud_free_mh001x.nc",
+      "sha256": "642804cfb309074c965191a1c7ef40c6158a851f3cb054d7e09369fcc7e74e97",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 29,
+      "run_id": "29_gj_1214b_observed_tint050_cloud_free_mh100x",
+      "included": true,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/29_gj_1214b_observed_tint050_cloud_free_mh100x.nc",
+      "sha256": "ac987658024007297037bff0aec80d2ed37f7a70187b08c8ad7a070959b94ac2",
+      "exclusion_reasons": []
+    },
+    {
+      "run_index": 30,
+      "run_id": "30_gj_1214b_observed_tint050_fully_cloudy_virga_mh001x",
+      "included": false,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/30_gj_1214b_observed_tint050_fully_cloudy_virga_mh001x.nc",
+      "sha256": null,
+      "exclusion_reasons": [
+        "missing NetCDF"
+      ]
+    },
+    {
+      "run_index": 31,
+      "run_id": "31_gj_1214b_observed_tint050_fully_cloudy_virga_mh100x",
+      "included": false,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/31_gj_1214b_observed_tint050_fully_cloudy_virga_mh100x.nc",
+      "sha256": null,
+      "exclusion_reasons": [
+        "missing NetCDF"
+      ]
+    },
+    {
+      "run_index": 32,
+      "run_id": "32_gj_1214b_observed_tint100_cloud_free_mh001x",
+      "included": false,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/32_gj_1214b_observed_tint100_cloud_free_mh001x.nc",
+      "sha256": null,
+      "exclusion_reasons": [
+        "missing NetCDF"
+      ]
+    },
+    {
+      "run_index": 33,
+      "run_id": "33_gj_1214b_observed_tint100_cloud_free_mh100x",
+      "included": false,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/33_gj_1214b_observed_tint100_cloud_free_mh100x.nc",
+      "sha256": null,
+      "exclusion_reasons": [
+        "missing NetCDF"
+      ]
+    },
+    {
+      "run_index": 34,
+      "run_id": "34_gj_1214b_observed_tint100_fully_cloudy_virga_mh001x",
+      "included": false,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/34_gj_1214b_observed_tint100_fully_cloudy_virga_mh001x.nc",
+      "sha256": null,
+      "exclusion_reasons": [
+        "missing NetCDF"
+      ]
+    },
+    {
+      "run_index": 35,
+      "run_id": "35_gj_1214b_observed_tint100_fully_cloudy_virga_mh100x",
+      "included": false,
+      "path": "/home/u11/danielxinhuang/Documents/aurora/outputs/tint_sensitivity_36/35_gj_1214b_observed_tint100_fully_cloudy_virga_mh100x.nc",
+      "sha256": null,
+      "exclusion_reasons": [
+        "missing NetCDF"
+      ]
+    }
+  ],
+  "figure_stems": [
+    "pt_k2_18b_observed",
+    "pt_gj_1214b_low",
+    "pt_gj_1214b_observed",
+    "spectra_transmission_k2_18b_observed",
+    "spectra_transmission_gj_1214b_low",
+    "spectra_transmission_gj_1214b_observed",
+    "spectra_thermal_k2_18b_observed",
+    "spectra_thermal_gj_1214b_low",
+    "spectra_thermal_gj_1214b_observed",
+    "spectra_reflected_k2_18b_observed",
+    "spectra_reflected_gj_1214b_low",
+    "spectra_reflected_gj_1214b_observed",
+    "abundance_k2_18b_observed_cloud_free_001x",
+    "abundance_k2_18b_observed_cloud_free_100x",
+    "abundance_k2_18b_observed_fully_cloudy_virga_001x",
+    "abundance_k2_18b_observed_fully_cloudy_virga_100x",
+    "abundance_gj_1214b_low_cloud_free_001x",
+    "abundance_gj_1214b_low_cloud_free_100x",
+    "abundance_gj_1214b_low_fully_cloudy_virga_001x",
+    "abundance_gj_1214b_low_fully_cloudy_virga_100x",
+    "abundance_gj_1214b_observed_cloud_free_001x",
+    "abundance_gj_1214b_observed_cloud_free_100x",
+    "abundance_gj_1214b_observed_fully_cloudy_virga_001x",
+    "abundance_gj_1214b_observed_fully_cloudy_virga_100x",
+    "residual_transmission",
+    "residual_thermal",
+    "residual_reflected",
+    "case_metric_transmission",
+    "case_metric_thermal",
+    "case_metric_reflected",
+    "case_metric_co_co2"
+  ]
+}
