@@ -108,5 +108,36 @@ Planned full `aurora_subneptune_v1` parameter axes:
 - Gravity note: `gravity_ms2` is computed per row from mass and radius
   (`g = GM/R²`) for PICASO; at `R = 2 R⊕` this recovers the legacy g grid.
 
+## Tint-sensitivity analysis
+
+The 36-run Tint experiment has a portable analysis pipeline under
+`src/aurora_grid/tint`. Transferred NetCDF files are discovered by their
+embedded `run_id`; their filenames and transfer directory do not need to match
+the HPC paths recorded at model runtime.
+
+Run preflight before generating publication outputs:
+
+```bash
+export PYTHONPATH="$PWD/src:$PWD/roadrunner_egp${PYTHONPATH:+:$PYTHONPATH}"
+
+python -m aurora_grid.tint \
+  --config params/tint_sensitivity_36.yaml \
+  preflight \
+  --input-dir /path/to/36_netcdfs \
+  --output results/tint_sensitivity_preflight
+
+python -m aurora_grid.tint \
+  --config params/tint_sensitivity_36.yaml \
+  figures \
+  --input-dir /path/to/36_netcdfs \
+  --mode final \
+  --output results/tint_sensitivity_final
+```
+
+`final` mode requires all 36 schema-v1.3 files, climate convergence, and all
+12 Tint=25/100 endpoint pairs. `partial` mode accepts missing or nonconverged
+models for diagnostics and watermarks every figure. The interactive wrapper is
+`analysis/tint_sensitivity_figures/tint_sensitivity_framework.ipynb`.
+
 See [roadrunner_egp/aurora_subneptune_grid/README.md](roadrunner_egp/aurora_subneptune_grid/README.md)
 and [HPC_INSTALL.md](HPC_INSTALL.md) for details.

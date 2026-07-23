@@ -191,6 +191,25 @@ def validate_config(config: dict[str, Any]) -> None:
     wave = config["wavelength"]
     if (float(wave["minimum_um"]), float(wave["maximum_um"]), float(wave["resolving_power"])) != (0.6, 15.0, 1000.0):
         raise ValueError("Wavelength grid must be 0.6-15 um at constant R=1000")
+    analysis = config.get("analysis", {})
+    abundance_pressure = float(analysis.get("abundance_pressure_bar", 1.0e-3))
+    if abundance_pressure <= 0:
+        raise ValueError("analysis.abundance_pressure_bar must be positive")
+    headline = analysis.get("headline_combination", {})
+    cloud_ids = {str(item["id"]) for item in config["axes"]["cloud"]}
+    if str(headline.get("cloud_id", "fully_cloudy_virga")) not in cloud_ids:
+        raise ValueError("analysis.headline_combination.cloud_id is not in the cloud axis")
+    metallicities = {float(value) for value in config["axes"]["metallicity_xsolar"]}
+    if float(headline.get("metallicity_xsolar", 100.0)) not in metallicities:
+        raise ValueError(
+            "analysis.headline_combination.metallicity_xsolar is not in the metallicity axis"
+        )
+    guide = analysis.get("precision_guide", {})
+    band = tuple(float(value) for value in guide.get("band_ppm", (20.0, 50.0)))
+    if len(band) != 2 or band[0] < 0 or band[1] <= band[0]:
+        raise ValueError("analysis.precision_guide.band_ppm must be [low, high] with 0 <= low < high")
+    if float(guide.get("reference_ppm", 30.0)) < 0:
+        raise ValueError("analysis.precision_guide.reference_ppm must be nonnegative")
 
 
 def model_manifest(config: dict[str, Any], index: int) -> dict[str, Any]:
