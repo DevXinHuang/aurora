@@ -1,0 +1,5 @@
+stage,category,failed_attempt_logs,unique_run_indices
+production,Quench point below pressure grid,12,12
+preflight,Planet radius unavailable to transmission,10,9
+corrected production,Virga particle root below physical floor,1,1
+preflight,Returned profile omitted kz,1,1

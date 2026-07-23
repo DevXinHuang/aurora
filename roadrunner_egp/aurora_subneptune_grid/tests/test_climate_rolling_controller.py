@@ -34,6 +34,32 @@ def test_local_array_ids_never_use_real_climate_indices(tmp_path: Path):
     assert chunk_runner.resolve_climate_group_index(None, str(mapping), 997) == 10997
 
 
+def test_submission_routes_task_logs_to_requested_directory(tmp_path: Path):
+    manifest = tmp_path / "wave.csv"
+    log_dir = tmp_path / "group" / "logs"
+    commands = []
+
+    def fake_run(command, *, cwd, env=None):
+        commands.append(command)
+        return subprocess.CompletedProcess(command, 0, "123\n", "")
+
+    controller.submit_array(
+        repo_root=tmp_path,
+        slurm_script=tmp_path / "climate.slurm",
+        model="test",
+        items=[controller.WorkItem(42, 0, manifest)],
+        throttle=999,
+        time_limit="02:00:00",
+        submission_dir=tmp_path / "submissions",
+        log_path=tmp_path / "controller.log",
+        task_log_dir=log_dir,
+        run_command=fake_run,
+    )
+
+    assert f"--output={log_dir}/%x_%A_%a.out" in commands[0]
+    assert f"--error={log_dir}/%x_%A_%a.err" in commands[0]
+
+
 def test_available_slots_include_controller_and_interactive_jobs():
     assert controller.available_submit_slots(1000, 1) == 999
     assert controller.available_submit_slots(1000, 2) == 998

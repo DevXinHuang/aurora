@@ -1,0 +1,1122 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "PICASO Tint Sensitivity: Partial 26-Model Analysis",
+    "description": "Scientific findings, data-quality assessment, and failure diagnosis for the frozen partial experiment.",
+    "generatedAt": "2026-07-21T17:21:30Z",
+    "sources": [
+      {
+        "id": "model-source",
+        "label": "Frozen 26-model NetCDF summary",
+        "path": "model_summary.csv",
+        "query": {
+          "description": "Python/xarray profile of the explicit 26-file NetCDF snapshot.",
+          "language": "python",
+          "executed_at": "2026-07-21T17:21:30Z",
+          "filters": [
+            "Explicit run indices 0-25 only",
+            "Snapshot frozen while corrected Slurm array remained active"
+          ],
+          "metric_definitions": [
+            "Transmission modulation = (maximum transit depth - minimum transit depth) \u00d7 10^6 ppm over 0.6-15 \u00b5m",
+            "Visible albedo median = median geometric albedo over 0.6-1.0 \u00b5m"
+          ]
+        }
+      },
+      {
+        "id": "tint-source",
+        "label": "Tint endpoint sensitivity calculations",
+        "path": "tint_sensitivity.csv",
+        "query": {
+          "description": "Wavelength-wise Tint=100 K minus Tint=25 K transmission comparisons.",
+          "language": "python",
+          "executed_at": "2026-07-21T17:21:30Z",
+          "filters": [
+            "Otherwise identical models",
+            "Chart includes converged endpoints only"
+          ],
+          "metric_definitions": [
+            "RMS transmission change = sqrt(mean((depth_100K-depth_25K)^2)) \u00d7 10^6 ppm"
+          ]
+        }
+      },
+      {
+        "id": "failure-source",
+        "label": "Slurm traceback classification",
+        "path": "failure_summary.csv",
+        "query": {
+          "description": "Classification of every non-empty traceback log available at the snapshot time.",
+          "language": "python",
+          "executed_at": "2026-07-21T17:21:30Z",
+          "filters": [
+            "Traceback-containing .err files only",
+            "Counts are attempts, not final model counts"
+          ]
+        }
+      },
+      {
+        "id": "thermal-source",
+        "label": "Thermal ratio dimensional audit",
+        "path": "thermal_ratio_issue.txt",
+        "query": {
+          "description": "Code-path and unit audit of PICASO climate fpfs_thermal calculation.",
+          "language": "text",
+          "executed_at": "2026-07-21T17:21:30Z"
+        }
+      }
+    ],
+    "cards": [
+      {
+        "id": "coverage-card",
+        "dataset": "headline",
+        "sourceId": "model-source",
+        "description": "Schema-valid, unique, restartable NetCDF models in the frozen 36-model design.",
+        "metrics": [
+          {
+            "label": "Valid models",
+            "field": "valid_models",
+            "format": "number"
+          },
+          {
+            "label": "Expected",
+            "field": "expected_models",
+            "format": "number"
+          },
+          {
+            "label": "Coverage",
+            "field": "coverage_rate",
+            "format": "percent"
+          }
+        ]
+      },
+      {
+        "id": "convergence-card",
+        "dataset": "headline",
+        "sourceId": "model-source",
+        "description": "Saved valid files whose PICASO climate convergence flag is true.",
+        "metrics": [
+          {
+            "label": "Converged models",
+            "field": "converged_models",
+            "format": "number"
+          },
+          {
+            "label": "Of valid files",
+            "field": "valid_model_convergence_rate",
+            "format": "percent"
+          }
+        ]
+      },
+      {
+        "id": "remaining-card",
+        "dataset": "headline",
+        "sourceId": "model-source",
+        "description": "Designed models without a valid frozen-snapshot output.",
+        "metrics": [
+          {
+            "label": "Missing or failed",
+            "field": "missing_or_failed_models",
+            "format": "number"
+          }
+        ]
+      }
+    ],
+    "charts": [
+      {
+        "id": "tint-rms-chart",
+        "title": "Transmission sensitivity to Tint",
+        "subtitle": "Tint=100 K versus 25 K; converged endpoint pairs only, RMS across 0.6-15 \u00b5m",
+        "intent": "comparison",
+        "question": "How much does Tint change the transmission spectrum when all other model inputs are fixed?",
+        "rationale": "A horizontal bar chart makes six discrete, long-label model-pair comparisons readable and keeps a zero baseline.",
+        "comparisonContext": {
+          "baseline": "Tint=25 K",
+          "grain": "case \u00d7 cloud \u00d7 metallicity endpoint pair",
+          "unit": "ppm RMS"
+        },
+        "type": "horizontalBar",
+        "dataset": "tint_pairs_converged",
+        "sourceId": "tint-source",
+        "encodings": {
+          "x": {
+            "field": "rms_transmission_change_ppm",
+            "type": "quantitative",
+            "format": "number",
+            "label": "RMS transmission change",
+            "unit": "ppm"
+          },
+          "y": {
+            "field": "pair",
+            "type": "nominal",
+            "label": "Model pair"
+          },
+          "tooltip": [
+            {
+              "field": "maximum_transmission_change_ppm",
+              "type": "quantitative",
+              "label": "Maximum change",
+              "unit": "ppm"
+            },
+            {
+              "field": "temperature_1bar_change_k",
+              "type": "quantitative",
+              "label": "1-bar temperature change",
+              "unit": "K"
+            },
+            {
+              "field": "case",
+              "type": "text",
+              "label": "Case"
+            }
+          ]
+        },
+        "valueFormat": "number",
+        "unit": "ppm",
+        "layout": "full"
+      }
+    ],
+    "tables": [
+      {
+        "id": "case-table",
+        "title": "Coverage and transmission summary by coupled case",
+        "subtitle": "Frozen snapshot; transmission values are peak-to-trough over 0.6-15 \u00b5m",
+        "dataset": "coverage",
+        "sourceId": "model-source",
+        "defaultSort": {
+          "field": "case",
+          "direction": "asc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "case",
+            "label": "Case",
+            "type": "text"
+          },
+          {
+            "field": "valid_models",
+            "label": "Valid",
+            "format": "number"
+          },
+          {
+            "field": "expected_models",
+            "label": "Expected",
+            "format": "number"
+          },
+          {
+            "field": "converged_models",
+            "label": "Converged",
+            "format": "number"
+          },
+          {
+            "field": "median_transmission_modulation_ppm",
+            "label": "Median modulation (ppm)",
+            "format": "number"
+          },
+          {
+            "field": "median_temperature_1bar_k",
+            "label": "Median T at 1 bar (K)",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "failure-table",
+        "title": "Why attempts failed",
+        "subtitle": "Traceback counts describe execution attempts, not unique final scientific models",
+        "dataset": "failures",
+        "sourceId": "failure-source",
+        "defaultSort": {
+          "field": "failed_attempt_logs",
+          "direction": "desc"
+        },
+        "density": "spacious",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "stage",
+            "label": "Stage",
+            "type": "text"
+          },
+          {
+            "field": "failure_category",
+            "label": "Failure",
+            "type": "text"
+          },
+          {
+            "field": "severity",
+            "label": "Severity",
+            "type": "text"
+          },
+          {
+            "field": "failed_attempt_logs",
+            "label": "Attempt logs",
+            "format": "number"
+          },
+          {
+            "field": "unique_run_indices",
+            "label": "Unique indices",
+            "format": "number"
+          },
+          {
+            "field": "root_cause",
+            "label": "Root cause",
+            "type": "text"
+          },
+          {
+            "field": "remediation",
+            "label": "Remediation",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "id": "nonconverged-table",
+        "title": "Saved models with climate_converged=false",
+        "subtitle": "Finite, schema-valid outputs that remain provisional",
+        "dataset": "nonconverged",
+        "sourceId": "model-source",
+        "defaultSort": {
+          "field": "run_index",
+          "direction": "asc"
+        },
+        "density": "dense",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "run_index",
+            "label": "Index",
+            "format": "number"
+          },
+          {
+            "field": "case",
+            "label": "Case",
+            "type": "text"
+          },
+          {
+            "field": "tint_k",
+            "label": "Tint (K)",
+            "format": "number"
+          },
+          {
+            "field": "cloud",
+            "label": "Cloud",
+            "type": "text"
+          },
+          {
+            "field": "metallicity_xsolar",
+            "label": "Metallicity (\u00d7 solar)",
+            "format": "number"
+          },
+          {
+            "field": "transmission_modulation_ppm",
+            "label": "Modulation (ppm)",
+            "format": "number"
+          }
+        ]
+      },
+      {
+        "id": "model-table",
+        "title": "All 26 frozen-snapshot models",
+        "subtitle": "Exact model-level values used in this partial analysis",
+        "dataset": "models",
+        "sourceId": "model-source",
+        "defaultSort": {
+          "field": "run_index",
+          "direction": "asc"
+        },
+        "density": "dense",
+        "layout": "full",
+        "columns": [
+          {
+            "field": "run_index",
+            "label": "Index",
+            "format": "number"
+          },
+          {
+            "field": "case",
+            "label": "Case",
+            "type": "text"
+          },
+          {
+            "field": "tint_k",
+            "label": "Tint (K)",
+            "format": "number"
+          },
+          {
+            "field": "cloud",
+            "label": "Cloud",
+            "type": "text"
+          },
+          {
+            "field": "metallicity_xsolar",
+            "label": "Metallicity (\u00d7 solar)",
+            "format": "number"
+          },
+          {
+            "field": "climate_converged",
+            "label": "Converged",
+            "type": "text"
+          },
+          {
+            "field": "transmission_modulation_ppm",
+            "label": "Modulation (ppm)",
+            "format": "number"
+          },
+          {
+            "field": "visible_albedo_median",
+            "label": "Visible albedo",
+            "format": "number"
+          },
+          {
+            "field": "temperature_1bar_k",
+            "label": "T at 1 bar (K)",
+            "format": "number"
+          }
+        ]
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# PICASO Tint Sensitivity: Partial 26-Model Analysis",
+        "layout": "full"
+      },
+      {
+        "id": "technical-summary",
+        "type": "markdown",
+        "body": "## Technical summary\n\nThe frozen cohort has **26/36 valid restart files** and represents all three coupled cases, but only the two 255 K cases are complete. Among converged endpoint pairs, Tint=25\u2192100 K changes transmission by **1.6\u20139.3 ppm RMS**, smaller than the observed gravity, metallicity, cloud, and Teq contrasts. Seven valid files are nonconverged and remain provisional. Logged failures were caused by identifiable PICASO/Virga interface or numerical-domain issues\u2014not equilibrium-only chemistry\u2014and the current thermal planet/star ratios are excluded because they fail a dimensional audit.",
+        "layout": "full"
+      },
+      {
+        "id": "metrics",
+        "type": "metric-strip",
+        "cardIds": [
+          "coverage-card",
+          "convergence-card",
+          "remaining-card"
+        ],
+        "layout": "full"
+      },
+      {
+        "id": "tint-finding",
+        "type": "markdown",
+        "body": "## Tint is a secondary transmission driver in the complete 255 K cases\n\nAcross the six converged endpoint pairs, the wavelength-wise RMS change from Tint=25 K to 100 K is 1.6\u20139.3 ppm. The response is larger at 100\u00d7 solar than at 1\u00d7 solar. Read each bar as an otherwise identical model pair; the 500 K case is absent because it does not yet have both Tint endpoints.",
+        "sourceId": "tint-source",
+        "layout": "full"
+      },
+      {
+        "id": "tint-chart",
+        "type": "chart",
+        "chartId": "tint-rms-chart",
+        "layout": "full"
+      },
+      {
+        "id": "case-finding",
+        "type": "markdown",
+        "body": "## Gravity, metallicity, clouds, and Teq dominate the present contrasts\n\nThe complete lower-gravity GJ 1214 b grid has **23% greater median transmission modulation** than K2-18 b (172.3 versus 139.6 ppm). In converged 100\u00d7-solar comparisons, clouds suppress modulation by roughly **40\u201362 ppm** and increase median visible albedo by about **34\u201384\u00d7**. The two provisional 500 K clear models span **293\u2013496 ppm**, but cannot establish Tint or cloud sensitivity.",
+        "sourceId": "model-source",
+        "layout": "full"
+      },
+      {
+        "id": "case-table-block",
+        "type": "table",
+        "tableId": "case-table",
+        "layout": "full"
+      },
+      {
+        "id": "scope",
+        "type": "markdown",
+        "body": "## Scope, data, and metric definitions\n\nThe analysis unit is one unique case \u00d7 Tint \u00d7 cloud \u00d7 metallicity model. The frozen file list contains indices 0\u201325: twelve K2-18 b models, twelve GJ 1214 b low-temperature models, and two clear GJ 1214 b observed-temperature models. Transmission modulation is peak-to-trough transit depth over 0.6\u201315 \u00b5m in ppm. Visible albedo is the median geometric albedo over 0.6\u20131.0 \u00b5m. All included files passed schema, finiteness, constant-Kzz, quench, and uniqueness checks.",
+        "sourceId": "model-source",
+        "layout": "full"
+      },
+      {
+        "id": "model-detail",
+        "type": "table",
+        "tableId": "model-table",
+        "layout": "full"
+      },
+      {
+        "id": "methodology",
+        "type": "markdown",
+        "body": "## Methodology preserves a frozen denominator\n\nThe companion notebook opens an explicit 26-file list rather than globbing live outputs. It validates required flags and arrays, computes per-model PT and spectral summaries, forms Tint endpoint pairs, and inventories traceback logs. This prevents ongoing Slurm completion from changing the cohort during analysis. Thermal ratios are intentionally omitted from every comparison.",
+        "layout": "full"
+      },
+      {
+        "id": "failure-finding",
+        "type": "markdown",
+        "body": "## Failed attempts have four concrete root causes\n\nThe largest scientific-domain failure was the original 31.6-bar pressure grid: all twelve 500 K attempts placed the CO\u2013CH4\u2013H2O quench crossing below the modeled domain. Earlier preflight failures came from PICASO dropping the radius in its gravity-only branch or omitting kz from the returned dataframe. The latest cloudy 100\u00d7 hot attempt reached Virga but requested a settling radius below Virga's 0.1-nm physical floor. Counts below describe traceback attempts, so repeated diagnostics must not be read as 24 distinct failed science models.",
+        "sourceId": "failure-source",
+        "layout": "full"
+      },
+      {
+        "id": "failure-table-block",
+        "type": "table",
+        "tableId": "failure-table",
+        "layout": "full"
+      },
+      {
+        "id": "nonconvergence",
+        "type": "markdown",
+        "body": "## Seven saved models are finite but not converged\n\nThese are not crashed jobs: each produced a valid atomic NetCDF with finite spectra and quenched abundances. However, `climate_converged=false` means the PT solution did not satisfy PICASO's convergence criterion, so these rows should remain provisional. Six of seven are 1\u00d7-solar cloudy models; the seventh is K2-18 b, Tint=50 K, cloudy, 100\u00d7 solar.",
+        "sourceId": "model-source",
+        "layout": "full"
+      },
+      {
+        "id": "nonconverged-table-block",
+        "type": "table",
+        "tableId": "nonconverged-table",
+        "layout": "full"
+      },
+      {
+        "id": "thermal-limitation",
+        "type": "markdown",
+        "body": "## Thermal planet/star ratios are not decision-ready\n\nThe installed PICASO climate path integrates stellar flux per native bin, then divides a planet spectral flux density by that integrated value. The units do not cancel, and saved ratios reach physically implausible values. Transmission, reflected ratios, albedo, PT, and abundance arrays do not use this thermal division and remain separately analyzable. Final production should correct the native thermal ratio and regenerate affected files.",
+        "sourceId": "thermal-source",
+        "layout": "full"
+      },
+      {
+        "id": "next-steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. Correct the thermal flux-density/bin-integral mismatch and rerun all outputs that will be used for thermal inference.\n2. Complete the ten missing hot-case files with the adaptive deep grids and recorded Virga minimum-radius guard.\n3. Rerun or tune the seven nonconverged climate cases before final comparative claims.\n4. Repeat this frozen analysis on the final 36/36 validated ensemble and require zero invalid files, constant Kzz, enabled/applied quench flags, and finite spectra.",
+        "layout": "full"
+      },
+      {
+        "id": "further-questions",
+        "type": "markdown",
+        "body": "## Further questions\n\n- Does the full 500 K cloudy ensemble preserve the current 293\u2013496 ppm transmission range?\n- Are the cloudy 1\u00d7-solar nonconvergences sensitive to the initial RCB guess or Virga iteration cadence?\n- After a dimensionally correct thermal calculation, does Tint affect thermal emission more strongly than the modest transmission response?",
+        "layout": "full"
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-07-21T17:21:30Z",
+    "status": "partial",
+    "datasets": {
+      "headline": [
+        {
+          "valid_models": 26,
+          "expected_models": 36,
+          "coverage_rate": 0.7222222222222222,
+          "converged_models": 19,
+          "valid_model_convergence_rate": 0.7307692307692307,
+          "missing_or_failed_models": 10,
+          "thermal_ratio_reliable": false
+        }
+      ],
+      "coverage": [
+        {
+          "case": "GJ 1214 b low (255 K)",
+          "valid_models": 12,
+          "expected_models": 12,
+          "coverage_rate": 1.0,
+          "converged_models": 9,
+          "nonconverged_models": 3,
+          "median_transmission_modulation_ppm": 172.32427286576228,
+          "transmission_modulation_min_ppm": 91.74084766570313,
+          "transmission_modulation_max_ppm": 190.65876537935387,
+          "median_temperature_1bar_k": 431.1846727042686
+        },
+        {
+          "case": "GJ 1214 b observed (500 K)",
+          "valid_models": 2,
+          "expected_models": 12,
+          "coverage_rate": 0.16666666666666666,
+          "converged_models": 2,
+          "nonconverged_models": 0,
+          "median_transmission_modulation_ppm": 394.69743659690323,
+          "transmission_modulation_min_ppm": 293.0274554541899,
+          "transmission_modulation_max_ppm": 496.3674177396165,
+          "median_temperature_1bar_k": 918.9816764491536
+        },
+        {
+          "case": "K2-18 b observed (255 K)",
+          "valid_models": 12,
+          "expected_models": 12,
+          "coverage_rate": 1.0,
+          "converged_models": 8,
+          "nonconverged_models": 4,
+          "median_transmission_modulation_ppm": 139.5908574727896,
+          "transmission_modulation_min_ppm": 76.14190693206857,
+          "transmission_modulation_max_ppm": 154.54050278054234,
+          "median_temperature_1bar_k": 438.59926143262527
+        }
+      ],
+      "tint_pairs_converged": [
+        {
+          "pair": "GJ 1214 b low | cloudy | 100x",
+          "case": "GJ 1214 b low (255 K)",
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "rms_transmission_change_ppm": 9.261813212992044,
+          "maximum_transmission_change_ppm": 9.942651601868146,
+          "temperature_1bar_change_k": 79.52130927886026,
+          "both_endpoints_converged": true
+        },
+        {
+          "pair": "GJ 1214 b low | clear | 100x",
+          "case": "GJ 1214 b low (255 K)",
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "rms_transmission_change_ppm": 6.372048054577219,
+          "maximum_transmission_change_ppm": 7.081112554004672,
+          "temperature_1bar_change_k": 62.22643315052494,
+          "both_endpoints_converged": true
+        },
+        {
+          "pair": "K2-18 b observed | cloudy | 100x",
+          "case": "K2-18 b observed (255 K)",
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "rms_transmission_change_ppm": 4.218624897092252,
+          "maximum_transmission_change_ppm": 5.723860405344207,
+          "temperature_1bar_change_k": 19.52076811919551,
+          "both_endpoints_converged": true
+        },
+        {
+          "pair": "K2-18 b observed | clear | 100x",
+          "case": "K2-18 b observed (255 K)",
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "rms_transmission_change_ppm": 4.089690441668009,
+          "maximum_transmission_change_ppm": 4.287958753312372,
+          "temperature_1bar_change_k": 53.89269288893672,
+          "both_endpoints_converged": true
+        },
+        {
+          "pair": "GJ 1214 b low | clear | 1x",
+          "case": "GJ 1214 b low (255 K)",
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "rms_transmission_change_ppm": 2.170510305264722,
+          "maximum_transmission_change_ppm": 2.3116653435199286,
+          "temperature_1bar_change_k": 5.703023756774371,
+          "both_endpoints_converged": true
+        },
+        {
+          "pair": "K2-18 b observed | clear | 1x",
+          "case": "K2-18 b observed (255 K)",
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "rms_transmission_change_ppm": 1.5925017010150013,
+          "maximum_transmission_change_ppm": 1.730156912018669,
+          "temperature_1bar_change_k": 5.095286910327445,
+          "both_endpoints_converged": true
+        }
+      ],
+      "failures": [
+        {
+          "stage": "production",
+          "failure_category": "Quench point below pressure grid",
+          "severity": "High",
+          "failed_attempt_logs": 12,
+          "unique_run_indices": 12,
+          "root_cause": "The default Guillot grid ended at 31.6 bar, above the hot-case CO\u2013CH4\u2013H2O quench crossing.",
+          "remediation": "Use Tint-dependent deep grids (10^6, 10^5, 10^4 bar for 25, 50, 100 K) and rerun hot models."
+        },
+        {
+          "stage": "preflight",
+          "failure_category": "Planet radius unavailable to transmission",
+          "severity": "High",
+          "failed_attempt_logs": 10,
+          "unique_run_indices": 9,
+          "root_cause": "PICASO's gravity-only setup branch discarded the supplied radius, leaving transit depth non-finite.",
+          "remediation": "Initialize with mass plus radius, then overwrite gravity with the exact coupled-case value."
+        },
+        {
+          "stage": "corrected production",
+          "failure_category": "Virga particle root below physical floor",
+          "severity": "High",
+          "failed_attempt_logs": 1,
+          "unique_run_indices": 1,
+          "root_cause": "At one 100x-metallicity cloudy layer, the settling-speed root fell below Virga's 0.1-nm particle floor at fixed Kzz.",
+          "remediation": "Clamp only that endpoint to Virga's documented minimum radius, record the clamp count, and rerun affected cloudy models."
+        },
+        {
+          "stage": "preflight",
+          "failure_category": "Returned profile omitted kz",
+          "severity": "Medium",
+          "failed_attempt_logs": 1,
+          "unique_run_indices": 1,
+          "root_cause": "PICASO retained constant Kzz internally but omitted kz from the returned ptchem_df.",
+          "remediation": "Verify the internal constant_kzz array and reattach 1e10 cm2/s to the saved final profile."
+        }
+      ],
+      "nonconverged": [
+        {
+          "run_index": 2,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 25.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 154.08956457725046,
+          "visible_albedo_median": 0.07258824048072715,
+          "temperature_1bar_k": 368.948972562974,
+          "max_quench_difference_dex": 42.58031093839592
+        },
+        {
+          "run_index": 6,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 50.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 154.1168327510601,
+          "visible_albedo_median": 0.07257018315054692,
+          "temperature_1bar_k": 369.25572188993254,
+          "max_quench_difference_dex": 42.6040177754568
+        },
+        {
+          "run_index": 7,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 50.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 76.14190693206857,
+          "visible_albedo_median": 0.3688712440576458,
+          "temperature_1bar_k": 502.95573703496024,
+          "max_quench_difference_dex": 39.17942816604038
+        },
+        {
+          "run_index": 10,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 100.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 154.53032333812533,
+          "visible_albedo_median": 0.07232025493409774,
+          "temperature_1bar_k": 374.06426203366084,
+          "max_quench_difference_dex": 42.94037010904187
+        },
+        {
+          "run_index": 14,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 25.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 190.09971180069175,
+          "visible_albedo_median": 0.07545025025614271,
+          "temperature_1bar_k": 373.3157234208279,
+          "max_quench_difference_dex": 42.643405916964184
+        },
+        {
+          "run_index": 18,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 50.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 190.13264508959284,
+          "visible_albedo_median": 0.07543211918571165,
+          "temperature_1bar_k": 373.6448545814706,
+          "max_quench_difference_dex": 42.66950380515019
+        },
+        {
+          "run_index": 22,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 100.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 190.64355634271095,
+          "visible_albedo_median": 0.07516053850171886,
+          "temperature_1bar_k": 378.83625490296237,
+          "max_quench_difference_dex": 42.98017879093572
+        }
+      ],
+      "models": [
+        {
+          "run_index": 0,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 25.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 154.10053126821205,
+          "visible_albedo_median": 0.07258442839583665,
+          "temperature_1bar_k": 369.14749891996286,
+          "max_quench_difference_dex": 42.582928262328046
+        },
+        {
+          "run_index": 1,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 25.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 123.8843105832799,
+          "visible_albedo_median": 0.0044259677444698125,
+          "temperature_1bar_k": 569.118883160704,
+          "max_quench_difference_dex": 39.41046569974874
+        },
+        {
+          "run_index": 2,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 25.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 154.08956457725046,
+          "visible_albedo_median": 0.07258824048072715,
+          "temperature_1bar_k": 368.948972562974,
+          "max_quench_difference_dex": 42.58031093839592
+        },
+        {
+          "run_index": 3,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 25.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 76.47275741886217,
+          "visible_albedo_median": 0.17703387619685207,
+          "temperature_1bar_k": 517.1606003606969,
+          "max_quench_difference_dex": 38.28473704169117
+        },
+        {
+          "run_index": 4,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 50.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 154.12764620352948,
+          "visible_albedo_median": 0.07256643949535624,
+          "temperature_1bar_k": 369.451590075064,
+          "max_quench_difference_dex": 42.606570743504484
+        },
+        {
+          "run_index": 5,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 50.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 123.53224006503598,
+          "visible_albedo_median": 0.004375492258878603,
+          "temperature_1bar_k": 572.7142748092455,
+          "max_quench_difference_dex": 39.44553148407232
+        },
+        {
+          "run_index": 6,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 50.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 154.1168327510601,
+          "visible_albedo_median": 0.07257018315054692,
+          "temperature_1bar_k": 369.25572188993254,
+          "max_quench_difference_dex": 42.6040177754568
+        },
+        {
+          "run_index": 7,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 50.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 76.14190693206857,
+          "visible_albedo_median": 0.3688712440576458,
+          "temperature_1bar_k": 502.95573703496024,
+          "max_quench_difference_dex": 39.17942816604038
+        },
+        {
+          "run_index": 8,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 100.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 154.54050278054234,
+          "visible_albedo_median": 0.07231617625514242,
+          "temperature_1bar_k": 374.2427858302903,
+          "max_quench_difference_dex": 42.94323801769319
+        },
+        {
+          "run_index": 9,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 100.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 125.09215036832873,
+          "visible_albedo_median": 0.004264072546115357,
+          "temperature_1bar_k": 623.0115760496407,
+          "max_quench_difference_dex": 38.82575213875176
+        },
+        {
+          "run_index": 10,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 100.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 154.53032333812533,
+          "visible_albedo_median": 0.07232025493409774,
+          "temperature_1bar_k": 374.06426203366084,
+          "max_quench_difference_dex": 42.94037010904187
+        },
+        {
+          "run_index": 11,
+          "case": "K2-18 b observed (255 K)",
+          "tint_k": 100.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 84.81707914800027,
+          "visible_albedo_median": 0.3280856235865131,
+          "temperature_1bar_k": 536.6813684798924,
+          "max_quench_difference_dex": 40.24794257907379
+        },
+        {
+          "run_index": 12,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 25.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 190.10447746924945,
+          "visible_albedo_median": 0.07544856710595108,
+          "temperature_1bar_k": 373.37226502044695,
+          "max_quench_difference_dex": 42.64523772081639
+        },
+        {
+          "run_index": 13,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 25.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 151.9377141564809,
+          "visible_albedo_median": 0.004579459178844716,
+          "temperature_1bar_k": 580.6135449667341,
+          "max_quench_difference_dex": 39.76176145947925
+        },
+        {
+          "run_index": 14,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 25.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 190.09971180069175,
+          "visible_albedo_median": 0.07545025025614271,
+          "temperature_1bar_k": 373.3157234208279,
+          "max_quench_difference_dex": 42.643405916964184
+        },
+        {
+          "run_index": 15,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 25.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 91.74084766570313,
+          "visible_albedo_median": 0.15608809139532165,
+          "temperature_1bar_k": 533.2755355759439,
+          "max_quench_difference_dex": 37.78544652375453
+        },
+        {
+          "run_index": 16,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 50.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 190.14830962732313,
+          "visible_albedo_median": 0.0754277667987909,
+          "temperature_1bar_k": 373.89125413403144,
+          "max_quench_difference_dex": 42.67204748376424
+        },
+        {
+          "run_index": 17,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 50.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 152.5162538097177,
+          "visible_albedo_median": 0.004508689213442343,
+          "temperature_1bar_k": 584.8090598154572,
+          "max_quench_difference_dex": 39.78849088103227
+        },
+        {
+          "run_index": 18,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 50.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 190.13264508959284,
+          "visible_albedo_median": 0.07543211918571165,
+          "temperature_1bar_k": 373.6448545814706,
+          "max_quench_difference_dex": 42.66950380515019
+        },
+        {
+          "run_index": 19,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 50.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 105.84259802351144,
+          "visible_albedo_median": 0.3540764303921167,
+          "temperature_1bar_k": 483.2940566313159,
+          "max_quench_difference_dex": 42.32435558617388
+        },
+        {
+          "run_index": 20,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 100.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 190.65876537935387,
+          "visible_albedo_median": 0.0751553400870984,
+          "temperature_1bar_k": 379.0752887772213,
+          "max_quench_difference_dex": 42.9815428685401
+        },
+        {
+          "run_index": 21,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 100.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 154.5488339308328,
+          "visible_albedo_median": 0.004400501860707405,
+          "temperature_1bar_k": 642.8399781172591,
+          "max_quench_difference_dex": 38.98669575686793
+        },
+        {
+          "run_index": 22,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 100.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": false,
+          "transmission_modulation_ppm": 190.64355634271095,
+          "visible_albedo_median": 0.07516053850171886,
+          "temperature_1bar_k": 378.83625490296237,
+          "max_quench_difference_dex": 42.98017879093572
+        },
+        {
+          "run_index": 23,
+          "case": "GJ 1214 b low (255 K)",
+          "tint_k": 100.0,
+          "cloud": "cloudy",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 92.9209928706232,
+          "visible_albedo_median": 0.1559516419312601,
+          "temperature_1bar_k": 612.7968448548041,
+          "max_quench_difference_dex": 37.87332727632796
+        },
+        {
+          "run_index": 24,
+          "case": "GJ 1214 b observed (500 K)",
+          "tint_k": 25.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 1.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 496.3674177396165,
+          "visible_albedo_median": 0.0299360196784246,
+          "temperature_1bar_k": 810.2278993929275,
+          "max_quench_difference_dex": 10.590852653483285
+        },
+        {
+          "run_index": 25,
+          "case": "GJ 1214 b observed (500 K)",
+          "tint_k": 25.0,
+          "cloud": "clear",
+          "metallicity_xsolar": 100.0,
+          "climate_converged": true,
+          "transmission_modulation_ppm": 293.0274554541899,
+          "visible_albedo_median": 0.0060163935440727435,
+          "temperature_1bar_k": 1027.7354535053798,
+          "max_quench_difference_dex": 9.600758890587493
+        }
+      ]
+    },
+    "accessIssues": [
+      {
+        "id": "incomplete-hot-case",
+        "scope": "GJ 1214 b observed 500 K",
+        "dataset": "models",
+        "message": "Ten of twelve hot-case models were unavailable in the frozen snapshot; hot-case Tint and cloud comparisons are incomplete."
+      }
+    ]
+  },
+  "sources": [
+    {
+      "id": "model-source",
+      "label": "Frozen 26-model NetCDF summary",
+      "path": "model_summary.csv",
+      "query": {
+        "description": "Python/xarray profile of the explicit 26-file NetCDF snapshot.",
+        "language": "python",
+        "executed_at": "2026-07-21T17:21:30Z",
+        "filters": [
+          "Explicit run indices 0-25 only",
+          "Snapshot frozen while corrected Slurm array remained active"
+        ],
+        "metric_definitions": [
+          "Transmission modulation = (maximum transit depth - minimum transit depth) \u00d7 10^6 ppm over 0.6-15 \u00b5m",
+          "Visible albedo median = median geometric albedo over 0.6-1.0 \u00b5m"
+        ]
+      }
+    },
+    {
+      "id": "tint-source",
+      "label": "Tint endpoint sensitivity calculations",
+      "path": "tint_sensitivity.csv",
+      "query": {
+        "description": "Wavelength-wise Tint=100 K minus Tint=25 K transmission comparisons.",
+        "language": "python",
+        "executed_at": "2026-07-21T17:21:30Z",
+        "filters": [
+          "Otherwise identical models",
+          "Chart includes converged endpoints only"
+        ],
+        "metric_definitions": [
+          "RMS transmission change = sqrt(mean((depth_100K-depth_25K)^2)) \u00d7 10^6 ppm"
+        ]
+      }
+    },
+    {
+      "id": "failure-source",
+      "label": "Slurm traceback classification",
+      "path": "failure_summary.csv",
+      "query": {
+        "description": "Classification of every non-empty traceback log available at the snapshot time.",
+        "language": "python",
+        "executed_at": "2026-07-21T17:21:30Z",
+        "filters": [
+          "Traceback-containing .err files only",
+          "Counts are attempts, not final model counts"
+        ]
+      }
+    },
+    {
+      "id": "thermal-source",
+      "label": "Thermal ratio dimensional audit",
+      "path": "thermal_ratio_issue.txt",
+      "query": {
+        "description": "Code-path and unit audit of PICASO climate fpfs_thermal calculation.",
+        "language": "text",
+        "executed_at": "2026-07-21T17:21:30Z"
+      }
+    }
+  ]
+}

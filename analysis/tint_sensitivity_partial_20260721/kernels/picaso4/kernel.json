@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/home/u11/danielxinhuang/Documents/aurora/.venv-picaso4/bin/python",
+    "-m",
+    "ipykernel_launcher",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "Python 3 (PICASO 4)",
+  "language": "python",
+  "metadata": {
+    "debugger": true
+  }
+}

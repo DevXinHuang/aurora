@@ -1,0 +1,14 @@
+Thermal planet/star flux-ratio quality finding
+Snapshot: 2026-07-21T17:21:30Z
+
+The installed PICASO climate stellar path integrates stellar flux over native
+wavelength bins in picaso.justdoit.inputs.star (approximately lines 1845-1863),
+and labels the result erg cm-2 s-1. Later, spectrum() divides the planet thermal
+flux density (erg cm-2 s-1 cm-1) by that integrated stellar-bin quantity when
+forming fpfs_thermal (approximately line 586). The units therefore do not cancel.
+
+Observed consequence: saved values reach 0.36 in a 255 K model and 10.5 in a
+500 K model, far outside plausible sub-Neptune planet/star thermal ratios. The
+partial analysis excludes thermal conclusions. Corrected production must divide
+by a stellar spectral flux density on the native grid (or consistently convert
+both numerator and denominator to bin-integrated flux) before interpolation.
