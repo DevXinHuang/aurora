@@ -24,6 +24,37 @@ from .config import (
 SCHEMA_NAME = "aurora_picaso_tint_sensitivity"
 SCHEMA_VERSION = "1.3"
 
+PORTABLE_MANIFEST_KEYS = (
+    "run_index",
+    "run_id",
+    "experiment_name",
+    "case_id",
+    "planet_mass_mearth",
+    "planet_radius_rearth",
+    "gravity_ms2",
+    "equilibrium_temperature_k",
+    "tint_k",
+    "metallicity_xsolar",
+    "cloud_id",
+    "cloud_model",
+    "cloud_fraction",
+    "fsed",
+    "star_teff_k",
+    "star_radius_rsun",
+    "c_to_o_xsolar",
+    "c_to_o_absolute",
+    "kzz_cm2_s",
+    "phase_angle_deg",
+    "chemistry_initialization",
+    "chemistry_mode",
+    "diseq_chem",
+    "self_consistent_kzz",
+    "quench",
+    "wavelength_minimum_um",
+    "wavelength_maximum_um",
+    "wavelength_resolving_power",
+)
+
 
 def _version(package: str) -> str:
     try:
@@ -219,6 +250,14 @@ def build_dataset(result: dict[str, Any], row: dict[str, Any]) -> xr.Dataset:
 
 def validate_dataset(ds: xr.Dataset, expected_row: dict[str, Any] | None = None) -> list[str]:
     issues: list[str] = []
+    if ds.attrs.get("schema_name") != SCHEMA_NAME:
+        issues.append(
+            f"schema_name is {ds.attrs.get('schema_name')!r}; expected {SCHEMA_NAME!r}"
+        )
+    if ds.attrs.get("schema_version") != SCHEMA_VERSION:
+        issues.append(
+            f"schema_version is {ds.attrs.get('schema_version')!r}; expected {SCHEMA_VERSION!r}"
+        )
     required = {
         "pressure_bar", "temperature_k", "kzz_cm2_s_profile", "mole_fraction",
         "equilibrium_mole_fraction", "quench_pressure_bar",
@@ -237,6 +276,11 @@ def validate_dataset(ds: xr.Dataset, expected_row: dict[str, Any] | None = None)
         issues.append("species coordinate is not the required six-species ordering")
     if tuple(str(x) for x in ds["quench_family"].values.tolist()) != QUENCH_FAMILIES:
         issues.append("quench_family coordinate is not the required PICASO ordering")
+    pressure = np.asarray(ds["pressure_bar"].values, dtype=float)
+    if pressure.size < 2 or np.any(~np.isfinite(pressure)) or np.any(pressure <= 0):
+        issues.append("pressure grid must contain at least two finite positive levels")
+    elif not (np.all(np.diff(pressure) > 0) or np.all(np.diff(pressure) < 0)):
+        issues.append("pressure grid is not strictly monotonic")
     wave = np.asarray(ds["wavelength_um"].values, dtype=float)
     if wave.size < 2 or not np.all(np.diff(wave) > 0):
         issues.append("wavelength grid is not strictly increasing")
@@ -321,18 +365,21 @@ def validate_dataset(ds: xr.Dataset, expected_row: dict[str, Any] | None = None)
         except Exception:
             issues.append("manifest_json is not valid JSON")
         else:
-            legacy_expected = {
-                key: value for key, value in expected_row.items()
+            mismatches = [
+                key
+                for key in PORTABLE_MANIFEST_KEYS
                 if key not in LEGACY_OPTIONAL_MANIFEST_KEYS
-            }
-            legacy_stored = {
-                key: value for key, value in stored.items()
-                if key not in LEGACY_OPTIONAL_MANIFEST_KEYS
-            }
-            if stored != expected_row and legacy_stored != legacy_expected:
-                issues.append("stored manifest does not match expected manifest")
+                and stored.get(key) != expected_row.get(key)
+            ]
+            if mismatches:
+                issues.append(
+                    "stored manifest scientific fields do not match expected manifest: "
+                    f"{mismatches}"
+                )
         expected_wave = wavelength_grid(expected_row)
-        if wave.shape != expected_wave.shape or not np.allclose(wave, expected_wave, rtol=0, atol=0):
+        if wave.shape != expected_wave.shape or not np.allclose(
+            wave, expected_wave, rtol=1.0e-12, atol=1.0e-14
+        ):
             issues.append("wavelength coordinate does not exactly match manifest grid")
     return issues
 

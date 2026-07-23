@@ -119,7 +119,26 @@ def cmd_summarize(args: argparse.Namespace) -> int:
 def cmd_figures(args: argparse.Namespace) -> int:
     from .analysis import generate_package
 
-    output = generate_package(args.config, args.output, args.mode, overwrite=args.overwrite)
+    output = generate_package(
+        args.config,
+        args.output,
+        args.mode,
+        input_directory=args.input_dir,
+        overwrite=args.overwrite,
+    )
+    print(output)
+    return 0
+
+
+def cmd_preflight(args: argparse.Namespace) -> int:
+    from .analysis import write_preflight_report
+
+    output = write_preflight_report(
+        args.config,
+        args.input_dir,
+        args.output,
+        overwrite=args.overwrite,
+    )
     print(output)
     return 0
 
@@ -137,7 +156,13 @@ def build_parser() -> argparse.ArgumentParser:
     run.set_defaults(func=cmd_run_one)
     summary = sub.add_parser("summarize")
     summary.set_defaults(func=cmd_summarize)
+    preflight = sub.add_parser("preflight", help="Inventory and validate transferred Tint NetCDFs")
+    preflight.add_argument("--input-dir", required=True)
+    preflight.add_argument("--output", required=True)
+    preflight.add_argument("--overwrite", action="store_true")
+    preflight.set_defaults(func=cmd_preflight)
     figures = sub.add_parser("figures")
+    figures.add_argument("--input-dir")
     figures.add_argument("--mode", choices=("partial", "final"), required=True)
     figures.add_argument("--output", required=True)
     figures.add_argument("--overwrite", action="store_true")

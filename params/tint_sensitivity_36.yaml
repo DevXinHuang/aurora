@@ -57,6 +57,16 @@ wavelength:
   maximum_um: 15.0
   resolving_power: 1000.0
 
+analysis:
+  abundance_pressure_bar: 1.0e-3
+  headline_combination:
+    cloud_id: fully_cloudy_virga
+    metallicity_xsolar: 100.0
+  precision_guide:
+    observables: [transmission]
+    band_ppm: [20.0, 50.0]
+    reference_ppm: 30.0
+
 paths:
   reference_data: picaso4_reference
   opacity_directory: picaso4_reference/opacities

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import inspect
+import json
 from collections import namedtuple
 from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
+import pytest
+import xarray as xr
 
 from aurora_grid.tint.config import (
     EXPECTED_MODEL_COUNT,
@@ -15,12 +18,66 @@ from aurora_grid.tint.config import (
     manifests,
     wavelength_grid,
 )
-from aurora_grid.tint.netcdf import build_dataset, validate_dataset
+from aurora_grid.tint.netcdf import build_dataset, validate_dataset, validate_file, write_atomic
 
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "params" / "tint_sensitivity_36.yaml"
 EQUILIBRIUM_CONFIG = ROOT / "params" / "tint_sensitivity_equilibrium_36.yaml"
+
+
+def _synthetic_result(row: dict, *, converged: bool = True) -> dict:
+    wave = wavelength_grid(row)
+    pressure = np.geomspace(1e-6, min(float(row["pressure_bottom_bar"]), 1e3), 8)
+    tint_scale = float(row["tint_k"]) / 100.0
+    spectral_shape = np.exp(-0.5 * ((wave - 4.3) / 0.35) ** 2)
+    abundances = np.stack(
+        [
+            np.geomspace(1e-9 * (index + 1), 1e-5 * (index + 1), pressure.size)
+            * (1.0 + tint_scale * (index + 1) / 10.0)
+            for index in range(len(REQUIRED_SPECIES))
+        ],
+        axis=1,
+    )
+    return {
+        "wavelength_um": wave,
+        "pressure_bar": pressure,
+        "temperature_k": np.linspace(200.0, 700.0 + float(row["tint_k"]), pressure.size),
+        "kzz_cm2_s_profile": np.full(pressure.size, 1e10),
+        "mole_fraction": abundances,
+        "equilibrium_mole_fraction": abundances * 0.8,
+        "quench_pressures_bar": {name: 1.0 for name in QUENCH_FAMILIES},
+        "transmission_depth": 1e-3 + tint_scale * spectral_shape * 2e-5,
+        "thermal_planet_star_flux_ratio": 1e-7 + tint_scale * spectral_shape * 2e-8,
+        "reflected_planet_star_flux_ratio": 1e-8 + tint_scale * spectral_shape * 2e-9,
+        "geometric_albedo": np.full(wave.size, 0.2),
+        "climate_converged": converged,
+        "quench_enabled": True,
+        "quench_applied": True,
+        "quench_profile_differs_from_equilibrium": True,
+        "diseq_chem": True,
+        "self_consistent_kzz": False,
+        "max_quench_log10_difference": 1.0,
+        "selected_opacity_file": "synthetic.hdf5",
+        "runtime_seconds": 1.0,
+        "thermal_flux_ratio_correction": {
+            "minimum_native_bin_width_cm": 1e-8,
+            "maximum_native_bin_width_cm": 1e-6,
+        },
+    }
+
+
+def _write_synthetic_model(directory: Path, row: dict, *, converged: bool = True) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"transferred_{int(row['run_index']):02d}.nc"
+    dataset = build_dataset(_synthetic_result(row, converged=True), row)
+    if not converged:
+        dataset["climate_converged"] = np.int8(0)
+    try:
+        write_atomic(dataset, path)
+    finally:
+        dataset.close()
+    return path
 
 
 def test_exactly_36_unique_models() -> None:
@@ -275,16 +332,19 @@ def test_equilibrium_only_netcdf_has_explicit_false_quench_provenance() -> None:
     assert np.all(np.isnan(ds["quench_pressure_bar"].values))
 
 
-def test_analysis_contract_has_31_png_pdf_figure_designs() -> None:
-    from aurora_grid.tint.analysis import expected_figure_stems
+def test_analysis_contract_has_34_png_pdf_figure_designs() -> None:
+    from aurora_grid.tint.analysis import expected_figure_stems, figure_group, figure_relative_stem
 
     stems = expected_figure_stems()
-    assert len(stems) == 31
-    assert len(set(stems)) == 31
-    assert len(stems) * 2 == 62
+    assert len(stems) == 34
+    assert len(set(stems)) == 34
+    assert len(stems) * 2 == 68
     assert sum(stem.startswith("pt_") for stem in stems) == 3
     assert sum(stem.startswith("spectra_") for stem in stems) == 9
     assert sum(stem.startswith("abundance_") for stem in stems) == 12
+    assert figure_relative_stem("pt_k2_18b_observed").as_posix() == "01_pt_profiles/pt_k2_18b_observed"
+    assert figure_group("residual_transmission") == "04_residuals"
+    assert figure_group("headline_case_metric_transmission") == "05_comparisons"
 
 
 def test_analysis_summary_retains_all_36_manifest_rows() -> None:
@@ -296,6 +356,7 @@ def test_analysis_summary_retains_all_36_manifest_rows() -> None:
     assert table["run_index"].tolist() == list(range(36))
     for species in REQUIRED_SPECIES:
         assert f"{species}_mole_fraction_at_1mbar" in table
+        assert f"{species}_pressure_weighted_column_mean_mole_fraction" in table
 
 
 def test_analysis_pairs_all_tint_25_and_100_endpoints() -> None:
@@ -322,6 +383,17 @@ def test_pressure_axis_is_logarithmic_and_increases_downward() -> None:
     plt.close(fig)
 
 
+def test_pressure_axis_remains_inverted_when_shared_axis_is_styled_repeatedly() -> None:
+    import matplotlib.pyplot as plt
+    from aurora_grid.tint.analysis import _set_pressure_axis
+
+    fig, axes = plt.subplots(2, 2, sharey=True)
+    for ax in axes.flat:
+        _set_pressure_axis(ax)
+    assert all(ax.yaxis_inverted() for ax in axes.flat)
+    plt.close(fig)
+
+
 def test_static_figure_export_writes_png_and_pdf(tmp_path: Path) -> None:
     import matplotlib.pyplot as plt
     from aurora_grid.tint.analysis import _save_figure
@@ -332,3 +404,144 @@ def test_static_figure_export_writes_png_and_pdf(tmp_path: Path) -> None:
     _save_figure(fig, stem, "partial", 1)
     assert stem.with_suffix(".png").is_file()
     assert stem.with_suffix(".pdf").is_file()
+
+
+def test_input_discovery_matches_transferred_files_by_run_id(tmp_path: Path) -> None:
+    from aurora_grid.tint.analysis import discover_input_files
+
+    rows = manifests(load_experiment(CONFIG))
+    path = _write_synthetic_model(tmp_path, rows[0])
+    discovery = discover_input_files(rows, tmp_path)
+
+    assert discovery.paths_by_index[0] == path
+    assert discovery.issues_by_index[1] == ["missing NetCDF"]
+    assert len(discovery.paths_by_index) == 1
+
+
+def test_input_discovery_rejects_duplicate_run_ids(tmp_path: Path) -> None:
+    from aurora_grid.tint.analysis import discover_input_files
+
+    rows = manifests(load_experiment(CONFIG))
+    first = _write_synthetic_model(tmp_path, rows[0])
+    duplicate = tmp_path / "duplicate.nc"
+    duplicate.write_bytes(first.read_bytes())
+    discovery = discover_input_files(rows, tmp_path)
+
+    assert "duplicate run_id" in discovery.issues_by_index[0][0]
+    assert 0 not in discovery.paths_by_index
+
+
+def test_schema_and_pressure_validation_reject_unsupported_inputs(tmp_path: Path) -> None:
+    row = manifests(load_experiment(CONFIG))[0]
+    path = _write_synthetic_model(tmp_path, row)
+    with xr.open_dataset(path) as source:
+        dataset = source.load()
+    dataset.attrs["schema_version"] = "0.0"
+    dataset["pressure_bar"] = (("level",), np.array([1e-6, 1e-4, 1e-3, 5e-4, 1, 10, 100, 1000]))
+    dataset.to_netcdf(path, mode="w")
+    dataset.close()
+    issues = validate_file(path, row)
+
+    assert any("schema_version" in issue for issue in issues)
+    assert "pressure grid is not strictly monotonic" in issues
+
+
+def test_wavelength_validation_allows_serialization_roundoff() -> None:
+    row = manifests(load_experiment(CONFIG))[0]
+    dataset = build_dataset(_synthetic_result(row), row)
+    perturbed = dataset["wavelength_um"].values.copy()
+    perturbed[2] = np.nextafter(perturbed[2], np.inf)
+    dataset = dataset.assign_coords(wavelength_um=(("wavelength",), perturbed))
+
+    assert validate_dataset(dataset, row) == []
+    dataset.close()
+
+
+def test_missing_spectral_product_is_invalid(tmp_path: Path) -> None:
+    row = manifests(load_experiment(CONFIG))[0]
+    path = _write_synthetic_model(tmp_path, row)
+    with xr.open_dataset(path) as source:
+        dataset = source.load().drop_vars("reflected_planet_star_flux_ratio")
+    dataset.to_netcdf(path, mode="w")
+    dataset.close()
+
+    assert any("reflected_planet_star_flux_ratio" in issue for issue in validate_file(path, row))
+
+
+def test_final_mode_rejects_nonconverged_inputs(tmp_path: Path) -> None:
+    from aurora_grid.tint.analysis import load_models
+
+    rows = manifests(load_experiment(CONFIG))
+    _write_synthetic_model(tmp_path, rows[0], converged=False)
+    with pytest.raises(RuntimeError, match="36 valid models") as error:
+        load_models(CONFIG, "final", tmp_path)
+    assert "climate solution is not converged" in str(error.value)
+
+
+def test_abundance_and_residual_numerics() -> None:
+    from aurora_grid.tint.analysis import (
+        pressure_weighted_column_mean,
+        rms_residual_ppm,
+        spectral_residual_ppm,
+    )
+
+    low = SimpleNamespace(
+        pressure_bar=np.array([1.0, 2.0, 3.0]),
+        wavelength_um=np.array([1.0, 2.0]),
+        spectra={"transmission": np.array([1e-3, 2e-3])},
+    )
+    high = SimpleNamespace(
+        wavelength_um=np.array([1.0, 2.0]),
+        spectra={"transmission": np.array([1.001e-3, 2.003e-3])},
+    )
+    assert pressure_weighted_column_mean(low, np.array([1.0, 2.0, 3.0])) == pytest.approx(2.0)
+    assert spectral_residual_ppm(low, high, "transmission") == pytest.approx([1.0, 3.0])
+    assert rms_residual_ppm(low, high, "transmission") == pytest.approx(np.sqrt(5.0))
+
+
+def test_preflight_writes_machine_readable_inventory(tmp_path: Path) -> None:
+    from aurora_grid.tint.analysis import write_preflight_report
+
+    rows = manifests(load_experiment(CONFIG))
+    input_dir = tmp_path / "inputs"
+    _write_synthetic_model(input_dir, rows[0])
+    output = write_preflight_report(CONFIG, input_dir, tmp_path / "preflight")
+    payload = json.loads((output / "preflight_inventory.json").read_text())
+
+    assert payload["matched_models"] == 1
+    assert payload["final_ready"] is False
+    assert (output / "preflight_inventory.csv").is_file()
+
+
+def test_synthetic_36_file_final_package(tmp_path: Path) -> None:
+    from aurora_grid.tint.analysis import expected_figure_stems, figure_relative_stem, generate_package
+
+    rows = manifests(load_experiment(CONFIG))
+    input_dir = tmp_path / "inputs"
+    for row in rows:
+        _write_synthetic_model(input_dir, row)
+    output = generate_package(
+        CONFIG,
+        tmp_path / "final",
+        "final",
+        input_directory=input_dir,
+    )
+
+    figures = expected_figure_stems()
+    assert all((output / "figures" / figure_relative_stem(stem)).with_suffix(".png").is_file() for stem in figures)
+    assert all((output / "figures" / figure_relative_stem(stem)).with_suffix(".pdf").is_file() for stem in figures)
+    abundances = np.genfromtxt(
+        output / "tables" / "photospheric_abundances_1mbar.csv",
+        delimiter=",",
+        names=True,
+        dtype=None,
+        encoding="utf-8",
+    )
+    assert len(abundances) == 36
+    qc = json.loads((output / "qc_summary.json").read_text())
+    assert qc["included_models"] == 36
+    assert qc["endpoint_pairs"] == 12
+    assert (output / "figures" / "05_comparisons" / "headline_case_metric_transmission.png").is_file()
+    assert (output / "figures" / "README.md").is_file()
+    index_text = (output / "FIGURE_INDEX.md").read_text(encoding="utf-8")
+    assert "figures/01_pt_profiles/pt_k2_18b_observed.png" in index_text
