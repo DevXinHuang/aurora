@@ -377,7 +377,9 @@ def validate_dataset(ds: xr.Dataset, expected_row: dict[str, Any] | None = None)
                     f"{mismatches}"
                 )
         expected_wave = wavelength_grid(expected_row)
-        if wave.shape != expected_wave.shape or not np.allclose(wave, expected_wave, rtol=0, atol=0):
+        if wave.shape != expected_wave.shape or not np.allclose(
+            wave, expected_wave, rtol=1.0e-12, atol=1.0e-14
+        ):
             issues.append("wavelength coordinate does not exactly match manifest grid")
     return issues
 

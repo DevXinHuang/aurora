@@ -432,6 +432,17 @@ def test_schema_and_pressure_validation_reject_unsupported_inputs(tmp_path: Path
     assert "pressure grid is not strictly monotonic" in issues
 
 
+def test_wavelength_validation_allows_serialization_roundoff() -> None:
+    row = manifests(load_experiment(CONFIG))[0]
+    dataset = build_dataset(_synthetic_result(row), row)
+    perturbed = dataset["wavelength_um"].values.copy()
+    perturbed[2] = np.nextafter(perturbed[2], np.inf)
+    dataset = dataset.assign_coords(wavelength_um=(("wavelength",), perturbed))
+
+    assert validate_dataset(dataset, row) == []
+    dataset.close()
+
+
 def test_missing_spectral_product_is_invalid(tmp_path: Path) -> None:
     row = manifests(load_experiment(CONFIG))[0]
     path = _write_synthetic_model(tmp_path, row)
