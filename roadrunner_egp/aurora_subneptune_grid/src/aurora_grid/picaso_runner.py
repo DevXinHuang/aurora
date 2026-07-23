@@ -20,6 +20,7 @@ PICASO_MAX_WAVELENGTH_MAX_UM = 15.0
 PICASO_MAX_RESOLUTION = 15000.0
 R_EARTH_TO_R_JUP = 0.0892141056
 R_EARTH_AU = 4.263521245e-5
+DEFAULT_ATMOSPHERE_SOURCE = "picaso_climate"
 
 
 def _row_value(row: dict[str, Any] | None, key: str, default: Any = None) -> Any:
@@ -270,6 +271,7 @@ def _dry_run_model(row: dict[str, Any]) -> dict[str, Any]:
             "dry_run": True,
             "spectrum_source": "toy spectrum",
             "cloud_model": str(row.get("cloud_model", "none")),
+            "virga_condensates": str(row.get("virga_condensates", "")),
             "wavelength_points": int(wavelength.size),
         },
     }
@@ -316,6 +318,7 @@ def _run_real_picaso_climate_model(
             "cloud_model": cloud_model,
             "cloud_fraction": system.cloud_fraction,
             "cloud_hole_fraction": system.cloud_hole_fraction,
+            "virga_condensates": system.virga_condensates,
             "native_patchy_cloud_api": "virga(do_holes=True, fhole=cloud_hole_fraction)",
             "chem_log_mh": system.chem_log_mh,
             "chem_c_o_from_picaso_tag": system.chem_c_o,
@@ -355,8 +358,15 @@ def _run_real_picaso_model(
     *,
     run_exact_climate_qc: bool = False,
     ck_root: str | Path | None = None,
-    atmosphere_source: str = "picaso_guillot",
+    atmosphere_source: str = DEFAULT_ATMOSPHERE_SOURCE,
 ) -> dict[str, Any]:
+    """Run one real PICASO model.
+
+    The default is the self-consistent PICASO radiative-convective climate
+    route. ``picaso_guillot`` is retained only for explicit legacy smoke tests;
+    it computes spectra from an analytic Guillot P-T profile without climate
+    convergence.
+    """
     if str(ROADRUNNER_ROOT) not in sys.path:
         sys.path.insert(0, str(ROADRUNNER_ROOT))
 
@@ -413,6 +423,8 @@ def _run_real_picaso_model(
             extract_planet_fluxes=extract_planet_fluxes,
         )
 
+    # Explicit legacy route only. This still runs PICASO radiative transfer for
+    # the spectra, but it does not run PICASO's climate/RCE convergence.
     out_ref, out_em, case, opacity = run_picaso_once(
         system,
         output_grid,
@@ -437,7 +449,10 @@ def _run_real_picaso_model(
             "dry_run": False,
             "atmosphere_source": "picaso",
             "thermal_source": "picaso",
+            "climate_converged": False,
+            "legacy_guillot_profile": True,
             "cloud_model": cloud_model,
+            "virga_condensates": system.virga_condensates,
             "chem_log_mh": log_mh,
             "chem_c_o_from_picaso_tag": c_to_o,
             "c_to_o_picaso_tag": str(row["c_to_o_picaso_tag"]).zfill(3),
@@ -578,6 +593,7 @@ def run_picaso_model_from_climate_cache(
             "atmosphere_source": "picaso_climate_cached",
             "thermal_source": "skipped_spectrum_stage",
             "cloud_model": cloud_model,
+            "virga_condensates": system.virga_condensates,
             "climate_group_index": int(row.get("climate_group_index", -1)),
             "climate_cache_stage": True,
             "climate_converged": _as_bool_scalar(diagnostics.get("climate_converged", False)),
@@ -608,10 +624,18 @@ def run_picaso_model(
     ck_root: str | Path | None = None,
     atmosphere_source: str | None = None,
 ) -> dict[str, Any]:
-    """Run one Aurora model row, or return a valid toy spectrum for plumbing tests."""
+    """Run one Aurora model row, defaulting to converged PICASO climate.
+
+    Dry runs return a toy spectrum for plumbing tests. The legacy
+    ``picaso_guillot`` route must be selected explicitly.
+    """
     if dry_run:
         return _dry_run_model(row)
-    selected_source = str(atmosphere_source or row.get("atmosphere_source") or "picaso_guillot")
+    selected_source = str(
+        atmosphere_source
+        or row.get("atmosphere_source")
+        or DEFAULT_ATMOSPHERE_SOURCE
+    )
     return _run_real_picaso_model(
         row,
         run_exact_climate_qc=run_exact_climate_qc,

@@ -74,7 +74,9 @@ REFLECT_NUM_GANGLE = 4
 REFLECT_NUM_TANGLE = 4
 THERMAL_NUM_GANGLE = 8
 THERMAL_NUM_TANGLE = 1
-ATM_NLAYERS        = 61   # match PICASO default; jupiter_cld expects (nlevel-1)=60
+# PICASO's climate tutorial recommends 51-91 pressure levels. Use the upper
+# end of that range for the converged Aurora climate grid.
+ATM_NLAYERS = 91
 
 # ---------------------------------------------------------------------------
 # Generated-PICASO atmosphere defaults
@@ -87,9 +89,10 @@ PICASO_CHEM_C_TO_O = float(os.environ.get("ROADRUNNER_PICASO_C_TO_O", "1.0"))
 PICASO_CHEM_LOG_MH = float(os.environ.get("ROADRUNNER_PICASO_LOG_MH", "0.0"))
 PICASO_KZZ_CGS = float(os.environ.get("ROADRUNNER_PICASO_KZZ_CGS", "1e9"))
 PICASO_CLOUD_MODEL = os.environ.get("ROADRUNNER_PICASO_CLOUD_MODEL", "virga")
+DEFAULT_PICASO_VIRGA_CONDENSATES = "H2O,CH4,NH3" #for subneptune, default condensates for virga model fixed jul 17
 PICASO_VIRGA_CONDENSATES = os.environ.get(
     "ROADRUNNER_PICASO_VIRGA_CONDENSATES",
-    "MgSiO3",
+    DEFAULT_PICASO_VIRGA_CONDENSATES,
 )
 PICASO_VIRGA_FSED = float(os.environ.get("ROADRUNNER_PICASO_VIRGA_FSED", "3"))
 PICASO_VIRGA_DIR = os.environ.get(

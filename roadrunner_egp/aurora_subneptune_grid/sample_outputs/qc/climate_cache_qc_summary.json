@@ -1,0 +1,33 @@
+[
+  {
+    "climate_group_index": 0,
+    "npz_path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/sample_outputs/climate_00.npz",
+    "pkl_path": "/Users/dhuang/Documents/daniel/research/aurora/roadrunner_egp/aurora_subneptune_grid/sample_outputs/climate_00_case.pkl",
+    "status": "pass",
+    "severity": "pass",
+    "rerun_recommended": false,
+    "fail_reasons": "",
+    "warning_reasons": "",
+    "npz_bytes": 16749,
+    "pkl_bytes": 60584,
+    "pkl_exists": true,
+    "pkl_unpickle_checked": true,
+    "pkl_unpickle_ok": true,
+    "climate_converged": 1,
+    "n_levels": 61,
+    "pressure_min_bar": 1e-06,
+    "pressure_max_bar": 31.622776601683793,
+    "temperature_min_k": 204.0584854111241,
+    "temperature_max_k": 1201.510291992499,
+    "max_temperature_jump_k": 94.96373250717147,
+    "max_abs_dtdlogp": 759.7098600573718,
+    "max_adiabat_ratio": 1.0058544212981104,
+    "n_adiabat_violations": 0,
+    "max_abs_fnet_irfnet": 3.6420970567239563,
+    "max_brightness_temperature_k": "",
+    "bottom_temperature_k": 1201.510291992499,
+    "selected_ck_file": "/home/u11/danielxinhuang/Documents/aurora/picaso4_reference/opacities/sonora_2121grid_feh0.0_co0.27.hdf5",
+    "schema_warnings": "",
+    "open_error": ""
+  }
+]

@@ -8,10 +8,13 @@ physical parameters, cloud properties, and orbital geometry.
 Overview
 --------
 
-The production grid ``aurora_subneptune_v1`` contains **1,080,000 spectra**
-grouped into **180,000 climate groups**.  Smaller grids are available for
-pipeline validation and HPC timing tests.  The earlier ``aurora_subneptune_v0``
-grid remains available as a legacy baseline.
+The supported production grid ``aurora_subneptune_v1`` contains **960,000
+spectra** grouped into **160,000 climate groups**.  Its nominal Cartesian axes
+define 1,080,000 spectra and 180,000 climate groups, but the 100× solar
+metallicity, 2× solar C/O chemistry pair is excluded because the required
+PICASO 4 correlated-k opacity table is unavailable.  Smaller grids are
+available for pipeline validation and HPC timing tests.  The earlier
+``aurora_subneptune_v0`` grid remains available as a legacy baseline.
 
 .. list-table:: Available Aurora grids
    :header-rows: 1
@@ -34,9 +37,9 @@ grid remains available as a legacy baseline.
      - 16
      - 1-to-1 Cahoy et al. 2010 replication
    * - ``aurora_subneptune_v1``
-     - 1,080,000
-     - 180,000
-     - Full production science grid (current)
+     - 960,000
+     - 160,000
+     - Supported production science grid (current)
    * - ``aurora_subneptune_v0``
      - 276,480
      - 46,080
@@ -111,8 +114,16 @@ gravity is computed per row as :math:`g = GM/R^2` and passed to PICASO.
    * - Phase (deg)
      - 0, 30, 60, 90, 120, 150
 
-Full Cartesian product: **1,080,000** spectra = **180,000** climate groups × **6**
-phases.
+The nominal Cartesian product is **1,080,000** spectra = **180,000** climate
+groups × **6** phases.  PICASO 4 provides eight of the nine requested
+metallicity/C/O correlated-k tables.  The unsupported pair is:
+
+* metallicity = 100× solar and C/O = 2× solar, which maps to the unavailable
+  ``sonora_2121grid_feh2.0_co1.10.hdf5`` table.
+
+Excluding that pair removes **20,000 climate groups** and **120,000 spectra**.
+The supported production total is therefore **160,000 climate groups** and
+**960,000 spectra**.
 
 Cloud Parameters
 ----------------

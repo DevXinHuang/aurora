@@ -42,15 +42,21 @@ Each Aurora sub-Neptune model has the following characteristics:
 Current Production Parameter Space
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The supported ``aurora_subneptune_v1`` grid contains 1,080,000 spectra: five
-host-star points (3500/0.45, 4000/0.63, 5000/0.80, 6000/1.00, and 7000/1.70
-in K/R\ :sub:`☉`), four radii (1.6, 2.0, 2.5, 3.0 R\ :sub:`⊕`), five masses
-(2.037, 4.073, 6.110, 10.183, 12.220 M\ :sub:`⊕`), three metallicities
-(1, 10, 100× solar), three C/O ratios (0.5, 1.0, 2.0× solar), two
+The supported ``aurora_subneptune_v1`` grid contains 960,000 spectra in
+160,000 climate groups: five host-star points (3500/0.45, 4000/0.63,
+5000/0.80, 6000/1.00, and 7000/1.70 in K/R\ :sub:`☉`), four radii (1.6, 2.0,
+2.5, 3.0 R\ :sub:`⊕`), five masses (2.037, 4.073, 6.110, 10.183, 12.220
+M\ :sub:`⊕`), three metallicities (1, 10, 100× solar), three C/O ratios (0.5,
+1.0, 2.0× solar), two
 K\ :sub:`zz` values (10\ :sup:`9`, 10\ :sup:`11` cm\ :sup:`2` s\ :sup:`−1`),
 five cloud fractions (0, 0.5, 0.75, 0.9, 1), five f\ :sub:`sed` values
 (0.3, 1, 3, 6, 8), four insolation values (0.35, 0.70, 1.00, 1.50
 S\ :sub:`⊕`), and six phase angles (0, 30, 60, 90, 120, 150°).
+
+The axes nominally define 1,080,000 spectra in 180,000 climate groups.  The
+100× solar metallicity, 2× solar C/O pair is not runnable because PICASO 4 does
+not provide the required ``sonora_2121grid_feh2.0_co1.10.hdf5`` correlated-k
+table.  Removing that pair subtracts 20,000 climate groups and 120,000 spectra.
 
 Expected Cloud Species
 ~~~~~~~~~~~~~~~~~~~~~~

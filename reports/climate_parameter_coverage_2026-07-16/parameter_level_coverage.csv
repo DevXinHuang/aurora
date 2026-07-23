@@ -1,0 +1,37 @@
+axis_key,axis_label,value_index,value,completed_climates,expected_climates,completion_percent,touched
+stars,Stellar anchor,0,3500 K / 0.45 R_sun,27595,36000,76.652778,True
+stars,Stellar anchor,1,4000 K / 0.63 R_sun,0,36000,0.0,False
+stars,Stellar anchor,2,5000 K / 0.8 R_sun,0,36000,0.0,False
+stars,Stellar anchor,3,6000 K / 1 R_sun,0,36000,0.0,False
+stars,Stellar anchor,4,7000 K / 1.7 R_sun,0,36000,0.0,False
+planet_radius_rearth,Planet radius,0,1.6 R_earth,7968,45000,17.706667,True
+planet_radius_rearth,Planet radius,1,2 R_earth,8000,45000,17.777778,True
+planet_radius_rearth,Planet radius,2,2.5 R_earth,8000,45000,17.777778,True
+planet_radius_rearth,Planet radius,3,3 R_earth,3627,45000,8.06,True
+planet_mass_mearth,Planet mass,0,2.037 M_earth,6400,36000,17.777778,True
+planet_mass_mearth,Planet mass,1,4.073 M_earth,6341,36000,17.613889,True
+planet_mass_mearth,Planet mass,2,6.11 M_earth,5286,36000,14.683333,True
+planet_mass_mearth,Planet mass,3,10.183 M_earth,4796,36000,13.322222,True
+planet_mass_mearth,Planet mass,4,12.22 M_earth,4772,36000,13.255556,True
+metallicity_xsolar,Metallicity,0,1x solar,10542,60000,17.57,True
+metallicity_xsolar,Metallicity,1,10x solar,10344,60000,17.24,True
+metallicity_xsolar,Metallicity,2,100x solar,6709,60000,11.181667,True
+c_to_o_xsolar,C/O,0,0.5x solar,10396,60000,17.326667,True
+c_to_o_xsolar,C/O,1,1x solar,10285,60000,17.141667,True
+c_to_o_xsolar,C/O,2,2x solar,6914,60000,11.523333,True
+kzz_cm2_s,Kzz,0,1e+09 cm^2/s,13838,90000,15.375556,True
+kzz_cm2_s,Kzz,1,1e+11 cm^2/s,13757,90000,15.285556,True
+cloud_fraction,Cloud fraction,0,0,5674,36000,15.761111,True
+cloud_fraction,Cloud fraction,1,0.5,5438,36000,15.105556,True
+cloud_fraction,Cloud fraction,2,0.75,5446,36000,15.127778,True
+cloud_fraction,Cloud fraction,3,0.9,5455,36000,15.152778,True
+cloud_fraction,Cloud fraction,4,1,5582,36000,15.505556,True
+fsed,f_sed,0,0.3,5531,36000,15.363889,True
+fsed,f_sed,1,1,5526,36000,15.35,True
+fsed,f_sed,2,3,5529,36000,15.358333,True
+fsed,f_sed,3,6,5515,36000,15.319444,True
+fsed,f_sed,4,8,5494,36000,15.261111,True
+insolation_searth,Insolation,0,0.35 S_earth,6831,45000,15.18,True
+insolation_searth,Insolation,1,0.7 S_earth,6914,45000,15.364444,True
+insolation_searth,Insolation,2,1 S_earth,6922,45000,15.382222,True
+insolation_searth,Insolation,3,1.5 S_earth,6928,45000,15.395556,True

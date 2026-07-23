@@ -18,6 +18,7 @@ from astropy.constants import R_jup, R_sun, au
 
 from .config import (
     ATM_NLAYERS,
+    DEFAULT_PICASO_VIRGA_CONDENSATES,
     HAVE_PICASO,
     jdi,
     blackbody,
@@ -97,7 +98,12 @@ def select_picaso4_preweighted_ck_file(
 
 
 def normalize_atmosphere_source(source: str | None) -> str:
-    """Normalize user-facing atmosphere source names."""
+    """Normalize user-facing atmosphere source names.
+
+    The internal name ``picaso`` means the legacy analytic-Guillot path, not
+    the converged climate solver. Science grid runs should use
+    ``picaso_climate``.
+    """
     source = (source or "slgrid").strip().lower()
     aliases = {
         "files": "slgrid",
@@ -217,11 +223,16 @@ def _patch_virga_calc_optics_sublayer_guard(verbose: bool = False) -> bool:
 
 def _virga_condensates(value):
     """Normalize Virga condensates from string/list into a list PICASO accepts."""
+    fallback = [
+        part
+        for part in re.split(r"[,;\s]+", DEFAULT_PICASO_VIRGA_CONDENSATES)
+        if part
+    ]
     if value is None:
-        return ["MgSiO3"]
+        return fallback
     if isinstance(value, str):
         parts = [part for part in re.split(r"[,;\s]+", value.strip()) if part]
-        return parts or ["MgSiO3"]
+        return parts or fallback
     try:
         return list(value)
     except TypeError:
@@ -283,11 +294,12 @@ def _build_generated_picaso_atmosphere(
     cloud_model: str | None = None,
     verbose: bool = True,
 ) -> None:
-    """
-    Build the atmosphere inside PICASO instead of reading SLGRID files.
+    """Build a generated PICASO atmosphere instead of reading SLGRID files.
 
-    This follows the notebook pattern: Guillot (2010) PT profile, Visscher
-    equilibrium chemistry, then Virga/Jupiter/clear clouds. that is the old way don't use this
+    The Guillot (2010) P-T profile is the final atmosphere only for the legacy
+    ``picaso_guillot`` spectrum route. In the recommended ``picaso_climate``
+    route it is merely the initial temperature guess: ``cl_run.climate(...)``
+    subsequently performs radiative-convective convergence and replaces it.
     """
     teq = equilibrium_temperature(sys)
     case.guillot_pt(Teq=teq, T_int=sys.teff_k, nlevel=ATM_NLAYERS)
@@ -336,9 +348,9 @@ def _build_generated_picaso_atmosphere(
                 print(f"⚠ Virga not available ({exc}), using Jupiter cloud model")
 
     patchy_kwargs = _patchy_cloud_kwargs(sys)
+    jupiter_cloud_profile = _jupiter_cloud_profile_for_nlevel(ATM_NLAYERS)
     case.clouds(
-        filename=jdi.jupiter_cld(),
-        sep=r"\s+",
+        df=jupiter_cloud_profile,
         do_holes=patchy_kwargs["do_holes"],
         fhole=patchy_kwargs["fhole"],
         fthin_cld=patchy_kwargs["fthin_cld"],
@@ -348,6 +360,64 @@ def _build_generated_picaso_atmosphere(
             "✓ Using generated PICASO atmosphere "
             f"(Guillot PT, Teq={teq:.1f} K, Jupiter cloud fallback)"
         )
+
+
+def _jupiter_cloud_profile_for_nlevel(nlevel: int):
+    """Return PICASO's Jupiter cloud profile on ``nlevel - 1`` layers.
+
+    PICASO's bundled ``jupiterf3.cld`` contains 60 layers. Aurora now uses 91
+    pressure levels (90 layers), so the legacy Jupiter fallback must be
+    interpolated in normalized vertical-layer coordinate before
+    ``case.clouds`` validates its shape. Virga does not use this adapter.
+    """
+    import pandas as pd
+
+    if nlevel < 2:
+        raise ValueError(f"nlevel must be at least 2; got {nlevel!r}")
+
+    source = pd.read_csv(jdi.jupiter_cld(), sep=r"\s+")
+    source.columns = [str(column).lower() for column in source.columns]
+    required = {"lvl", "wv", "opd", "w0", "g0"}
+    missing = required.difference(source.columns)
+    if missing:
+        raise ValueError(
+            f"PICASO Jupiter cloud profile is missing columns: {sorted(missing)}"
+        )
+
+    source_layers = np.sort(source["lvl"].unique().astype(float))
+    wavelengths = np.sort(source["wv"].unique())
+    target_layer_count = int(nlevel) - 1
+    if source_layers.size == target_layer_count:
+        return source.loc[:, ["opd", "w0", "g0"]].reset_index(drop=True)
+
+    target_positions = np.linspace(
+        float(source_layers[0]),
+        float(source_layers[-1]),
+        target_layer_count,
+    )
+    target = {
+        "opd": np.empty((target_layer_count, wavelengths.size), dtype=float),
+        "w0": np.empty((target_layer_count, wavelengths.size), dtype=float),
+        "g0": np.empty((target_layer_count, wavelengths.size), dtype=float),
+    }
+    for wave_index, wavelength in enumerate(wavelengths):
+        wave_rows = source.loc[source["wv"] == wavelength].sort_values("lvl")
+        wave_layers = wave_rows["lvl"].to_numpy(dtype=float)
+        for column in target:
+            target[column][:, wave_index] = np.interp(
+                target_positions,
+                wave_layers,
+                wave_rows[column].to_numpy(dtype=float),
+            )
+
+    # Layer-major and wavelength-minor ordering matches the bundled file and
+    # the shape expected by PICASO's no-pressure/no-wavenumber cloud input.
+    return pd.DataFrame(
+        {
+            column: values.reshape(-1)
+            for column, values in target.items()
+        }
+    )
 
 
 def configure_picaso_atmosphere(
@@ -398,7 +468,9 @@ def run_picaso_once(
         maximum of ``lam_grid_um`` are used.
     atmosphere_source : str, optional
         ``"slgrid"`` reads PT/cloud files. ``"picaso"`` generates a Guillot
-        PT profile, Visscher chemistry, and configured clouds in PICASO.
+        PT profile, Visscher chemistry, and configured clouds in PICASO. This
+        is the legacy, non-converged climate route; use
+        :func:`run_picaso_climate_model_once` for an RCE-converged atmosphere.
     cloud_model : str, optional
         Generated-PICASO cloud model: ``"virga"``, ``"jupiter"``, or
         ``"none"``.
@@ -782,6 +854,9 @@ def _setup_picaso_climate_case(
         semi_major=system.a_au,
         semi_major_unit=u.AU,
     )
+    # Seed chemistry/cloud inputs and an initial Guillot P-T guess. The call to
+    # cl_run.climate(...) in the convergence routines below replaces this
+    # initial guess with the RCE-converged atmosphere used for the spectra.
     configure_picaso_atmosphere(
         cl_run,
         system,

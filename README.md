@@ -74,7 +74,7 @@ unique atmosphere/orbit (`climate_group_index`), then compute spectra for every 
 # Example: Cahoy 2010 replication (304 spectra, 16 climates)
 bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
 
-# Example: full sub-Neptune grid (1,080,000 spectra, 180,000 climates)
+# Example: supported v1 grid (960,000 spectra, 160,000 climates)
 bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
   "$(pwd)" aurora_subneptune_v1
 ```
@@ -85,8 +85,14 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 | --- | ---: | ---: | --- |
 | `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
-| `aurora_subneptune_v1` | 1,080,000 | 180,000 | Planned full production science grid (Zarah updates) |
+| `aurora_subneptune_v1` | 960,000 | 160,000 | Supported production science grid (Zarah updates) |
 | `aurora_subneptune_v0` | 276,480 | 46,080 | Legacy full-grid baseline |
+
+The nominal Cartesian axes for `aurora_subneptune_v1` contain 1,080,000 spectra
+and 180,000 climate groups. Production excludes the unsupported PICASO 4
+correlated-k pair `metallicity_xsolar = 100` with `c_to_o_xsolar = 2.0` because
+`sonora_2121grid_feh2.0_co1.10.hdf5` is unavailable. The runnable grid therefore
+contains **960,000 spectra in 160,000 climate groups**.
 
 Planned full `aurora_subneptune_v1` parameter axes:
 

@@ -4,9 +4,11 @@ author: "Daniel Huang"
 contact: "Daniel Huang"
 project: "Aurora Cahoy-Matched Solar Validation"
 notes: >-
-  Fast Guillot PT smoke test (48 cases, ~1 min/task) — not full PICASO climate.
-  For Cahoy science spectra use aurora_cahoy2010_replication_v0 and
-  submit_cahoy2010_two_stage.sh instead.
+  LEGACY PLUMBING TEST ONLY. Requires the explicit runner option
+  --atmosphere-source picaso_guillot. It uses an analytic Guillot PT profile
+  without PICASO radiative-convective climate convergence. Do not use these
+  outputs for science. For Cahoy science spectra use
+  aurora_cahoy2010_replication_v0 and submit_cahoy2010_two_stage.sh instead.
 
 code:
   spectrum: "PICASO"

@@ -324,6 +324,7 @@ def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
         "picaso_tint_mode": config.get("picaso_tint_mode", "equilibrium"),
         "picaso_tint_fixed_k": float(config.get("picaso_tint_fixed_k", 1000.0)),
         "picaso_tint_floor_k": float(config.get("picaso_tint_floor_k", 100.0)),
+        "virga_condensates": str(config.get("virga_condensates", "")),
         "netcdf_optional_variables": json.dumps(netcdf_config.get("optional_variables", []), sort_keys=True),
         "netcdf_strict_optional": bool(netcdf_config.get("strict_optional", False)),
         "wavelength_grid_mode": grid_mode,

@@ -16,6 +16,7 @@ code:
 picaso_tint_mode: "equilibrium"
 picaso_tint_fixed_k: 1000.0
 picaso_tint_floor_k: 100.0
+virga_condensates: "H2O,CH4,NH3"
 
 netcdf:
   optional_variables: []

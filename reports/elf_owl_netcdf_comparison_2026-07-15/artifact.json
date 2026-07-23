@@ -1,0 +1,1852 @@
+{
+  "surface": "report",
+  "manifest": {
+    "version": 1,
+    "surface": "report",
+    "title": "Elf Owl NetCDF Structure and AURORA Compatibility",
+    "description": "Technical comparison of Sonora Elf Owl v2 files with the AURORA sub-Neptune NetCDF schema.",
+    "generatedAt": "2026-07-15T12:00:00-07:00",
+    "cards": [],
+    "charts": [
+      {
+        "id": "grid_coverage_chart",
+        "title": "Available models by gravity",
+        "subtitle": "All three temperatures combined; a full gravity slice contains 360 models",
+        "showDescription": true,
+        "intent": "comparison",
+        "question": "Where is the extracted parameter grid incomplete?",
+        "rationale": "A horizontal bar chart makes the single low-gravity exception visible across 11 ordered gravity values.",
+        "comparisonContext": {
+          "baseline": "360 models for a complete gravity slice",
+          "grain": "gravity value",
+          "unit": "models"
+        },
+        "type": "horizontalBar",
+        "dataset": "grid_coverage",
+        "sourceId": "grid_coverage_sql",
+        "encodings": {
+          "x": {
+            "field": "gravity_label",
+            "type": "ordinal",
+            "label": "Gravity"
+          },
+          "y": {
+            "field": "model_count",
+            "type": "quantitative",
+            "label": "Models"
+          },
+          "tooltip": [
+            {
+              "field": "gravity_ms2",
+              "type": "quantitative",
+              "label": "Gravity",
+              "unit": "m s\u207b\u00b2"
+            },
+            {
+              "field": "model_count",
+              "type": "quantitative",
+              "label": "Available models"
+            },
+            {
+              "field": "expected_full_count",
+              "type": "quantitative",
+              "label": "Full slice"
+            }
+          ]
+        },
+        "xAxisTitle": "Gravity",
+        "yAxisTitle": "Available models",
+        "valueFormat": "number",
+        "unit": "models",
+        "layout": "full",
+        "maxRows": 20,
+        "referenceLines": [
+          {
+            "axis": "y",
+            "value": 360,
+            "label": "Complete slice",
+            "color": "neutral",
+            "lineStyle": "dashed"
+          }
+        ],
+        "surface": {
+          "surface": "card",
+          "viewMode": "both"
+        }
+      }
+    ],
+    "tables": [
+      {
+        "id": "schema_comparison_table",
+        "title": "Structural comparison",
+        "subtitle": "Representative files plus versioned AURORA schema; exact values shown for audit",
+        "showDescription": true,
+        "dataset": "schema_comparison",
+        "sourceId": "schema_comparison_sql",
+        "density": "spacious",
+        "layout": "full",
+        "defaultSort": {
+          "field": "aspect",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "aspect",
+            "label": "Aspect"
+          },
+          {
+            "field": "elf_owl",
+            "label": "Elf Owl v2"
+          },
+          {
+            "field": "aurora",
+            "label": "Your AURORA setup"
+          },
+          {
+            "field": "compatibility",
+            "label": "Compatibility"
+          }
+        ]
+      },
+      {
+        "id": "grid_axes_table",
+        "title": "Elf Owl 1300\u20131500 K grid axes",
+        "subtitle": "Parameter values parsed from all 3,603 filenames",
+        "showDescription": true,
+        "dataset": "grid_axes",
+        "sourceId": "grid_axes_sql",
+        "density": "spacious",
+        "layout": "full",
+        "defaultSort": {
+          "field": "axis",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "axis",
+            "label": "Axis"
+          },
+          {
+            "field": "field",
+            "label": "Filename field"
+          },
+          {
+            "field": "values",
+            "label": "Available values"
+          },
+          {
+            "field": "units",
+            "label": "Interpretation"
+          },
+          {
+            "field": "aurora_equivalent",
+            "label": "AURORA equivalent"
+          }
+        ]
+      },
+      {
+        "id": "mapping_table",
+        "title": "Import crosswalk",
+        "subtitle": "Required transformations for an AURORA-compatible view of Elf Owl data",
+        "showDescription": true,
+        "dataset": "mapping",
+        "sourceId": "mapping_sql",
+        "density": "spacious",
+        "layout": "full",
+        "defaultSort": {
+          "field": "elf_source",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "elf_source",
+            "label": "Elf Owl source"
+          },
+          {
+            "field": "aurora_target",
+            "label": "AURORA target"
+          },
+          {
+            "field": "transform",
+            "label": "Transformation"
+          },
+          {
+            "field": "status",
+            "label": "Status/caveat"
+          }
+        ]
+      },
+      {
+        "id": "quality_table",
+        "title": "Data-quality and compatibility findings",
+        "subtitle": "Priority 1 requires correction before chemistry analysis or schema conversion",
+        "showDescription": true,
+        "dataset": "quality_issues",
+        "sourceId": "quality_issues_sql",
+        "density": "spacious",
+        "layout": "full",
+        "defaultSort": {
+          "field": "priority",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "priority",
+            "label": "Priority",
+            "format": "number"
+          },
+          {
+            "field": "system",
+            "label": "System"
+          },
+          {
+            "field": "issue",
+            "label": "Finding"
+          },
+          {
+            "field": "evidence",
+            "label": "Evidence"
+          },
+          {
+            "field": "action",
+            "label": "Recommended action"
+          }
+        ]
+      },
+      {
+        "id": "variable_table",
+        "title": "Variable-level inventory",
+        "subtitle": "Representative Elf Owl and AURORA files; use filters/search for exact fields",
+        "showDescription": true,
+        "dataset": "variable_inventory",
+        "sourceId": "variable_inventory_sql",
+        "density": "dense",
+        "layout": "full",
+        "defaultSort": {
+          "field": "name",
+          "direction": "asc"
+        },
+        "columns": [
+          {
+            "field": "family",
+            "label": "Family"
+          },
+          {
+            "field": "name",
+            "label": "Variable"
+          },
+          {
+            "field": "role",
+            "label": "Role"
+          },
+          {
+            "field": "dimensions",
+            "label": "Dimensions"
+          },
+          {
+            "field": "dtype",
+            "label": "Type"
+          },
+          {
+            "field": "units",
+            "label": "Declared units"
+          },
+          {
+            "field": "compressed",
+            "label": "Compressed"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "elf_sample",
+        "label": "Sonora Elf Owl v2 representative NetCDF",
+        "path": "science_inputs/sonora_elf_owl_v2/teff_1300_1500/spectra_logzz_2.0_teff_1300.0_grav_100.0_mh_-0.5_co_0.5.nc"
+      },
+      {
+        "id": "aurora_sample",
+        "label": "AURORA weekend-grid representative NetCDF",
+        "path": "outputs/weekend_nc/run_0000000.nc"
+      },
+      {
+        "id": "aurora_schema",
+        "label": "AURORA NetCDF schema implementation",
+        "path": "roadrunner_egp/aurora_subneptune_grid/src/aurora_grid/io/netcdf_schema.py"
+      },
+      {
+        "id": "analysis_code",
+        "label": "Reproducible NetCDF structure analysis",
+        "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analyze_netcdf_structures.py"
+      },
+      {
+        "id": "grid_coverage_sql",
+        "label": "Elf Owl grid coverage query",
+        "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT gravity_ms2, gravity_label, model_count, expected_full_count FROM grid_coverage ORDER BY gravity_ms2",
+          "description": "Returns the observed Elf Owl model count at each gravity value across the three extracted temperatures.",
+          "tables_used": [
+            "grid_coverage"
+          ],
+          "filters": [
+            "Archive subset: Teff 1300, 1400, and 1500 K"
+          ],
+          "metric_definitions": [
+            "model_count is the number of extracted NetCDF files at each gravity; expected_full_count is 360 for a complete gravity slice."
+          ],
+          "executed_at": "2026-07-15T12:00:00-07:00"
+        }
+      },
+      {
+        "id": "schema_comparison_sql",
+        "label": "Structural comparison query",
+        "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT aspect, elf_owl, aurora, compatibility FROM schema_comparison",
+          "description": "Returns the reviewed rows used by the schema_comparison report table.",
+          "tables_used": [
+            "schema_comparison"
+          ],
+          "executed_at": "2026-07-15T12:00:00-07:00"
+        }
+      },
+      {
+        "id": "grid_axes_sql",
+        "label": "Elf Owl grid-axis query",
+        "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT axis, field, values, units, aurora_equivalent FROM grid_axes",
+          "description": "Returns the reviewed rows used by the grid_axes report table.",
+          "tables_used": [
+            "grid_axes"
+          ],
+          "executed_at": "2026-07-15T12:00:00-07:00"
+        }
+      },
+      {
+        "id": "mapping_sql",
+        "label": "NetCDF import crosswalk query",
+        "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT elf_source, aurora_target, transform, status FROM mapping",
+          "description": "Returns the reviewed rows used by the mapping report table.",
+          "tables_used": [
+            "mapping"
+          ],
+          "executed_at": "2026-07-15T12:00:00-07:00"
+        }
+      },
+      {
+        "id": "quality_issues_sql",
+        "label": "Data-quality findings query",
+        "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT priority, system, issue, evidence, action FROM quality_issues",
+          "description": "Returns the reviewed rows used by the quality_issues report table.",
+          "tables_used": [
+            "quality_issues"
+          ],
+          "executed_at": "2026-07-15T12:00:00-07:00"
+        }
+      },
+      {
+        "id": "variable_inventory_sql",
+        "label": "Variable inventory query",
+        "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+        "query": {
+          "engine": "sqlite",
+          "language": "sql",
+          "sql": "SELECT family, name, role, dimensions, dtype, units, description, compressed, chunks FROM variable_inventory",
+          "description": "Returns the reviewed rows used by the variable_inventory report table.",
+          "tables_used": [
+            "variable_inventory"
+          ],
+          "executed_at": "2026-07-15T12:00:00-07:00"
+        }
+      }
+    ],
+    "blocks": [
+      {
+        "id": "title",
+        "type": "markdown",
+        "body": "# Elf Owl NetCDF Structure and AURORA Compatibility"
+      },
+      {
+        "id": "technical_summary",
+        "type": "markdown",
+        "body": "## Technical summary\n\n**Elf Owl can be imported into your tooling, but it cannot be treated as a native AURORA run file.** The shared physical core is pressure, temperature, chemistry and thermal flux; the array layout, wavelength grid, units, parameter semantics and run metadata differ. A dedicated adapter is safer than modifying either source format.\n\n**The most urgent finding is in your current AURORA outputs:** `mole_fraction` includes a spurious species named `index` with values hundreds of times larger than a valid mixing fraction. It appeared in all 60 deterministically sampled weekend-grid files. Remove that column during schema construction and regenerate or repair affected files before chemistry analysis.\n\n**Elf Owl also has a metadata defect:** all chemistry fields declare `units='Kelvin'`, although their sums show they are volume mixing fractions. Override these units only in the adapter and preserve the downloaded originals."
+      },
+      {
+        "id": "structural_finding",
+        "type": "markdown",
+        "body": "## The two formats share science variables, not a common schema\n\nElf Owl is optimized for compact distribution of one atmosphere per file: two coordinates and separate one-dimensional chemistry arrays. AURORA is optimized for reproducible grid operations: explicit level/layer/species axes, multiple spectral products, cloud optical properties, run scalars, QC diagnostics and provenance. The table below is the decisive compatibility view."
+      },
+      {
+        "id": "structural_table_block",
+        "type": "table",
+        "tableId": "schema_comparison_table"
+      },
+      {
+        "id": "grid_finding",
+        "type": "markdown",
+        "body": "## The extracted grid is regular above 10 m s\u207b\u00b2, with one low-gravity exception\n\nThe archive contains 1,201 models at each of 1300, 1400 and 1500 K. Every combination is present for gravity \u226517 m s\u207b\u00b2. At 10 m s\u207b\u00b2, only one special combination per temperature is included (`logKzz=8`, `[M/H]=+1`, `C/O=1\u00d7 solar`). Code should index actual filenames instead of assuming the naive 3,960-row Cartesian product."
+      },
+      {
+        "id": "grid_coverage_chart_block",
+        "type": "chart",
+        "chartId": "grid_coverage_chart"
+      },
+      {
+        "id": "grid_table_block",
+        "type": "table",
+        "tableId": "grid_axes_table"
+      },
+      {
+        "id": "crosswalk_finding",
+        "type": "markdown",
+        "body": "## A loss-aware adapter can expose the shared subset\n\nThe safe conversion path reverses and optionally resamples wavelength, converts per-centimeter flux to per-micron flux, interpolates the vertical profile, stacks chemistry variables, and translates logarithmic parameters. It must explicitly mark stellar, orbital, reflected-light and cloud products as unavailable; inventing placeholders would make an imported atmosphere look like a completed AURORA simulation."
+      },
+      {
+        "id": "mapping_table_block",
+        "type": "table",
+        "tableId": "mapping_table"
+      },
+      {
+        "id": "quality_finding",
+        "type": "markdown",
+        "body": "## Two metadata/data defects matter more than the layout differences\n\nThe AURORA `index` pseudo-species corrupts any total-abundance calculation, while the Elf Owl chemistry unit labels can mislead generic readers. Both should be corrected at ingestion or generation boundaries and covered by automated validation. The flux-normalization question is separate: the algebraic unit conversion is known, but amplitude comparison is not trustworthy until the physical reference surface is confirmed."
+      },
+      {
+        "id": "quality_table_block",
+        "type": "table",
+        "tableId": "quality_table"
+      },
+      {
+        "id": "inventory_finding",
+        "type": "markdown",
+        "body": "## The variable inventory shows where each format carries extra meaning\n\nUse this table as the field-level reference. Elf Owl chemistry appears as individual variables on `pressure`; AURORA chemistry is a matrix on `(level, species)`. AURORA's additional scalar and QC variables are operational metadata, not quantities that can be inferred from Elf Owl."
+      },
+      {
+        "id": "inventory_table_block",
+        "type": "table",
+        "tableId": "variable_table"
+      },
+      {
+        "id": "scope_methods",
+        "type": "markdown",
+        "body": "## Scope and method\n\nThe analysis parsed all 3,603 Elf Owl filenames and inspected a representative file's dimensions, coordinates, variables, attributes, encodings, wavelength sampling and chemistry sums. It compared that result with `outputs/weekend_nc/run_0000000.nc` and the versioned AURORA schema implementation. Structural consistency was checked on 60 evenly spaced files from each corpus; each sample had one schema signature and no open failures. The patchy-cloud product was inspected as a secondary variant but is not the primary baseline."
+      },
+      {
+        "id": "limitations",
+        "type": "markdown",
+        "body": "## Limitations and robustness\n\nThis is a structural and metadata comparison, not a validation that the two model families predict the same atmosphere. The representative-file value checks establish units/layout issues but do not compare spectra at matched physical parameters. Only 60 files per corpus were opened for schema-signature consistency, while the complete Elf filename grid was indexed. The archive's native wavelength spacing was measured directly; it should not be confused with the effective opacity or instrument resolution."
+      },
+      {
+        "id": "next_steps",
+        "type": "markdown",
+        "body": "## Recommended next steps\n\n1. Fix `_IGNORED_PROFILE_COLUMNS` to exclude `index`, add mole-fraction range and sum checks, and repair/regenerate the weekend-grid files.\n2. Implement a read-only `open_elf_owl()` adapter that returns a normalized intermediate dataset without rewriting the source files.\n3. Keep an explicit `source_model_family='sonora_elf_owl_v2'` marker and use nullable/unavailable fields for AURORA-only products.\n4. Confirm thermal-flux normalization with a matched PICASO calculation before amplitude comparisons.\n5. Add adapter tests for wavelength reversal, the 5 \u00b5m stitch, unit conversion, chemistry sums, parameter transforms and missing-field behavior."
+      },
+      {
+        "id": "further_questions",
+        "type": "markdown",
+        "body": "## Further questions\n\nThe next design choice is whether Elf Owl should remain an external comparison dataset or be converted into an AURORA-shaped interchange file. The external-adapter approach preserves scientific distinctions and is the recommended default. A full conversion is appropriate only if downstream software cannot consume a normalized in-memory view."
+      }
+    ]
+  },
+  "snapshot": {
+    "version": 1,
+    "generatedAt": "2026-07-15T12:00:00-07:00",
+    "status": "ready",
+    "datasets": {
+      "headline": [
+        {
+          "elf_files": 3603,
+          "elf_spectral_points": 193132,
+          "aurora_spectral_points": 2201,
+          "shared_species": 37
+        }
+      ],
+      "schema_comparison": [
+        {
+          "aspect": "Scientific target",
+          "elf_owl": "Cloud-free, self-luminous L-type atmosphere; thermal emission",
+          "aurora": "Irradiated sub-Neptune run; reflected + thermal spectra and cloud/QC products",
+          "compatibility": "Different model products"
+        },
+        {
+          "aspect": "Core dimensions",
+          "elf_owl": "pressure=91; wavelength=193,132",
+          "aurora": "level=61; layer=60; species=50; wavelength=2,201; brightness wavelength=196",
+          "compatibility": "Requires remapping"
+        },
+        {
+          "aspect": "Wavelength coverage",
+          "elf_owl": "0.6000015\u201314.9997608 \u00b5m, descending",
+          "aurora": "0.3\u20132.5 \u00b5m, ascending",
+          "compatibility": "Only 0.6\u20132.5 \u00b5m overlaps"
+        },
+        {
+          "aspect": "Spectral sampling",
+          "elf_owl": "Approximately constant R=60,000; one stitch interval near 5 \u00b5m",
+          "aurora": "Uniform \u0394\u03bb\u22480.001 \u00b5m; sampling R rises from ~300 to ~2,499",
+          "compatibility": "Must choose a target grid"
+        },
+        {
+          "aspect": "Vertical representation",
+          "elf_owl": "91 pressure levels; no explicit layer axis",
+          "aurora": "61 levels plus 60 derived layers",
+          "compatibility": "Interpolate levels; derive layers"
+        },
+        {
+          "aspect": "Chemistry",
+          "elf_owl": "38 separate 1-D species variables",
+          "aurora": "One mole_fraction(level, species) array with 50 species labels",
+          "compatibility": "Stack and normalize metadata"
+        },
+        {
+          "aspect": "Flux units",
+          "elf_owl": "flux: erg cm\u207b\u00b2 s\u207b\u00b9 cm\u207b\u00b9",
+          "aurora": "thermal_flux: erg cm\u207b\u00b2 s\u207b\u00b9 \u00b5m\u207b\u00b9",
+          "compatibility": "Multiply Elf Owl numeric flux by 10\u207b\u2074 for per-\u00b5m units"
+        },
+        {
+          "aspect": "Metadata/provenance",
+          "elf_owl": "5 global attributes; parameters mostly embedded in filename/planet_params",
+          "aurora": "27 global attributes; versioned schema, run scalars, code versions, git commit and QC",
+          "compatibility": "AURORA requires additional metadata"
+        },
+        {
+          "aspect": "Storage",
+          "elf_owl": "All float64; no variable compression/chunking",
+          "aurora": "Mixed dtypes; 18 compressed variables in representative file",
+          "compatibility": "Re-encode on import"
+        }
+      ],
+      "grid_axes": [
+        {
+          "axis": "Effective temperature",
+          "field": "teff",
+          "values": "1300, 1400, 1500",
+          "units": "K",
+          "aurora_equivalent": "No direct equivalent; do not substitute equilibrium_temperature_k"
+        },
+        {
+          "axis": "Gravity",
+          "field": "grav",
+          "values": "10, 17, 31, 56, 100, 178, 316, 562, 1000, 1780, 3160",
+          "units": "m s\u207b\u00b2",
+          "aurora_equivalent": "gravity_ms2"
+        },
+        {
+          "axis": "Vertical mixing",
+          "field": "logzz",
+          "values": "2, 4, 7, 8, 9",
+          "units": "log\u2081\u2080(cm\u00b2 s\u207b\u00b9)",
+          "aurora_equivalent": "log10(kzz_cm2_s)"
+        },
+        {
+          "axis": "Metallicity",
+          "field": "mh",
+          "values": "-1, -0.5, 0, 0.5, 0.7, 1",
+          "units": "dex [M/H]",
+          "aurora_equivalent": "log10(metallicity_xsolar)"
+        },
+        {
+          "axis": "C/O enrichment",
+          "field": "co",
+          "values": "0.5, 1, 1.5, 2.5",
+          "units": "\u00d7 solar C/O",
+          "aurora_equivalent": "c_to_o_xsolar"
+        }
+      ],
+      "mapping": [
+        {
+          "elf_source": "pressure(pressure)",
+          "aurora_target": "pressure_bar(level)",
+          "transform": "Rename pressure\u2192level or interpolate to the AURORA level grid",
+          "status": "Direct concept; different length/range"
+        },
+        {
+          "elf_source": "temperature(pressure)",
+          "aurora_target": "temperature_k(level)",
+          "transform": "Rename and interpolate consistently with pressure",
+          "status": "Direct concept"
+        },
+        {
+          "elf_source": "38 species variables",
+          "aurora_target": "mole_fraction(level, species)",
+          "transform": "Stack variables along a species coordinate; set units to v/v",
+          "status": "37 names overlap; e\u207b naming differs/missing"
+        },
+        {
+          "elf_source": "wavelength(wavelength)",
+          "aurora_target": "wavelength_um(wavelength), wavenumber_cm1(wavelength)",
+          "transform": "Reverse to ascending; optionally crop/resample; compute 10\u2074/\u03bb",
+          "status": "Direct coordinate conversion"
+        },
+        {
+          "elf_source": "flux(wavelength)",
+          "aurora_target": "thermal_flux(wavelength)",
+          "transform": "Reverse with wavelength; multiply by 10\u207b\u2074 to convert per cm to per \u00b5m",
+          "status": "Confirm identical physical normalization before scientific comparison"
+        },
+        {
+          "elf_source": "filename logzz",
+          "aurora_target": "kzz_cm2_s",
+          "transform": "kzz_cm2_s = 10**logzz",
+          "status": "Direct parameter conversion"
+        },
+        {
+          "elf_source": "filename mh",
+          "aurora_target": "metallicity_xsolar",
+          "transform": "metallicity_xsolar = 10**mh",
+          "status": "Direct parameter conversion"
+        },
+        {
+          "elf_source": "filename grav",
+          "aurora_target": "gravity_ms2",
+          "transform": "Copy numeric value",
+          "status": "Direct parameter conversion"
+        },
+        {
+          "elf_source": "No layer variables",
+          "aurora_target": "layer pressure/temperature and cloud optical fields",
+          "transform": "Derive layer centers; cloud fields remain unavailable/NaN",
+          "status": "Not present in Elf Owl"
+        },
+        {
+          "elf_source": "No stellar/orbit/reflection data",
+          "aurora_target": "stellar, orbit, phase, reflected-light fields",
+          "transform": "Do not fabricate; represent as unavailable or use a separate import schema",
+          "status": "Scientifically inapplicable"
+        }
+      ],
+      "quality_issues": [
+        {
+          "priority": 1,
+          "system": "AURORA",
+          "issue": "Spurious species named 'index'",
+          "evidence": "Representative values span 307.8\u20131,067.5; total mole-fraction sums become 308.8\u20131,068.5. Removing it restores sums to 0.999858\u20130.999877. Present in all 60 sampled files.",
+          "action": "Add 'index' to _IGNORED_PROFILE_COLUMNS, regenerate affected outputs, and add a sum-to-one validation."
+        },
+        {
+          "priority": 1,
+          "system": "Elf Owl",
+          "issue": "All 38 chemistry variables incorrectly advertise units='Kelvin'",
+          "evidence": "Their level-wise sum is 0.99999987\u20130.999999997, demonstrating mixing fractions rather than temperatures.",
+          "action": "Override units to v/v in an import adapter; preserve original files unchanged."
+        },
+        {
+          "priority": 2,
+          "system": "Crosswalk",
+          "issue": "Thermal-flux normalization needs a scientific check beyond unit conversion",
+          "evidence": "Elf Owl describes emergent flux requiring R\u00b2/D\u00b2 scaling for observed flux; AURORA's field is a PICASO absolute-flux diagnostic.",
+          "action": "Verify both fields are defined at the same reference surface before comparing amplitudes."
+        },
+        {
+          "priority": 2,
+          "system": "Elf Owl grid",
+          "issue": "The filename axes are not a full Cartesian grid",
+          "evidence": "3,603 files versus 3,960 naive combinations (91.0%); gravity\u226517 m s\u207b\u00b2 is complete, while gravity=10 has one special model per Teff.",
+          "action": "Build the available-model index from filenames rather than generating expected paths from axis products."
+        },
+        {
+          "priority": 3,
+          "system": "Elf Owl spectrum",
+          "issue": "One wavelength-grid stitch interrupts constant R",
+          "evidence": "R\u224860,000 at 193,130 of 193,131 intervals; the interval around 5 \u00b5m has R\u224841,595.",
+          "action": "Treat R=60,000 as the native sampling with a documented stitch boundary."
+        }
+      ],
+      "grid_coverage": [
+        {
+          "gravity_ms2": 10.0,
+          "gravity_label": "10 m s\u207b\u00b2",
+          "model_count": 3,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 17.0,
+          "gravity_label": "17 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 31.0,
+          "gravity_label": "31 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 56.0,
+          "gravity_label": "56 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 100.0,
+          "gravity_label": "100 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 178.0,
+          "gravity_label": "178 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 316.0,
+          "gravity_label": "316 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 562.0,
+          "gravity_label": "562 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 1000.0,
+          "gravity_label": "1000 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 1780.0,
+          "gravity_label": "1780 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        },
+        {
+          "gravity_ms2": 3160.0,
+          "gravity_label": "3160 m s\u207b\u00b2",
+          "model_count": 360,
+          "expected_full_count": 360
+        }
+      ],
+      "variable_inventory": [
+        {
+          "family": "Elf Owl",
+          "name": "temperature",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "flux",
+          "role": "data variable",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "erg/cm**2/s/cm",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "e-",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H2",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H+",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H-",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H2-",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H2+",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H3+",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "He",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H2O",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "CH4",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "CO",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "NH3",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "N2",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "PH3",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "H2S",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "TiO",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "VO",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "Fe",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "FeH",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "CrH",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "Na",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "K",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "Rb",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "Cs",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "CO2",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "HCN",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "C2H2",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "C2H4",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "C2H6",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "SiO",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "MgH",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "OCS",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "Li",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "LiOH",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "LiH",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "LiCl",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "LiF",
+          "role": "data variable",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "Kelvin",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "pressure",
+          "role": "coordinate",
+          "dimensions": "pressure",
+          "dtype": "float64",
+          "units": "bar",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "Elf Owl",
+          "name": "wavelength",
+          "role": "coordinate",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "micron",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "reflected_planet_star_flux_ratio",
+          "role": "data variable",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "Reflected-light planet/star flux ratio.",
+          "compressed": true,
+          "chunks": "(2201,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "geometric_albedo",
+          "role": "data variable",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "Geometric albedo spectrum.",
+          "compressed": true,
+          "chunks": "(2201,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "reflected_flux",
+          "role": "data variable",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "erg cm-2 s-1 um-1",
+          "description": "Absolute reflected planet flux diagnostic converted from Roadrunner/PICASO output to per-micron wavelength units.",
+          "compressed": true,
+          "chunks": "(2201,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "thermal_flux",
+          "role": "data variable",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "erg cm-2 s-1 um-1",
+          "description": "Absolute thermal planet flux diagnostic converted from Roadrunner/PICASO output to per-micron wavelength units. Only valid if the thermal calculation was run.",
+          "compressed": true,
+          "chunks": "(2201,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "pressure_bar",
+          "role": "data variable",
+          "dimensions": "level",
+          "dtype": "float64",
+          "units": "bar",
+          "description": "",
+          "compressed": true,
+          "chunks": "(61,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "temperature_k",
+          "role": "data variable",
+          "dimensions": "level",
+          "dtype": "float64",
+          "units": "K",
+          "description": "",
+          "compressed": true,
+          "chunks": "(61,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "mole_fraction",
+          "role": "data variable",
+          "dimensions": "level, species",
+          "dtype": "float64",
+          "units": "v/v",
+          "description": "Volume mixing ratio for each gas species.",
+          "compressed": true,
+          "chunks": "(61, 50)"
+        },
+        {
+          "family": "AURORA",
+          "name": "layer_pressure_bar",
+          "role": "data variable",
+          "dimensions": "layer",
+          "dtype": "float64",
+          "units": "bar",
+          "description": "",
+          "compressed": true,
+          "chunks": "(60,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "layer_temperature_k",
+          "role": "data variable",
+          "dimensions": "layer",
+          "dtype": "float64",
+          "units": "K",
+          "description": "",
+          "compressed": true,
+          "chunks": "(60,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "cloud_optical_depth",
+          "role": "data variable",
+          "dimensions": "layer, wavelength",
+          "dtype": "float64",
+          "units": "unitless per layer",
+          "description": "",
+          "compressed": true,
+          "chunks": "(60, 2201)"
+        },
+        {
+          "family": "AURORA",
+          "name": "single_scattering_albedo",
+          "role": "data variable",
+          "dimensions": "layer, wavelength",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "",
+          "compressed": true,
+          "chunks": "(60, 2201)"
+        },
+        {
+          "family": "AURORA",
+          "name": "asymmetry_factor",
+          "role": "data variable",
+          "dimensions": "layer, wavelength",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "",
+          "compressed": true,
+          "chunks": "(60, 2201)"
+        },
+        {
+          "family": "AURORA",
+          "name": "wavelength_um",
+          "role": "coordinate",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "um",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "wavenumber_cm1",
+          "role": "coordinate",
+          "dimensions": "wavelength",
+          "dtype": "float64",
+          "units": "cm^-1",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "level",
+          "role": "coordinate",
+          "dimensions": "level",
+          "dtype": "int32",
+          "units": "index",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "layer",
+          "role": "coordinate",
+          "dimensions": "layer",
+          "dtype": "int32",
+          "units": "index",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "species",
+          "role": "coordinate",
+          "dimensions": "species",
+          "dtype": "<U5",
+          "units": "",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_adiabat",
+          "role": "data variable",
+          "dimensions": "layer",
+          "dtype": "float64",
+          "units": "K bar-1",
+          "description": "Exact PICASO adiabatic temperature gradient diagnostic.",
+          "compressed": true,
+          "chunks": "(60,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_dtdp",
+          "role": "data variable",
+          "dimensions": "layer",
+          "dtype": "float64",
+          "units": "K bar-1",
+          "description": "Exact PICASO atmospheric dT/dP diagnostic.",
+          "compressed": true,
+          "chunks": "(60,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_adiabat_pressure",
+          "role": "data variable",
+          "dimensions": "layer",
+          "dtype": "float64",
+          "units": "bar",
+          "description": "Pressure grid returned with exact PICASO adiabatic diagnostic.",
+          "compressed": true,
+          "chunks": "(60,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "fnet_irfnet",
+          "role": "data variable",
+          "dimensions": "level",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "Exact PICASO Fnet/IR-Fnet flux-balance diagnostic.",
+          "compressed": true,
+          "chunks": "(61,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_brightness_wavelength_um",
+          "role": "coordinate",
+          "dimensions": "brightness_wavelength_um",
+          "dtype": "float64",
+          "units": "um",
+          "description": "Native wavelength grid for the exact PICASO brightness-temperature diagnostic.",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_brightness_temperature",
+          "role": "data variable",
+          "dimensions": "brightness_wavelength_um",
+          "dtype": "float64",
+          "units": "K",
+          "description": "Exact PICASO brightness-temperature diagnostic on its native wavelength grid.",
+          "compressed": true,
+          "chunks": "(196,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_brightness_wavelength",
+          "role": "data variable",
+          "dimensions": "brightness_wavelength_um",
+          "dtype": "float64",
+          "units": "um",
+          "description": "Compatibility alias for qc_brightness_wavelength_um.",
+          "compressed": true,
+          "chunks": "(196,)"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_p_bottom_bar",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "bar",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_t_bottom_k",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "K",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_brightness_tmax_k",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "K",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "qc_brightness_tmax_over_tbottom",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "run_index",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "int64",
+          "units": "",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "star_teff_k",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "K",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "star_radius_rsun",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "R_sun",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "star_mass_msun",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "M_sun",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "star_logg_cgs",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "log10(cm s-2)",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "star_metallicity_feh",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "dex",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "planet_radius_rearth",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "R_earth",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "planet_mass_mearth",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "M_earth",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "gravity_ms2",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "m s-2",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "insolation_searth",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "S_earth",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "semi_major_axis_au",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "AU",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "equilibrium_temperature_k",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "K",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "phase_angle_deg",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "deg",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "metallicity_xsolar",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "x_solar",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "c_to_o_xsolar",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "x_solar",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "kzz_cm2_s",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "cm2 s-1",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "cloud_fraction",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "fsed",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "dimensionless",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "run_success",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "int8",
+          "units": "",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        },
+        {
+          "family": "AURORA",
+          "name": "runtime_seconds",
+          "role": "data variable",
+          "dimensions": "scalar",
+          "dtype": "float64",
+          "units": "s",
+          "description": "",
+          "compressed": false,
+          "chunks": "None"
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "id": "elf_sample",
+      "label": "Sonora Elf Owl v2 representative NetCDF",
+      "path": "science_inputs/sonora_elf_owl_v2/teff_1300_1500/spectra_logzz_2.0_teff_1300.0_grav_100.0_mh_-0.5_co_0.5.nc"
+    },
+    {
+      "id": "aurora_sample",
+      "label": "AURORA weekend-grid representative NetCDF",
+      "path": "outputs/weekend_nc/run_0000000.nc"
+    },
+    {
+      "id": "aurora_schema",
+      "label": "AURORA NetCDF schema implementation",
+      "path": "roadrunner_egp/aurora_subneptune_grid/src/aurora_grid/io/netcdf_schema.py"
+    },
+    {
+      "id": "analysis_code",
+      "label": "Reproducible NetCDF structure analysis",
+      "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analyze_netcdf_structures.py"
+    },
+    {
+      "id": "grid_coverage_sql",
+      "label": "Elf Owl grid coverage query",
+      "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT gravity_ms2, gravity_label, model_count, expected_full_count FROM grid_coverage ORDER BY gravity_ms2",
+        "description": "Returns the observed Elf Owl model count at each gravity value across the three extracted temperatures.",
+        "tables_used": [
+          "grid_coverage"
+        ],
+        "filters": [
+          "Archive subset: Teff 1300, 1400, and 1500 K"
+        ],
+        "metric_definitions": [
+          "model_count is the number of extracted NetCDF files at each gravity; expected_full_count is 360 for a complete gravity slice."
+        ],
+        "executed_at": "2026-07-15T12:00:00-07:00"
+      }
+    },
+    {
+      "id": "schema_comparison_sql",
+      "label": "Structural comparison query",
+      "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT aspect, elf_owl, aurora, compatibility FROM schema_comparison",
+        "description": "Returns the reviewed rows used by the schema_comparison report table.",
+        "tables_used": [
+          "schema_comparison"
+        ],
+        "executed_at": "2026-07-15T12:00:00-07:00"
+      }
+    },
+    {
+      "id": "grid_axes_sql",
+      "label": "Elf Owl grid-axis query",
+      "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT axis, field, values, units, aurora_equivalent FROM grid_axes",
+        "description": "Returns the reviewed rows used by the grid_axes report table.",
+        "tables_used": [
+          "grid_axes"
+        ],
+        "executed_at": "2026-07-15T12:00:00-07:00"
+      }
+    },
+    {
+      "id": "mapping_sql",
+      "label": "NetCDF import crosswalk query",
+      "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT elf_source, aurora_target, transform, status FROM mapping",
+        "description": "Returns the reviewed rows used by the mapping report table.",
+        "tables_used": [
+          "mapping"
+        ],
+        "executed_at": "2026-07-15T12:00:00-07:00"
+      }
+    },
+    {
+      "id": "quality_issues_sql",
+      "label": "Data-quality findings query",
+      "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT priority, system, issue, evidence, action FROM quality_issues",
+        "description": "Returns the reviewed rows used by the quality_issues report table.",
+        "tables_used": [
+          "quality_issues"
+        ],
+        "executed_at": "2026-07-15T12:00:00-07:00"
+      }
+    },
+    {
+      "id": "variable_inventory_sql",
+      "label": "Variable inventory query",
+      "path": "reports/elf_owl_netcdf_comparison_2026-07-15/analysis.sqlite",
+      "query": {
+        "engine": "sqlite",
+        "language": "sql",
+        "sql": "SELECT family, name, role, dimensions, dtype, units, description, compressed, chunks FROM variable_inventory",
+        "description": "Returns the reviewed rows used by the variable_inventory report table.",
+        "tables_used": [
+          "variable_inventory"
+        ],
+        "executed_at": "2026-07-15T12:00:00-07:00"
+      }
+    }
+  ]
+}
