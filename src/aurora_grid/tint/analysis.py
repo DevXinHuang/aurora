@@ -377,7 +377,12 @@ def _style_axis(ax: plt.Axes) -> None:
 
 def _set_pressure_axis(ax: plt.Axes) -> None:
     ax.set_yscale("log")
-    ax.invert_yaxis()
+    # ``invert_yaxis`` toggles the current direction.  That is unsafe for
+    # figures whose panels share a y-axis because styling each panel can
+    # toggle the shared axis back to its original direction.  Set explicit
+    # limits instead so this helper is idempotent.
+    lower, upper = ax.get_ylim()
+    ax.set_ylim(max(lower, upper), min(lower, upper))
 
 
 def _watermark(fig: plt.Figure, mode: str, loaded_count: int) -> None:
@@ -391,6 +396,7 @@ def _watermark(fig: plt.Figure, mode: str, loaded_count: int) -> None:
 
 def _save_figure(fig: plt.Figure, stem: Path, mode: str, loaded_count: int) -> None:
     _watermark(fig, mode, loaded_count)
+    stem.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(stem.with_suffix(".png"), dpi=180, bbox_inches="tight", facecolor="white")
     fig.savefig(stem.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -860,6 +866,31 @@ def expected_figure_stems() -> list[str]:
     return stems
 
 
+FIGURE_GROUPS = (
+    ("01_pt_profiles", "P-T profiles", "Three case-specific figures; each compares Tint across the four cloud/metallicity combinations."),
+    ("02_spectra", "Emergent spectra", "Transmission, thermal-emission, and reflected-light spectra for all three cases."),
+    ("03_abundances", "Abundance profiles", "One six-molecule figure for every case, cloud, and metallicity combination."),
+    ("04_residuals", "Spectral residuals", "Tint=25 K versus Tint=100 K residuals for each observable."),
+    ("05_comparisons", "Sensitivity comparisons", "Case-ranking, headline cloudy/100x, and CO/CO2 comparison figures."),
+)
+
+
+def figure_group(stem: str) -> str:
+    if stem.startswith("pt_"):
+        return "01_pt_profiles"
+    if stem.startswith("spectra_"):
+        return "02_spectra"
+    if stem.startswith("abundance_"):
+        return "03_abundances"
+    if stem.startswith("residual_"):
+        return "04_residuals"
+    return "05_comparisons"
+
+
+def figure_relative_stem(stem: str) -> Path:
+    return Path(figure_group(stem)) / stem
+
+
 def write_preflight_report(
     config_path: str | Path,
     input_directory: str | Path,
@@ -935,35 +966,42 @@ def generate_package(
     count = len(models)
     try:
         for case_id in CASE_ORDER:
-            plot_pt_case(case_id, index, mode, count, figures / f"pt_{case_id}")
+            stem = f"pt_{case_id}"
+            plot_pt_case(case_id, index, mode, count, figures / figure_relative_stem(stem))
         for observable in OBSERVABLES:
             for case_id in CASE_ORDER:
-                plot_spectra_case(observable, case_id, index, mode, count, figures / f"spectra_{observable}_{case_id}")
+                stem = f"spectra_{observable}_{case_id}"
+                plot_spectra_case(observable, case_id, index, mode, count, figures / figure_relative_stem(stem))
         for case_id in CASE_ORDER:
             for cloud_id, metallicity in PANEL_ORDER:
+                stem = f"abundance_{case_id}_{cloud_id}_{int(metallicity):03d}x"
                 plot_abundance_combination(case_id, cloud_id, metallicity, index, mode, count,
-                                           figures / f"abundance_{case_id}_{cloud_id}_{int(metallicity):03d}x")
+                                           figures / figure_relative_stem(stem))
         for observable in OBSERVABLES:
+            stem = f"residual_{observable}"
             plot_residuals(
                 observable,
                 pairs,
                 mode,
                 count,
-                figures / f"residual_{observable}",
+                figures / figure_relative_stem(stem),
                 precision_guide=analysis_config.get("precision_guide"),
             )
-            plot_case_metric(observable, pairs, mode, count, figures / f"case_metric_{observable}")
+            stem = f"case_metric_{observable}"
+            plot_case_metric(observable, pairs, mode, count, figures / figure_relative_stem(stem))
             headline = analysis_config.get("headline_combination", {})
+            stem = f"headline_case_metric_{observable}"
             plot_headline_case_metric(
                 observable,
                 pairs,
                 mode,
                 count,
-                figures / f"headline_case_metric_{observable}",
+                figures / figure_relative_stem(stem),
                 cloud_id=str(headline.get("cloud_id", "fully_cloudy_virga")),
                 metallicity=float(headline.get("metallicity_xsolar", 100.0)),
             )
-        plot_chemistry_metric(pairs, mode, count, figures / "case_metric_co_co2")
+        stem = "case_metric_co_co2"
+        plot_chemistry_metric(pairs, mode, count, figures / figure_relative_stem(stem))
 
         abundance_pressure_bar = float(analysis_config.get("abundance_pressure_bar", 1.0e-3))
         summary = build_summary_table(rows, models, abundance_pressure_bar)
@@ -1024,16 +1062,17 @@ def generate_package(
             ),
             "schema_name": SCHEMA_NAME,
             "schema_version": SCHEMA_VERSION,
-            "sources": source_rows, "figure_stems": expected_figure_stems(),
+            "sources": source_rows,
+            "figure_stems": [str(figure_relative_stem(stem)) for stem in expected_figure_stems()],
         }
         (temporary / "frozen_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         (temporary / "chart_map.csv").write_text(
             "family,question,variant,palette,output\n"
-            "P-T,How does Tint change atmospheric structure?,faceted multi-series line,Tint categorical,figures/pt_*.{png,pdf}\n"
-            "Spectra,How does Tint change each observable?,faceted multi-series line,Tint categorical,figures/spectra_*.{png,pdf}\n"
-            "Abundance,How does Tint change each species profile?,faceted log-profile line,Tint categorical,figures/abundance_*.{png,pdf}\n"
-            "Residual,Where is Tint detectable?,multi-series line with benchmark,case categorical,figures/residual_*.{png,pdf}\n"
-            "Case comparison,Does insolation or gravity control sensitivity?,faceted bar,case categorical,figures/case_metric_*.{png,pdf}\n",
+            "P-T,How does Tint change atmospheric structure?,faceted multi-series line,Tint categorical,figures/01_pt_profiles/pt_*.{png,pdf}\n"
+            "Spectra,How does Tint change each observable?,faceted multi-series line,Tint categorical,figures/02_spectra/spectra_*.{png,pdf}\n"
+            "Abundance,How does Tint change each species profile?,faceted log-profile line,Tint categorical,figures/03_abundances/abundance_*.{png,pdf}\n"
+            "Residual,Where is Tint detectable?,multi-series line with benchmark,case categorical,figures/04_residuals/residual_*.{png,pdf}\n"
+            "Case comparison,Does insolation or gravity control sensitivity?,faceted bar,case categorical,figures/05_comparisons/*metric*.{png,pdf}\n",
             encoding="utf-8",
         )
         qc_summary = {
@@ -1057,17 +1096,34 @@ def generate_package(
             "# Tint-sensitivity figure index", "",
             f"Status: **{mode.upper()}** — {count}/36 included models.", "",
             "Partial outputs are diagnostic only. Dashed curves are not climate-converged; blank panels are intentional.", "",
-            "## Figures", "",
+            "Each folder keeps the publication PDF beside its matching PNG preview.", "",
         ]
-        figure_lines += [f"- `{stem}.png` and `{stem}.pdf`" for stem in expected_figure_stems()]
+        all_stems = expected_figure_stems()
+        for folder, title, description in FIGURE_GROUPS:
+            figure_lines += [f"## {title}", "", f"Folder: `figures/{folder}/`", "", description, ""]
+            for stem in all_stems:
+                if figure_group(stem) != folder:
+                    continue
+                relative = figure_relative_stem(stem)
+                figure_lines.append(
+                    f"- `{stem}`: [PNG](figures/{relative}.png) · [PDF](figures/{relative}.pdf)"
+                )
+            figure_lines.append("")
         figure_lines += ["", "## Excluded models", ""]
         figure_lines += [f"- {index}: {'; '.join(reasons)}" for index, reasons in sorted(excluded.items())] or ["- None"]
         figure_lines += ["", "## Tables", "", "- `photospheric_abundances_1mbar.csv` / `.tex`: 36-row 1 mbar and pressure-weighted column-mean abundance table.", "- `sensitivity_metrics.csv`: endpoint RMS and maximum spectral residual metrics.", "- `expected_case_ranking.csv`: low-Teq versus observed GJ 1214 b sensitivity check.", "- `h2o_sanity_check.csv`: endpoint H2O change and >0.1 dex advisory.", "- `k2_18b_wogan_direction_check.csv`: K2-18 b 100× CO/CO2 direction check."]
         (temporary / "FIGURE_INDEX.md").write_text("\n".join(figure_lines) + "\n", encoding="utf-8")
+        (figures / "README.md").write_text(
+            "# Figure folders\n\n"
+            "See [`../FIGURE_INDEX.md`](../FIGURE_INDEX.md) for descriptions and links to every PNG and PDF.\n\n"
+            + "\n".join(f"- `{folder}/`: {title}. {description}" for folder, title, description in FIGURE_GROUPS)
+            + "\n",
+            encoding="utf-8",
+        )
 
         missing_exports = [
             f"{stem}.{suffix}" for stem in expected_figure_stems() for suffix in ("png", "pdf")
-            if not (figures / f"{stem}.{suffix}").is_file()
+            if not (figures / figure_relative_stem(stem)).with_suffix(f".{suffix}").is_file()
         ]
         if missing_exports:
             raise RuntimeError(f"Figure export validation failed: {missing_exports}")

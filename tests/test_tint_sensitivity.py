@@ -333,7 +333,7 @@ def test_equilibrium_only_netcdf_has_explicit_false_quench_provenance() -> None:
 
 
 def test_analysis_contract_has_34_png_pdf_figure_designs() -> None:
-    from aurora_grid.tint.analysis import expected_figure_stems
+    from aurora_grid.tint.analysis import expected_figure_stems, figure_group, figure_relative_stem
 
     stems = expected_figure_stems()
     assert len(stems) == 34
@@ -342,6 +342,9 @@ def test_analysis_contract_has_34_png_pdf_figure_designs() -> None:
     assert sum(stem.startswith("pt_") for stem in stems) == 3
     assert sum(stem.startswith("spectra_") for stem in stems) == 9
     assert sum(stem.startswith("abundance_") for stem in stems) == 12
+    assert figure_relative_stem("pt_k2_18b_observed").as_posix() == "01_pt_profiles/pt_k2_18b_observed"
+    assert figure_group("residual_transmission") == "04_residuals"
+    assert figure_group("headline_case_metric_transmission") == "05_comparisons"
 
 
 def test_analysis_summary_retains_all_36_manifest_rows() -> None:
@@ -377,6 +380,17 @@ def test_pressure_axis_is_logarithmic_and_increases_downward() -> None:
     _set_pressure_axis(ax)
     assert ax.get_yscale() == "log"
     assert ax.yaxis_inverted()
+    plt.close(fig)
+
+
+def test_pressure_axis_remains_inverted_when_shared_axis_is_styled_repeatedly() -> None:
+    import matplotlib.pyplot as plt
+    from aurora_grid.tint.analysis import _set_pressure_axis
+
+    fig, axes = plt.subplots(2, 2, sharey=True)
+    for ax in axes.flat:
+        _set_pressure_axis(ax)
+    assert all(ax.yaxis_inverted() for ax in axes.flat)
     plt.close(fig)
 
 
@@ -500,7 +514,7 @@ def test_preflight_writes_machine_readable_inventory(tmp_path: Path) -> None:
 
 
 def test_synthetic_36_file_final_package(tmp_path: Path) -> None:
-    from aurora_grid.tint.analysis import expected_figure_stems, generate_package
+    from aurora_grid.tint.analysis import expected_figure_stems, figure_relative_stem, generate_package
 
     rows = manifests(load_experiment(CONFIG))
     input_dir = tmp_path / "inputs"
@@ -514,8 +528,8 @@ def test_synthetic_36_file_final_package(tmp_path: Path) -> None:
     )
 
     figures = expected_figure_stems()
-    assert all((output / "figures" / f"{stem}.png").is_file() for stem in figures)
-    assert all((output / "figures" / f"{stem}.pdf").is_file() for stem in figures)
+    assert all((output / "figures" / figure_relative_stem(stem)).with_suffix(".png").is_file() for stem in figures)
+    assert all((output / "figures" / figure_relative_stem(stem)).with_suffix(".pdf").is_file() for stem in figures)
     abundances = np.genfromtxt(
         output / "tables" / "photospheric_abundances_1mbar.csv",
         delimiter=",",
@@ -527,4 +541,7 @@ def test_synthetic_36_file_final_package(tmp_path: Path) -> None:
     qc = json.loads((output / "qc_summary.json").read_text())
     assert qc["included_models"] == 36
     assert qc["endpoint_pairs"] == 12
-    assert (output / "figures" / "headline_case_metric_transmission.png").is_file()
+    assert (output / "figures" / "05_comparisons" / "headline_case_metric_transmission.png").is_file()
+    assert (output / "figures" / "README.md").is_file()
+    index_text = (output / "FIGURE_INDEX.md").read_text(encoding="utf-8")
+    assert "figures/01_pt_profiles/pt_k2_18b_observed.png" in index_text
