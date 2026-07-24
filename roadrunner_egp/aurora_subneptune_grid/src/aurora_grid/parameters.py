@@ -42,16 +42,20 @@ BASE_PARAMETER_KEYS = [
 ]
 GRAVITY_AXIS_KEY = "gravity_ms2"
 MASS_AXIS_KEY = "planet_mass_mearth"
+DEFAULT_CLIMATE_SPECTRUM_AXES = ("phase_deg",)
+SUPPORTED_CLIMATE_SPECTRUM_AXES = frozenset({"planet_radius_rearth", "phase_deg"})
 
 MANIFEST_COLUMNS = [
     "run_index",
     "model_name",
     "run_id",
     "climate_group_index",
+    "climate_group_key",
     "star_teff_k",
     "star_radius_rsun",
     "stellar_luminosity_lsun",
     "planet_radius_rearth",
+    "climate_reference_radius_rearth",
     "planet_mass_mearth",
     "gravity_ms2",
     "metallicity_xsolar",
@@ -94,6 +98,7 @@ FLOAT_COLUMNS = {
     "star_radius_rsun",
     "stellar_luminosity_lsun",
     "planet_radius_rearth",
+    "climate_reference_radius_rearth",
     "planet_mass_mearth",
     "gravity_ms2",
     "metallicity_xsolar",
@@ -209,7 +214,63 @@ def load_config(path: str | Path) -> dict[str, Any]:
         raise ValueError(
             f"Config {path} must provide one of {GRAVITY_AXIS_KEY!r} or {MASS_AXIS_KEY!r}."
         )
+    axes = climate_spectrum_axes(config)
+    if "planet_radius_rearth" in axes:
+        if not has_gravity_axis:
+            raise ValueError(
+                "planet_radius_rearth can be spectrum-only only when gravity_ms2 "
+                "is the primary planet axis."
+            )
+        reference_radius = float(config.get("climate_reference_radius_rearth", 0.0))
+        if reference_radius <= 0.0:
+            raise ValueError(
+                "A positive climate_reference_radius_rearth is required when "
+                "planet_radius_rearth is spectrum-only."
+            )
+    unsupported_chemistry_pairs(config)
     return config
+
+
+def climate_spectrum_axes(config: dict[str, Any]) -> tuple[str, ...]:
+    raw_axes = config.get("climate_spectrum_axes", DEFAULT_CLIMATE_SPECTRUM_AXES)
+    if not isinstance(raw_axes, (list, tuple)) or not raw_axes:
+        raise ValueError("climate_spectrum_axes must be a non-empty list when provided.")
+    axes = tuple(str(value) for value in raw_axes)
+    unknown = sorted(set(axes) - SUPPORTED_CLIMATE_SPECTRUM_AXES)
+    if unknown:
+        raise ValueError(f"Unsupported climate_spectrum_axes values: {unknown}")
+    if "phase_deg" not in axes:
+        raise ValueError("climate_spectrum_axes must include 'phase_deg'.")
+    if len(set(axes)) != len(axes):
+        raise ValueError("climate_spectrum_axes cannot contain duplicates.")
+    return axes
+
+
+def unsupported_chemistry_pairs(config: dict[str, Any]) -> frozenset[tuple[float, float]]:
+    raw_pairs = config.get("unsupported_chemistry_pairs", [])
+    if raw_pairs in (None, []):
+        return frozenset()
+    if not isinstance(raw_pairs, list):
+        raise ValueError("unsupported_chemistry_pairs must be a list.")
+    metallicities = {float(value) for value in config.get("metallicity_xsolar", [])}
+    c_to_o_values = {float(value) for value in config.get("c_to_o_xsolar", [])}
+    pairs: set[tuple[float, float]] = set()
+    for raw_pair in raw_pairs:
+        if not isinstance(raw_pair, dict):
+            raise ValueError("Each unsupported chemistry pair must be a mapping.")
+        pair = (
+            float(raw_pair["metallicity_xsolar"]),
+            float(raw_pair["c_to_o_xsolar"]),
+        )
+        if pair[0] not in metallicities or pair[1] not in c_to_o_values:
+            raise ValueError(
+                "Unsupported chemistry pair is outside the configured axes: "
+                f"metallicity_xsolar={pair[0]}, c_to_o_xsolar={pair[1]}"
+            )
+        pairs.add(pair)
+    if len(pairs) >= len(metallicities) * len(c_to_o_values):
+        raise ValueError("unsupported_chemistry_pairs excludes the entire chemistry grid.")
+    return frozenset(pairs)
 
 
 def stellar_luminosity_lsun(teff_k: float, radius_rsun: float) -> float:
@@ -289,12 +350,33 @@ def mass_from_gravity_radius_mearth(gravity_ms2: float, planet_radius_rearth: fl
     return mass_kg / M_EARTH_KG
 
 
-def expected_grid_size(config: dict[str, Any]) -> int:
+def unfiltered_grid_size(config: dict[str, Any]) -> int:
     total = 1
     for key in BASE_PARAMETER_KEYS:
         total *= len(config[key])
     total *= len(config[_planet_axis_key(config)])
     return int(total)
+
+
+def expected_grid_size(config: dict[str, Any]) -> int:
+    total = unfiltered_grid_size(config)
+    excluded_pairs = unsupported_chemistry_pairs(config)
+    if not excluded_pairs:
+        return total
+    chemistry_pair_count = len(config["metallicity_xsolar"]) * len(config["c_to_o_xsolar"])
+    return total - len(excluded_pairs) * (total // chemistry_pair_count)
+
+
+def expected_climate_grid_size(config: dict[str, Any]) -> int:
+    spectra_per_climate = 1
+    for axis in climate_spectrum_axes(config):
+        spectra_per_climate *= len(config[axis])
+    total = expected_grid_size(config)
+    if total % spectra_per_climate:
+        raise ValueError(
+            f"Filtered grid size {total} is not divisible by {spectra_per_climate} spectra per climate."
+        )
+    return total // spectra_per_climate
 
 
 def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
@@ -315,7 +397,7 @@ def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
     wavelength_points = int(wavelength_grid.get("points", DEFAULT_WAVELENGTH_POINTS))
     if grid_mode.strip().lower() in {"constant_resolution", "picaso_max", "picaso_resampled_max", "max"}:
         wavelength_points = int(math.ceil(math.log(wavelength_max_um / wavelength_min_um) * wavelength_resolution)) + 1
-    return {
+    metadata = {
         "author": config.get("author", ""),
         "contact": config.get("contact", ""),
         "project": config.get("project", ""),
@@ -334,6 +416,11 @@ def _metadata_columns(config: dict[str, Any]) -> dict[str, Any]:
         "wavelength_points": wavelength_points,
         "source_notebook_reference": NOTEBOOK_REFERENCE,
     }
+    if config.get("climate_reference_radius_rearth") not in (None, ""):
+        metadata["climate_reference_radius_rearth"] = float(
+            config["climate_reference_radius_rearth"]
+        )
+    return metadata
 
 
 def create_manifest_dataframe(config: dict[str, Any]) -> ManifestTable:
@@ -341,6 +428,7 @@ def create_manifest_dataframe(config: dict[str, Any]) -> ManifestTable:
     metadata = _metadata_columns(config)
     output_root = config["output_root"]
     run_index = 0
+    excluded_pairs = unsupported_chemistry_pairs(config)
 
     axis_key = _planet_axis_key(config)
     products = itertools.product(
@@ -367,6 +455,9 @@ def create_manifest_dataframe(config: dict[str, Any]) -> ManifestTable:
         insolation_searth,
         phase_deg,
     ) in products:
+        chemistry_pair = (float(metallicity_xsolar), float(c_to_o_xsolar))
+        if chemistry_pair in excluded_pairs:
+            continue
         star_teff_k = float(star["teff_k"])
         star_radius_rsun = float(star["radius_rsun"])
         planet_radius_rearth_value = float(planet_radius_rearth)
@@ -427,6 +518,9 @@ def validate_manifest(dataframe: ManifestTable, expected_rows: int | None = None
 def _coerce_manifest_row(row: dict[str, str]) -> dict[str, Any]:
     coerced: dict[str, Any] = {}
     for key, value in row.items():
+        if value in (None, ""):
+            coerced[key] = value
+            continue
         if key in INT_COLUMNS:
             coerced[key] = int(value)
         elif key in BOOL_COLUMNS:

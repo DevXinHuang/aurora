@@ -10,10 +10,10 @@ from pathlib import Path
 
 PARAMETER_COLUMNS = [
     "climate_group_index",
+    "climate_group_key",
     "star_teff_k",
     "star_radius_rsun",
-    "planet_radius_rearth",
-    "planet_mass_mearth",
+    "climate_reference_radius_rearth",
     "gravity_ms2",
     "metallicity_xsolar",
     "c_to_o_xsolar",

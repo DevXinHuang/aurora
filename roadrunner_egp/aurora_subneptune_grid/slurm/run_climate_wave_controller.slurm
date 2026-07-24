@@ -24,7 +24,7 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/submit_climate_wave_control
   --model "aurora_subneptune_v1_dhuang" \
   --mode "${CLIMATE_CONTROLLER_MODE:-rolling}" \
   --start-wave "${START_WAVE:-0}" \
-  --end-wave "${END_WAVE:-180}" \
+  --end-wave "${END_WAVE:-39}" \
   --throttle "${CLIMATE_WAVE_THROTTLE:-999}" \
   --poll-seconds "${CLIMATE_WAVE_POLL_SECONDS:-60}" \
   --post-wave-sleep-seconds "${CLIMATE_WAVE_POST_SLEEP_SECONDS:-30}" \
@@ -37,5 +37,4 @@ python roadrunner_egp/aurora_subneptune_grid/scripts/submit_climate_wave_control
   --state-path "$RUN_ROOT/controller/state.json" \
   --log-path "$RUN_ROOT/controller/controller.log" \
   --task-log-dir "$RUN_ROOT/logs" \
-  --failed-indices-path "$RUN_ROOT/controller/failed_climate_indices.csv" \
-  --skip-indices-path "${CLIMATE_WAVE_SKIP_INDICES_PATH:-$RUN_ROOT/controller/unsupported_climate_indices.csv}"
+  --failed-indices-path "$RUN_ROOT/controller/failed_climate_indices.csv"

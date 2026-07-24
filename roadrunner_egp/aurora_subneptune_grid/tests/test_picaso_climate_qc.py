@@ -49,6 +49,7 @@ def test_default_atmosphere_uses_91_pressure_levels():
     assert ATM_NLAYERS == 91
 
 
+@pytest.mark.skipif(runner_module.jdi is None, reason="PICASO is not installed")
 def test_jupiter_fallback_is_resampled_to_90_cloud_layers():
     profile = _jupiter_cloud_profile_for_nlevel(ATM_NLAYERS)
 
@@ -147,6 +148,51 @@ def test_reflected_phase_angle_rad_clamps_exact_180():
     assert np.isclose(clamped, np.pi - runner_module.PHASE_ANGLE_PI_EPS_RAD)
     assert np.isclose(reflected_phase_angle_rad(179.0), np.deg2rad(179.0))
     assert np.isclose(reflected_phase_angle_rad(0.0), 0.0)
+
+
+def test_converged_case_reapplies_spectrum_gravity_radius_and_phase(monkeypatch):
+    calls = []
+
+    class FakeCase:
+        def gravity(self, **kwargs):
+            calls.append(("gravity", kwargs))
+
+        def star(self, *args, **kwargs):
+            calls.append(("star", kwargs))
+
+        def phase_angle(self, angle, **kwargs):
+            calls.append(("phase", {"angle": angle, **kwargs}))
+
+        def spectrum(self, *args, **kwargs):
+            calls.append(("spectrum", kwargs))
+            return {"ok": True}
+
+    fake_jdi = types.SimpleNamespace(opannection=lambda **kwargs: object())
+    monkeypatch.setattr(runner_module, "jdi", fake_jdi)
+    system = _system(10.0, 1.0)
+    system.logg_cgs = math.log10(2500.0)
+    system.rj = 0.31
+    system.phase_deg = 60.0
+
+    result = runner_module.run_picaso_reflected_spectrum_from_converged_case(
+        FakeCase(), system, np.array([0.5, 1.0]), "/tmp/test.ck"
+    )
+
+    assert result == {"ok": True}
+    assert [name for name, _kwargs in calls] == ["gravity", "star", "phase", "spectrum"]
+    assert np.isclose(calls[0][1]["gravity"], 2500.0)
+    assert np.isclose(calls[0][1]["radius"], 0.31)
+    assert np.isclose(calls[2][1]["angle"], np.deg2rad(60.0))
+
+
+def test_climate_system_uses_fixed_reference_radius():
+    row = _real_row()
+    row["planet_radius_rearth"] = 1.6
+    row["climate_reference_radius_rearth"] = 2.0
+    system = picaso_runner._climate_system_from_row(row)
+
+    assert np.isclose(system.rj, 2.0 * picaso_runner.R_EARTH_TO_R_JUP)
+    assert system.phase_deg == 0.0
 
 
 def test_patch_virga_calc_optics_sublayer_guard(monkeypatch):

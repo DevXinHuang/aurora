@@ -14,7 +14,13 @@ for path in (SRC_ROOT, ROADRUNNER_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from aurora_grid.parameters import create_manifest_dataframe, expected_grid_size, load_config
+from aurora_grid.parameters import (
+    climate_spectrum_axes,
+    create_manifest_dataframe,
+    expected_climate_grid_size,
+    expected_grid_size,
+    load_config,
+)
 from aurora_grid.climate_groups import assign_climate_group_indices, count_climate_groups
 
 
@@ -29,7 +35,7 @@ def main() -> int:
     args = parse_args()
     config = load_config(args.config)
     manifest = create_manifest_dataframe(config)
-    assign_climate_group_indices(manifest.rows)
+    assign_climate_group_indices(manifest.rows, spectrum_axes=climate_spectrum_axes(config))
 
     output_path = Path(args.out)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -38,6 +44,7 @@ def main() -> int:
     print(f"model_name: {config['model_name']}")
     print(f"total_rows: {len(manifest)}")
     print(f"climate_groups: {count_climate_groups(manifest.rows)}")
+    print(f"expected_climate_groups: {expected_climate_grid_size(config)}")
     print(f"expected_rows: {expected_grid_size(config)}")
     print(f"output_root: {config['output_root']}")
     print(f"manifest: {output_path}")

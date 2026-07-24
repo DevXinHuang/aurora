@@ -68,13 +68,14 @@ The validation script compares Aurora's isolated PICASO 4 results against the fr
 ## PICASO grid runs (HPC)
 
 Large reflected-light grids use a **two-stage** workflow: converge climate once per
-unique atmosphere/orbit (`climate_group_index`), then compute spectra for every phase.
+unique gravity/atmosphere/orbit (`climate_group_index`), then compute spectra for
+every requested radius and phase.
 
 ```bash
 # Example: Cahoy 2010 replication (304 spectra, 16 climates)
 bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_cahoy2010_two_stage.sh
 
-# Example: supported v1 grid (960,000 spectra, 160,000 climates)
+# Example: supported v1 grid (960,000 spectra, 40,000 climates)
 bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
   "$(pwd)" aurora_subneptune_v1
 ```
@@ -85,28 +86,30 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 | --- | ---: | ---: | --- |
 | `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
-| `aurora_subneptune_v1` | 960,000 | 160,000 | Supported production science grid (Zarah updates) |
+| `aurora_subneptune_v1` | 960,000 | 40,000 | Supported production science grid (gravity climates) |
 | `aurora_subneptune_v0` | 276,480 | 46,080 | Legacy full-grid baseline |
 
 The nominal Cartesian axes for `aurora_subneptune_v1` contain 1,080,000 spectra
-and 180,000 climate groups. Production excludes the unsupported PICASO 4
-correlated-k pair `metallicity_xsolar = 100` with `c_to_o_xsolar = 2.0` because
-`sonora_2121grid_feh2.0_co1.10.hdf5` is unavailable. The runnable grid therefore
-contains **960,000 spectra in 160,000 climate groups**.
+and 45,000 gravity-based climate groups. Manifest generation omits the
+unsupported PICASO 4 correlated-k pair `metallicity_xsolar = 100` with
+`c_to_o_xsolar = 2.0` because `sonora_2121grid_feh2.0_co1.10.hdf5` is
+unavailable. The runnable grid therefore contains **960,000 spectra in 40,000
+climate groups**, with four radii and six phases generated from every climate.
 
 Planned full `aurora_subneptune_v1` parameter axes:
 
 - Stars (`teff_k`, `radius_rsun`): `(3500,0.45)`, `(4000,0.63)`, `(5000,0.80)`, `(6000,1.00)`, `(7000,1.70)`
 - `planet_radius_rearth`: `1.6, 2.0, 2.5, 3.0`
-- `planet_mass_mearth`: `2.037, 4.073, 6.110, 10.183, 12.220` (legacy
-  `g = 5, 10, 15, 25, 30 m/s²` at `R = 2 R⊕`)
+- `gravity_ms2`: `5, 10, 15, 25, 30`
 - `metallicity_xsolar`: `1, 10, 100`
 - `c_to_o_xsolar`: `0.5, 1.0, 2.0`
 - `kzz_cm2_s`: `1e9, 1e11`
 - `cloud_fraction`: `0, 0.5, 0.75, 0.9, 1`; `fsed`: `0.3, 1, 3, 6, 8`
 - `insolation_searth`: `0.35, 0.7, 1.0, 1.5`; `phase_deg`: `0, 30, 60, 90, 120, 150`
-- Gravity note: `gravity_ms2` is computed per row from mass and radius
-  (`g = GM/R²`) for PICASO; at `R = 2 R⊕` this recovers the legacy g grid.
+- `Tint` is fixed at `50 K`; `equilibrium_temperature_k` is still calculated
+  independently from stellar irradiation and stored as metadata.
+- Planet mass is derived per spectrum as `M = gR²/G`; it is metadata, not a
+  climate axis. Radius and phase are spectrum-only axes.
 
 ## Tint-sensitivity analysis
 

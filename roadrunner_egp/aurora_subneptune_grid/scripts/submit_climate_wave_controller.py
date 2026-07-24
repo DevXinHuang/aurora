@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
+import numpy as np
+
 
 WAVE_RE = re.compile(r"climate_wave_(?P<wave>\d+)_(?P<start>\d+)_(?P<end>\d+)\.csv$")
 
@@ -26,6 +28,7 @@ class WorkItem:
     wave: int
     manifest: Path
     attempt: int = 0
+    climate_group_key: str = ""
 
 
 @dataclass
@@ -44,7 +47,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--slurm-script", default="roadrunner_egp/aurora_subneptune_grid/slurm/run_climate_cache.slurm")
     parser.add_argument("--mode", choices=("sequential", "rolling"), default="sequential")
     parser.add_argument("--start-wave", type=int, default=0)
-    parser.add_argument("--end-wave", type=int, default=180)
+    parser.add_argument("--end-wave", type=int, default=39)
     parser.add_argument("--throttle", type=int, default=999)
     parser.add_argument("--poll-seconds", type=int, default=60)
     parser.add_argument("--post-wave-sleep-seconds", type=int, default=30)
@@ -91,9 +94,20 @@ def wave_file(wave_dir: Path, wave: int) -> tuple[Path, int, int]:
     return matches[0], int(match.group("start")), int(match.group("end"))
 
 
-def read_wave_indices(path: Path) -> list[int]:
+def read_wave_rows(path: Path) -> list[tuple[int, str]]:
     with path.open(newline="") as handle:
-        return [int(row["climate_group_index"]) for row in csv.DictReader(handle)]
+        reader = csv.DictReader(handle)
+        if not reader.fieldnames or "climate_group_key" not in reader.fieldnames:
+            raise ValueError(
+                f"Stale wave manifest {path}: missing climate_group_key. Regenerate climate waves."
+            )
+        rows = []
+        for row in reader:
+            key = str(row.get("climate_group_key", "")).strip()
+            if not key:
+                raise ValueError(f"Stale wave manifest {path}: empty climate_group_key.")
+            rows.append((int(row["climate_group_index"]), key))
+        return rows
 
 
 def read_skip_indices(path: Path | None) -> set[int]:
@@ -111,40 +125,28 @@ def cache_path(output_root: Path, climate_group_index: int) -> Path:
     return output_root / "climate_cache" / f"climate_{int(climate_group_index):02d}.npz"
 
 
-def cache_exists(output_root: Path, climate_group_index: int) -> bool:
-    path = cache_path(output_root, climate_group_index)
-    return path.exists() and path.stat().st_size > 0
-
-
-def count_cache_files(output_root: Path) -> int:
-    return len(existing_cache_indices(output_root))
-
-
-def existing_cache_indices(output_root: Path) -> set[int]:
-    cache_dir = output_root / "climate_cache"
-    if not cache_dir.exists():
-        return set()
-    indices: set[int] = set()
-    for entry in os.scandir(cache_dir):
-        if not entry.is_file() or not entry.name.startswith("climate_") or not entry.name.endswith(".npz"):
-            continue
-        try:
-            index = int(entry.name[len("climate_") : -len(".npz")])
-        except ValueError:
-            continue
-        if entry.stat().st_size > 0:
-            indices.add(index)
-    return indices
+def cache_matches(output_root: Path, item: WorkItem) -> bool:
+    path = cache_path(output_root, item.climate_group_index)
+    if not path.exists() or path.stat().st_size <= 0:
+        return False
+    if not item.climate_group_key:
+        return False
+    try:
+        with np.load(path, allow_pickle=False) as data:
+            metadata = json.loads(str(data["metadata_json"]))
+    except (OSError, KeyError, ValueError, json.JSONDecodeError):
+        return False
+    return str(metadata.get("climate_group_key", "")) == item.climate_group_key
 
 
 def build_catalog(wave_dir: Path, start_wave: int, end_wave: int) -> dict[int, WorkItem]:
     catalog: dict[int, WorkItem] = {}
     for wave in range(start_wave, end_wave + 1):
         manifest, _, _ = wave_file(wave_dir, wave)
-        for index in read_wave_indices(manifest):
+        for index, climate_key in read_wave_rows(manifest):
             if index in catalog:
                 raise ValueError(f"Duplicate climate_group_index across wave manifests: {index}")
-            catalog[index] = WorkItem(index, wave, manifest)
+            catalog[index] = WorkItem(index, wave, manifest, climate_group_key=climate_key)
     return catalog
 
 
@@ -318,7 +320,15 @@ def discover_active_submissions(
                 if local_id < len(indices):
                     base = catalog.get(indices[local_id])
                     if base:
-                        items.append(WorkItem(base.climate_group_index, waves[local_id], base.manifest, attempts[local_id]))
+                        items.append(
+                            WorkItem(
+                                base.climate_group_index,
+                                waves[local_id],
+                                base.manifest,
+                                attempts[local_id],
+                                base.climate_group_key,
+                            )
+                        )
             raw_mapping = record.get("mapping_path")
             if raw_mapping:
                 mapping_path = Path(str(raw_mapping))
@@ -347,10 +357,18 @@ def retry_or_fail(
     retry: list[WorkItem] = []
     failed: list[WorkItem] = []
     for item in submission.items:
-        if cache_exists(output_root, item.climate_group_index):
+        if cache_matches(output_root, item):
             continue
         if item.attempt < max_retries:
-            retry.append(WorkItem(item.climate_group_index, item.wave, item.manifest, item.attempt + 1))
+            retry.append(
+                WorkItem(
+                    item.climate_group_index,
+                    item.wave,
+                    item.manifest,
+                    item.attempt + 1,
+                    item.climate_group_key,
+                )
+            )
         else:
             failed.append(item)
     return retry, failed
@@ -390,7 +408,9 @@ def run_controller(args: argparse.Namespace) -> int:
     snapshot = qos_snapshot(repo_root, args.qos)
     active = discover_active_submissions(snapshot, catalog, submission_dir)
     in_flight = {item.climate_group_index for submission in active.values() for item in submission.items}
-    cached_indices = existing_cache_indices(output_root)
+    cached_indices = {
+        index for index, item in runnable.items() if cache_matches(output_root, item)
+    }
     pending = build_pending_items(runnable, cached_indices, in_flight)
 
     initial_cache_count = len(cached_indices)
@@ -418,6 +438,11 @@ def run_controller(args: argparse.Namespace) -> int:
             absent_since.pop(job_id, None)
             submission = active.pop(job_id)
             retry, failed = retry_or_fail(submission, output_root, args.max_retries)
+            cached_indices.update(
+                item.climate_group_index
+                for item in submission.items
+                if cache_matches(output_root, item)
+            )
             if retry:
                 pending.extend(retry)
             if failed:
@@ -469,7 +494,7 @@ def run_controller(args: argparse.Namespace) -> int:
             if args.mode == "sequential":
                 break
 
-        cache_count = count_cache_files(output_root)
+        cache_count = len(cached_indices)
         elapsed_hours = max((time.monotonic() - started) / 3600, 1 / 3600)
         throughput = max(0.0, cache_count - initial_cache_count) / elapsed_hours
         remaining = max(0, len(runnable) - cache_count - failed_total)
@@ -502,13 +527,15 @@ def run_controller(args: argparse.Namespace) -> int:
         if pending or active:
             time.sleep(args.poll_seconds if active or capacity == 0 else args.submit_retry_seconds)
 
-    final_missing = [item for index, item in runnable.items() if not cache_exists(output_root, index)]
+    final_missing = [
+        item for index, item in runnable.items() if index not in cached_indices
+    ]
     if final_missing:
         append_failures(failed_path, final_missing)
     write_state(
         state_path,
         status="all_waves_complete" if not final_missing else "complete_with_failures",
-        cached_count=count_cache_files(output_root),
+        cached_count=len(cached_indices),
         runnable_count=len(runnable),
         skipped_count=len(skip_indices),
         final_missing=len(final_missing),

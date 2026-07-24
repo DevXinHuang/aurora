@@ -15,9 +15,9 @@ for path in (SRC_ROOT, ROADRUNNER_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from aurora_grid.cahoy_climate_cache import climate_cache_path, save_climate_cache
+from aurora_grid.cahoy_climate_cache import climate_cache_path, load_climate_cache, save_climate_cache
 from aurora_grid.parameters import read_manifest_csv
-from aurora_grid.picaso_runner import _system_from_row, wavelength_grid_um
+from aurora_grid.picaso_runner import _climate_system_from_row, wavelength_grid_um
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,14 +64,20 @@ def main() -> int:
         raise ValueError(f"No manifest rows for climate_group_index={climate_group_index}")
 
     row = dict(matches[0])
+    climate_group_key = str(row.get("climate_group_key", "")).strip()
+    if not climate_group_key:
+        raise ValueError(
+            "Manifest is stale: missing climate_group_key. Regenerate it before running climates."
+        )
     row["phase_deg"] = float(min(float(r["phase_deg"]) for r in matches))
     output_root = str(Path(row["output_nc"]).parent.parent)
     cache_file = climate_cache_path(output_root, climate_group_index)
     if cache_file.exists() and not args.overwrite:
+        load_climate_cache(cache_file, expected_climate_group_key=climate_group_key)
         print(f"skipped_exists: {cache_file}")
         return 0
 
-    system = _system_from_row(row)
+    system = _climate_system_from_row(row)
     cloud_model = str(row.get("cloud_model") or ("none" if float(row["cloud_fraction"]) == 0.0 else "virga"))
     climate_out, diagnostics, selected_ck_file, cl_run = run_picaso_climate_converge_only(
         system,

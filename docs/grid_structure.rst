@@ -9,8 +9,8 @@ Overview
 --------
 
 The supported production grid ``aurora_subneptune_v1`` contains **960,000
-spectra** grouped into **160,000 climate groups**.  Its nominal Cartesian axes
-define 1,080,000 spectra and 180,000 climate groups, but the 100× solar
+spectra** grouped into **40,000 climate groups**.  Its nominal Cartesian axes
+define 1,080,000 spectra and 45,000 gravity-based climate groups, but the 100× solar
 metallicity, 2× solar C/O chemistry pair is excluded because the required
 PICASO 4 correlated-k opacity table is unavailable.  Smaller grids are
 available for pipeline validation and HPC timing tests.  The earlier
@@ -38,7 +38,7 @@ available for pipeline validation and HPC timing tests.  The earlier
      - 1-to-1 Cahoy et al. 2010 replication
    * - ``aurora_subneptune_v1``
      - 960,000
-     - 160,000
+     - 40,000
      - Supported production science grid (current)
    * - ``aurora_subneptune_v0``
      - 276,480
@@ -49,11 +49,11 @@ Two-Stage Workflow
 ------------------
 
 Each spectrum is computed in two stages to avoid redundant climate calculations.
-Phase angle is a viewing-geometry parameter only — the pressure–temperature
-profile does not change with phase.  All manifest rows that share the same
-planet, star, cloud, chemistry, and orbit parameters (but differ only in
-``phase_deg``) belong to the same *climate group* and share a single cached
-climate solution.
+Planet radius and phase angle are spectrum-only parameters — the
+pressure–temperature profile does not change with either. All manifest rows
+that share gravity, star, cloud, chemistry, and orbit parameters belong to the
+same *climate group* and share one cached solution. Each v1 climate feeds four
+radii and six phase angles, for 24 spectra.
 
 .. list-table:: Two-stage compute stages
    :header-rows: 1
@@ -81,9 +81,9 @@ Output file layout::
 Parameter Axes (``aurora_subneptune_v1``)
 -----------------------------------------
 
-The full production grid spans the following parameter axes.  **Planet mass and
-radius are the primary axes** (for comparison to measured values).  Surface
-gravity is computed per row as :math:`g = GM/R^2` and passed to PICASO.
+The full production grid uses **surface gravity as the climate planet axis**.
+Planet radius varies in the spectral stage, and mass is derived per spectrum as
+:math:`M = gR^2/G` for comparison with measured values.
 
 .. list-table::
    :header-rows: 1
@@ -95,10 +95,8 @@ gravity is computed per row as :math:`g = GM/R^2` and passed to PICASO.
      - (3500 K, 0.45 R\ :sub:`☉`), (4000 K, 0.63 R\ :sub:`☉`), (5000 K, 0.80 R\ :sub:`☉`), (6000 K, 1.00 R\ :sub:`☉`), (7000 K, 1.70 R\ :sub:`☉`)
    * - Planet radius (R\ :sub:`⊕`)
      - 1.6, 2.0, 2.5, 3.0
-   * - Planet mass (M\ :sub:`⊕`)
-     - 2.037, 4.073, 6.110, 10.183, 12.220
    * - Surface gravity (m s\ :sup:`−2`)
-     - Derived per row from mass and radius (legacy :math:`g = 5, 10, 15, 25, 30` m s\ :sup:`−2` at :math:`R = 2\,R_\oplus`)
+     - 5, 10, 15, 25, 30
    * - Metallicity (× solar)
      - 1, 10, 100
    * - C/O ratio (× solar)
@@ -113,17 +111,20 @@ gravity is computed per row as :math:`g = GM/R^2` and passed to PICASO.
      - 0.35, 0.70, 1.00, 1.50
    * - Phase (deg)
      - 0, 30, 60, 90, 120, 150
+   * - Internal temperature T\ :sub:`int`
+     - Fixed at 50 K; equilibrium temperature is calculated separately
 
-The nominal Cartesian product is **1,080,000** spectra = **180,000** climate
-groups × **6** phases.  PICASO 4 provides eight of the nine requested
+The nominal Cartesian product is **1,080,000** spectra = **45,000** climate
+groups × **4** radii × **6** phases.  PICASO 4 provides eight of the nine requested
 metallicity/C/O correlated-k tables.  The unsupported pair is:
 
 * metallicity = 100× solar and C/O = 2× solar, which maps to the unavailable
   ``sonora_2121grid_feh2.0_co1.10.hdf5`` table.
 
-Excluding that pair removes **20,000 climate groups** and **120,000 spectra**.
-The supported production total is therefore **160,000 climate groups** and
-**960,000 spectra**.
+Omitting that pair before manifest indexing removes **5,000 climate groups**
+and **120,000 spectra**. The supported production total is therefore **40,000
+climate groups** and **960,000 spectra**; unsupported cases have no manifest,
+cache, or output indices.
 
 Cloud Parameters
 ----------------

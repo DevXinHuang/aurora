@@ -5,6 +5,8 @@ PICASO execution: run reflected + thermal spectra and extract absolute
 planet fluxes with correct unit conversions.
 """
 
+from __future__ import annotations
+
 import os
 import re
 import inspect
@@ -913,6 +915,12 @@ def run_picaso_reflected_spectrum_from_converged_case(
         ck_db=str(selected_ck_file),
         wave_range=[float(np.nanmin(output_grid)), float(np.nanmax(output_grid))],
         method="preweighted",
+    )
+    cl_run.gravity(
+        gravity=10 ** system.logg_cgs,
+        gravity_unit=u.cm / u.s**2,
+        radius=system.rj,
+        radius_unit=u.R_jup,
     )
     cl_run.star(
         opa,

@@ -533,6 +533,16 @@ def _system_from_row(row: dict[str, Any], *, atmosphere_source: str = "picaso_cl
     )
 
 
+def _climate_system_from_row(row: dict[str, Any]) -> Any:
+    """Build the climate system, using a fixed reference radius when configured."""
+    climate_row = dict(row)
+    reference_radius = row.get("climate_reference_radius_rearth")
+    if reference_radius not in (None, ""):
+        climate_row["planet_radius_rearth"] = float(reference_radius)
+    climate_row["phase_deg"] = 0.0
+    return _system_from_row(climate_row)
+
+
 def run_picaso_model_from_climate_cache(
     row: dict[str, Any],
     climate_cache: dict[str, Any],

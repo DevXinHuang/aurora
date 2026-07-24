@@ -1,6 +1,48 @@
 {
-  "generated_at_utc": "2026-07-02T19:18:56+00:00",
+  "generated_at_utc": "2026-07-24T16:39:19+00:00",
   "grids": [
+    {
+      "completed": {
+        "qc_rows": 0,
+        "stage1_climate_groups": 0,
+        "stage2_rows": 0
+      },
+      "config_name": "aurora_subneptune_v1.yaml",
+      "expected": {
+        "qc_rows": 960000,
+        "stage1_climate_groups": 40000,
+        "stage2_rows": 960000
+      },
+      "model_name": "aurora_subneptune_v1",
+      "output_root": "roadrunner_egp/aurora_subneptune_grid/outputs/aurora_subneptune_v1",
+      "percent": {
+        "qc_rows": 0.0,
+        "stage1_climate_groups": 0.0,
+        "stage2_rows": 0.0
+      },
+      "qc_status_counts": {}
+    },
+    {
+      "completed": {
+        "qc_rows": 0,
+        "stage1_climate_groups": 0,
+        "stage2_rows": 0
+      },
+      "config_name": "aurora_subneptune_v1_dhuang.yaml",
+      "expected": {
+        "qc_rows": 960000,
+        "stage1_climate_groups": 40000,
+        "stage2_rows": 960000
+      },
+      "model_name": "aurora_subneptune_v1_dhuang",
+      "output_root": "/groups/tdrobin/dhuang/aurora_subneptune_v1_dhuang",
+      "percent": {
+        "qc_rows": 0.0,
+        "stage1_climate_groups": 0.0,
+        "stage2_rows": 0.0
+      },
+      "qc_status_counts": {}
+    },
     {
       "completed": {
         "qc_rows": 0,
@@ -89,7 +131,7 @@
       "completed": {
         "qc_rows": 0,
         "stage1_climate_groups": 0,
-        "stage2_rows": 0
+        "stage2_rows": 1
       },
       "config_name": "aurora_cahoy_exact_304_factorized.yaml",
       "expected": {
@@ -102,7 +144,7 @@
       "percent": {
         "qc_rows": 0.0,
         "stage1_climate_groups": 0.0,
-        "stage2_rows": 0.0
+        "stage2_rows": 0.329
       },
       "qc_status_counts": {}
     },
@@ -156,9 +198,9 @@
   "summary": {
     "completed_qc_rows": 0,
     "completed_stage1_climate_groups": 0,
-    "completed_stage2_rows": 6,
-    "expected_stage1_climate_groups": 46834,
-    "expected_stage2_rows": 279638,
-    "grid_count": 7
+    "completed_stage2_rows": 7,
+    "expected_stage1_climate_groups": 126834,
+    "expected_stage2_rows": 2199638,
+    "grid_count": 9
   }
 }

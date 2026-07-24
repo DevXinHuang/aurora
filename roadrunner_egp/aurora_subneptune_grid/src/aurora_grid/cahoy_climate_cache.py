@@ -72,6 +72,7 @@ def save_climate_cache(
     metadata = _json_safe(
         {
             "climate_group_index": int(climate_group_index),
+            "climate_group_key": str(row.get("climate_group_key", "")),
             "selected_ck_file": str(selected_ck_file),
             "cahoy_planet_type": row.get("cahoy_planet_type", ""),
             "cahoy_metallicity_label": row.get("cahoy_metallicity_label", ""),
@@ -93,13 +94,25 @@ def save_climate_cache(
     return cache_path
 
 
-def load_climate_cache(path: str | Path) -> dict[str, Any]:
+def load_climate_cache(
+    path: str | Path,
+    *,
+    expected_climate_group_key: str | None = None,
+) -> dict[str, Any]:
     cache_path = Path(path)
     if not cache_path.exists():
         raise FileNotFoundError(f"Climate cache not found: {cache_path}")
 
     with np.load(cache_path, allow_pickle=False) as data:
         metadata = json.loads(str(data["metadata_json"]))
+        if expected_climate_group_key not in (None, ""):
+            actual_key = str(metadata.get("climate_group_key", ""))
+            if actual_key != str(expected_climate_group_key):
+                raise ValueError(
+                    f"Stale climate cache {cache_path}: climate_group_key "
+                    f"{actual_key or '<missing>'!r} does not match expected "
+                    f"{expected_climate_group_key!r}. Regenerate the cache."
+                )
         loaded = {
             "pressure": np.asarray(data["pressure"], dtype=float),
             "temperature": np.asarray(data["temperature"], dtype=float),

@@ -42,3 +42,22 @@ def test_save_climate_cache_serializes_ndarray_diagnostics(tmp_path: Path):
     assert loaded["pressure"].shape == (120,)
     assert loaded["metadata"]["diagnostics"]["climate_converged"] is True
     assert "shape" in loaded["metadata"]["diagnostics"]["pressure"]
+
+
+def test_climate_cache_rejects_missing_or_mismatched_identity(tmp_path: Path):
+    cache_file = tmp_path / "climate_00.npz"
+    save_climate_cache(
+        cache_file,
+        climate_group_index=0,
+        pressure=np.array([1.0, 0.1]),
+        temperature=np.array([300.0, 250.0]),
+        selected_ck_file="/tmp/test.ck",
+        diagnostics={},
+        row={"semi_major_au": 0.8, "climate_group_key": "new-key"},
+    )
+
+    assert load_climate_cache(
+        cache_file, expected_climate_group_key="new-key"
+    )["metadata"]["climate_group_key"] == "new-key"
+    with pytest.raises(ValueError, match="Stale climate cache"):
+        load_climate_cache(cache_file, expected_climate_group_key="old-key")

@@ -39,7 +39,7 @@ bash roadrunner_egp/aurora_subneptune_grid/scripts/submit_two_stage_grid.sh \
 | `smoke_test_aurora_subneptune` | 6 | 2 | Plumbing |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | HPC timing / QC |
 | `aurora_cahoy2010_replication_v0` | 304 | 16 | Cahoy et al. 2010 1:1 |
-| `aurora_subneptune_v1` | 960,000 | 160,000 | Supported science grid (Zarah updates) |
+| `aurora_subneptune_v1` | 960,000 | 40,000 | Supported science grid (gravity climates) |
 | `aurora_subneptune_v0` | 276,480 | 46,080 | Legacy full-grid baseline |
 
 ### Sub-Neptune grid sets (non-Cahoy)
@@ -51,11 +51,11 @@ The two non-Cahoy grids currently used for development/testing are:
 | `smoke_test_aurora_subneptune` | 6 | 2 | Minimal plumbing check before larger runs |
 | `hpc_validation_aurora_subneptune` | 1,728 | 576 | Testing grid for HPC timing, stability, and QC |
 
-The nominal v1 axes define 1,080,000 spectra and 180,000 climate groups.
-Production excludes `metallicity_xsolar = 100` with `c_to_o_xsolar = 2.0`
-because PICASO 4 does not provide the required
+The nominal v1 axes define 1,080,000 spectra and 45,000 gravity-based climate
+groups. Manifest generation omits `metallicity_xsolar = 100` with
+`c_to_o_xsolar = 2.0` because PICASO 4 does not provide the required
 `sonora_2121grid_feh2.0_co1.10.hdf5` correlated-k table. The supported final
-production run is therefore 960,000 spectra in 160,000 climate groups.
+production run is therefore 960,000 spectra in 40,000 climate groups.
 
 Planned final production run is `aurora_subneptune_v1`:
 
@@ -63,7 +63,7 @@ Planned final production run is `aurora_subneptune_v1`:
 | --- | --- |
 | Host star Teff + radius | 3500/0.45, 4000/0.63, 5000/0.80, 6000/1.00, 7000/1.70 |
 | Planet radius (R_earth) | 1.6, 2.0, 2.5, 3.0 |
-| Planet mass (M_earth) | 2.037, 4.073, 6.110, 10.183, 12.220 |
+| Surface gravity (m/s²) | 5, 10, 15, 25, 30 |
 | Metallicity (x solar) | 1, 10, 100 |
 | C/O (x solar) | 0.5, 1.0, 2.0 |
 | Kzz (cm²/s) | 1e9, 1e11 |
@@ -72,10 +72,12 @@ Planned final production run is `aurora_subneptune_v1`:
 | fsed | 0.3, 1, 3, 6, 8 |
 | Insolation (S_earth) | 0.35, 0.7, 1.0, 1.5 |
 | Phase (deg) | 0, 30, 60, 90, 120, 150 |
+| Internal temperature Tint | Fixed at 50 K |
 
-Gravity note: `gravity_ms2` is computed per row from mass and radius
-(`g = GM/R²`) for PICASO. Mass values match legacy `g = 5–30 m/s²` at
-`R = 2 R⊕` and are stored in manifest/NetCDF for comparison to measured values.
+Gravity is the climate planet axis. Radius and phase vary only in the spectral
+stage, so each climate feeds 24 spectra. Planet mass is derived per spectrum as
+`M = gR²/G` and stored in manifest/NetCDF metadata. `equilibrium_temperature_k`
+is calculated independently and is not used as `Tint`.
 
 Cahoy shortcut:
 
@@ -91,7 +93,7 @@ are submitted in batches automatically.
 ```bash
 source env/activate_aurora_picaso4_job.sh
 
-# Generate manifest (adds climate_group_index)
+# Generate manifest (adds climate_group_index and climate_group_key)
 python roadrunner_egp/aurora_subneptune_grid/scripts/make_manifest.py \
   --config roadrunner_egp/aurora_subneptune_grid/params/hpc_validation.yaml \
   --out roadrunner_egp/aurora_subneptune_grid/manifests/hpc_validation_manifest.csv
@@ -163,7 +165,7 @@ worlds in reflected-light spectra (HWO).
 | --- | --- | ---: |
 | Host star Teff + radius | 3500, 4000, 5000, 6000, 7000 K | 5 |
 | Planet radius | 1.6, 2.0, 2.5, 3.0 R_earth | 4 |
-| Planet mass | 2.037, 4.073, 6.110, 10.183, 12.220 M_earth | 5 |
+| Surface gravity | 5, 10, 15, 25, 30 m/s² | 5 |
 | Metallicity | 1, 10, 100× solar | 3 |
 | C/O | 0.5, 1.0, 2.0× solar | 3 |
 | Kzz | 1e9, 1e11 cm²/s | 2 |
@@ -172,10 +174,11 @@ worlds in reflected-light spectra (HWO).
 | Insolation | 0.35, 0.7, 1.0, 1.5 S⊕ | 4 |
 | Phase | 0, 30, 60, 90, 120, 150° | 6 |
 
-Nominal Cartesian product: **1,080,000** spectra = **180,000** climate groups ×
-**6** phases. Excluding the unsupported 100× metallicity / 2× C/O pair removes
-**20,000** climate groups and **120,000** spectra, leaving **160,000** supported
-climate groups and **960,000** supported spectra.
+Nominal Cartesian product: **1,080,000** spectra = **45,000** climate groups ×
+**4** radii × **6** phases. Omitting the unsupported 100× metallicity / 2× C/O
+pair removes **5,000** climate groups and **120,000** spectra, leaving
+**40,000** supported climate groups and **960,000** supported spectra. The
+unsupported combination receives no manifest or cache indices.
 
 ## Environment
 

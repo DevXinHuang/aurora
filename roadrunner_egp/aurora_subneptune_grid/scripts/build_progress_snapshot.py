@@ -147,15 +147,30 @@ def _cartesian_parameter_keys(config: dict[str, Any]) -> tuple[str, ...]:
 
 
 def _expected_rows(config: dict[str, Any]) -> int:
-    return _expected_climate_groups(config) * _param_len(config, "phase_deg")
+    total = 1
+    for key in _cartesian_parameter_keys(config):
+        total *= _param_len(config, key)
+    return _subtract_unsupported_chemistry(config, total)
 
 
 def _expected_climate_groups(config: dict[str, Any]) -> int:
-    total = 1
-    for key in _cartesian_parameter_keys(config):
-        if key == "phase_deg":
-            continue
-        total *= _param_len(config, key)
+    total_rows = _expected_rows(config)
+    spectrum_axes = config.get("climate_spectrum_axes", ["phase_deg"])
+    if not isinstance(spectrum_axes, list) or not spectrum_axes:
+        raise ValueError("climate_spectrum_axes must be a non-empty list")
+    spectra_per_climate = 1
+    for key in spectrum_axes:
+        if key not in PARAMETER_KEYS:
+            raise ValueError(f"Unsupported climate spectrum axis: {key}")
+        spectra_per_climate *= _param_len(config, key)
+    if total_rows % spectra_per_climate:
+        raise ValueError(
+            f"Expected row count {total_rows} is not divisible by {spectra_per_climate} spectra per climate"
+        )
+    return total_rows // spectra_per_climate
+
+
+def _subtract_unsupported_chemistry(config: dict[str, Any], total: int) -> int:
 
     unsupported_pairs = config.get("unsupported_chemistry_pairs", [])
     if unsupported_pairs in (None, []):

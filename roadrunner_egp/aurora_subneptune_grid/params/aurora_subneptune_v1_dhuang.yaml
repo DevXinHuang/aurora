@@ -6,13 +6,12 @@ author: "Daniel Huang"
 contact: "Daniel Huang"
 project: "Aurora Sub-Neptune Grid"
 notes: >-
-  Supported production grid: 160,000 PICASO climate convergences and 960,000
-  reflected spectra. The nominal Cartesian axes contain 180,000 climates and
-  1,080,000 spectra; production excludes 100x solar metallicity with 2x solar
-  C/O because the required PICASO 4 preweighted CK table is unavailable. Planet
-  mass and radius are the primary axes (Zarah request). gravity_ms2 is computed
-  per row as g = GM/R^2 for PICASO runtime. Mass values match the legacy g = 5,
-  10, 15, 25, 30 m/s^2 grid at R = 2 R_earth.
+  Supported production grid: 40,000 PICASO gravity-based climate convergences
+  and 960,000 reflected spectra. Radius and phase are spectrum-only axes. The
+  unsupported 100x solar metallicity plus 2x solar C/O pair is omitted because
+  PICASO 4 lacks sonora_2121grid_feh2.0_co1.10.hdf5. Planet mass is derived per
+  spectrum from g and radius and is not a climate axis. Tint is fixed at 50 K;
+  equilibrium temperature is calculated separately.
 
 code:
   spectrum: "PICASO"
@@ -20,9 +19,11 @@ code:
   cloud: "PICASO/VIRGA if available"
   grid_runner: "aurora_grid"
 
-picaso_tint_mode: "equilibrium"
-picaso_tint_fixed_k: 1000.0
+picaso_tint_mode: "fixed"
+picaso_tint_fixed_k: 50.0
 picaso_tint_floor_k: 100.0
+climate_spectrum_axes: [planet_radius_rearth, phase_deg]
+climate_reference_radius_rearth: 2.0
 virga_condensates: "H2O,CH4,NH3"
 
 netcdf:
@@ -47,10 +48,10 @@ stars:
     radius_rsun: 1.70
 
 planet_radius_rearth: [1.6, 2.0, 2.5, 3.0]
-# M_earth values equivalent to legacy g (5,10,15,25,30 m/s^2) at R = 2 R_earth
-planet_mass_mearth: [2.037, 4.073, 6.110, 10.183, 12.220]
+gravity_ms2: [5, 10, 15, 25, 30]
 metallicity_xsolar: [1, 10, 100]
 c_to_o_xsolar: [0.5, 1.0, 2.0]
+# Omitted before manifest indices are assigned: PICASO 4 has no matching CK table.
 unsupported_chemistry_pairs:
   - metallicity_xsolar: 100
     c_to_o_xsolar: 2.0

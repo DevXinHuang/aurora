@@ -7,6 +7,9 @@ import sys
 from collections import deque
 from pathlib import Path
 
+import numpy as np
+import pytest
+
 
 GRID_ROOT = Path(__file__).resolve().parents[1]
 
@@ -74,6 +77,36 @@ def test_pending_excludes_cached_unsupported_and_in_flight_indices(tmp_path: Pat
     pending = controller.build_pending_items(runnable, cached_indices={0}, in_flight={2})
 
     assert [item.climate_group_index for item in pending] == [3, 5]
+
+
+def test_wave_manifest_requires_climate_identity(tmp_path: Path):
+    manifest = tmp_path / "climate_wave_000_0_0.csv"
+    manifest.write_text("climate_group_index\n0\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="missing climate_group_key"):
+        controller.read_wave_rows(manifest)
+
+
+def test_cache_is_counted_only_when_climate_identity_matches(tmp_path: Path):
+    output_root = tmp_path / "output"
+    cache_dir = output_root / "climate_cache"
+    cache_dir.mkdir(parents=True)
+    cache_file = cache_dir / "climate_00.npz"
+    np.savez_compressed(
+        cache_file,
+        pressure=np.array([1.0, 0.1]),
+        temperature=np.array([300.0, 250.0]),
+        metadata_json=np.asarray(json.dumps({"climate_group_key": "expected"})),
+    )
+
+    assert controller.cache_matches(
+        output_root,
+        controller.WorkItem(0, 0, tmp_path / "wave.csv", climate_group_key="expected"),
+    )
+    assert not controller.cache_matches(
+        output_root,
+        controller.WorkItem(0, 0, tmp_path / "wave.csv", climate_group_key="stale"),
+    )
 
 
 def test_rolling_refill_takes_only_available_capacity(tmp_path: Path):

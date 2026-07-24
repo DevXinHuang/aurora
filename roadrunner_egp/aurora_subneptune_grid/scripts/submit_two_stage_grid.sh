@@ -27,7 +27,9 @@ if [ ! -f "$CONFIG" ]; then
   exit 1
 fi
 
-if [ ! -f "$MANIFEST" ] || ! head -1 "$MANIFEST" | tr ',' '\n' | grep -qx climate_group_index; then
+if [ ! -f "$MANIFEST" ] \
+  || ! head -1 "$MANIFEST" | tr ',' '\n' | grep -qx climate_group_index \
+  || ! head -1 "$MANIFEST" | tr ',' '\n' | grep -qx climate_group_key; then
   echo "Regenerating manifest (missing or stale): $MANIFEST"
   if [ "$MODEL" = "aurora_cahoy2010_replication_v0" ]; then
     python "$GRID_ROOT/scripts/make_cahoy2010_manifest.py" --config "$CONFIG" --out "$MANIFEST"

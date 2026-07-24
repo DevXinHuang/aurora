@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from time import perf_counter
 
+import xarray as xr
+
 
 GRID_ROOT = Path(__file__).resolve().parents[1]
 ROADRUNNER_ROOT = GRID_ROOT.parent
@@ -32,6 +34,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def existing_output_matches_run_id(path: Path, expected_run_id: str) -> bool:
+    try:
+        with xr.open_dataset(path) as dataset:
+            return str(dataset.attrs.get("run_id", "")) == str(expected_run_id)
+    except Exception:
+        return False
+
+
 def main() -> int:
     args = parse_args()
     table = read_manifest_csv(args.manifest)
@@ -41,16 +51,29 @@ def main() -> int:
     row = dict(matches[0])
     if str(row["model_name"]) != args.model_name:
         raise ValueError(f"Row model_name mismatch: {row['model_name']!r} != {args.model_name!r}")
+    climate_group_key = str(row.get("climate_group_key", "")).strip()
+    if not climate_group_key:
+        raise ValueError(
+            "Manifest is stale: missing climate_group_key. Regenerate it before running spectra."
+        )
 
     output_path = resolve_repo_path(row["output_nc"])
     if output_path.exists() and not args.overwrite:
+        if not existing_output_matches_run_id(output_path, str(row["run_id"])):
+            raise ValueError(
+                f"Existing output {output_path} does not match run_id {row['run_id']!r}; "
+                "archive it or rerun with --overwrite."
+            )
         print(f"skipped_exists: {output_path}")
         return 0
 
     output_root = str(Path(row["output_nc"]).parent.parent)
     group_index = int(row["climate_group_index"])
     cache_file = climate_cache_path(output_root, group_index)
-    climate_cache = load_climate_cache(cache_file)
+    climate_cache = load_climate_cache(
+        cache_file,
+        expected_climate_group_key=climate_group_key,
+    )
 
     start = perf_counter()
     model_output = run_picaso_model_from_climate_cache(row, climate_cache, ck_root=args.ck_root)

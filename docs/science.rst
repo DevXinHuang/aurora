@@ -65,7 +65,8 @@ spectroscopy under HWO-relevant conditions.
 
    * Host star type across the supported 3500, 4000, 5000, 6000, and 7000 K points
    * HZ-relevant separations / insolation regimes
-   * Planet mass and radius, with surface gravity derived as :math:`g = GM/R^2`
+   * Surface gravity as the climate axis, with radius varied spectrally and
+     planet mass derived as :math:`M = gR^2/G`
    * Heavy-element enrichment (metallicity = 1, 10, and 100× solar)
    * Cloud coverage, sedimentation efficiency, and mixing strength
 
