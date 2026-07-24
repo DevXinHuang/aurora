@@ -1,0 +1,400 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modeling Sub-Neptunes Near the Radius Valley &mdash; Aurora 0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=e8cd7853" />
+
+  
+    <link rel="canonical" href="https://devxinhuang.github.io/aurora/subneptune_models.html" />
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=2709fde1"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Cahoy et al. 2010 Replication" href="cahoy2010_replication.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Aurora
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="science.html">Science Motivation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">The Sub-Neptune Grid</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="grid_structure.html">Sub-Neptune Grid Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="progress_graph.html">Aurora Progress Graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source_routes.html">Source Routes</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Model Case Studies</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="cahoy2010_replication.html">Cahoy et al. 2010 Replication</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Modeling Sub-Neptunes Near the Radius Valley</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#planet-and-atmosphere-setup">Planet and Atmosphere Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#current-production-parameter-space">Current Production Parameter Space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#expected-cloud-species">Expected Cloud Species</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#effect-of-c-o-ratio">Effect of C/O Ratio</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#phase-sampling">Phase Sampling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#insolation-grid">Insolation Grid</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#expected-spectral-features">Expected Spectral Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#planet-typing-diagnostics">Planet-Typing Diagnostics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#colormagnitude-comparisons">Color–Magnitude Comparisons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#phase-curve-behaviour">Phase Curve Behaviour</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Aurora</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Modeling Sub-Neptunes Near the Radius Valley</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/subneptune_models.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="modeling-sub-neptunes-near-the-radius-valley">
+<h1>Modeling Sub-Neptunes Near the Radius Valley<a class="headerlink" href="#modeling-sub-neptunes-near-the-radius-valley" title="Link to this heading"></a></h1>
+<p>Can we distinguish sub-Neptune envelopes from terrestrial atmospheres with
+HWO-relevant spectroscopy?</p>
+<p>Sub-Neptunes near the radius valley (1.5–2.5 R<sub>⊕</sub>) are the primary
+science targets of Aurora.  These planets straddle the transition between
+rocky super-Earths and volatile-rich sub-Neptunes, and their reflected-light
+spectra can closely mimic those of terrestrial planets when cloud decks mute
+absorption features and high metallicity compresses scale heights.
+The current production grid extends this radius-valley core to 3.0
+R<sub>⊕</sub>, uses surface gravity as the climate planet axis, and varies radius
+and phase during the spectral stage. Planet mass is derived as <span class="math notranslate nohighlight">\(M=gR^2/G\)</span>.</p>
+<p>This page describes the Aurora sub-Neptune model framework and previews the
+expected science output.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Full model results will be posted here once the <code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v1</span></code>
+production grid completes on HPC.  The descriptions below document the
+model setup and expected outputs.</p>
+</div>
+<section id="planet-and-atmosphere-setup">
+<h2>Planet and Atmosphere Setup<a class="headerlink" href="#planet-and-atmosphere-setup" title="Link to this heading"></a></h2>
+<p>Each Aurora sub-Neptune model has the following characteristics:</p>
+<ul class="simple">
+<li><p><strong>Bulk composition:</strong> H<sub>2</sub>/He-dominated envelope, with metallicity
+parametrically varying the heavy-element enrichment of all condensable and
+absorbing species.</p></li>
+<li><p><strong>Self-consistent P–T profile:</strong> PICASO’s <code class="docutils literal notranslate"><span class="pre">picaso_climate</span></code> solves for the
+pressure–temperature structure given the stellar irradiation, planet gravity,
+and atmospheric composition.</p></li>
+<li><p><strong>Equilibrium chemistry:</strong> Molecular mixing ratios are computed in chemical
+equilibrium at each pressure level, with the C/O ratio as a free parameter.</p></li>
+<li><p><strong>Clouds from Virga:</strong> Virga computes the cloud microphysics (particle size
+distribution, column optical depth) given the P–T profile, gravity, and
+mixing strength K<sub>zz</sub>.</p></li>
+</ul>
+<section id="current-production-parameter-space">
+<h3>Current Production Parameter Space<a class="headerlink" href="#current-production-parameter-space" title="Link to this heading"></a></h3>
+<p>The supported <code class="docutils literal notranslate"><span class="pre">aurora_subneptune_v1</span></code> grid contains 960,000 spectra in
+40,000 climate groups: five host-star points (3500/0.45, 4000/0.63,
+5000/0.80, 6000/1.00, and 7000/1.70 in K/R<sub>☉</sub>), four radii (1.6, 2.0,
+2.5, 3.0 R<sub>⊕</sub>), five gravities (5, 10, 15, 25, 30 m s<sup>−2</sup>),
+three metallicities (1, 10, 100× solar), three C/O ratios (0.5,
+1.0, 2.0× solar), two
+K<sub>zz</sub> values (10<sup>9</sup>, 10<sup>11</sup> cm<sup>2</sup> s<sup>−1</sup>),
+five cloud fractions (0, 0.5, 0.75, 0.9, 1), five f<sub>sed</sub> values
+(0.3, 1, 3, 6, 8), four insolation values (0.35, 0.70, 1.00, 1.50
+S<sub>⊕</sub>), and six phase angles (0, 30, 60, 90, 120, 150°). Internal
+temperature is fixed at 50 K while equilibrium temperature is calculated and
+stored separately.</p>
+<p>The axes nominally define 1,080,000 spectra in 45,000 climate groups.  The
+100× solar metallicity, 2× solar C/O pair is not runnable because PICASO 4 does
+not provide the required <code class="docutils literal notranslate"><span class="pre">sonora_2121grid_feh2.0_co1.10.hdf5</span></code> correlated-k
+table. Omitting that pair before indexing subtracts 5,000 climate groups and
+120,000 spectra, leaving 40,000 climates; unsupported cases receive no rows.</p>
+</section>
+<section id="expected-cloud-species">
+<h3>Expected Cloud Species<a class="headerlink" href="#expected-cloud-species" title="Link to this heading"></a></h3>
+<p>For the P–T profiles expected in the sub-Neptune insolation range
+(0.35–1.5 S<sub>⊕</sub>), the following condensate species are anticipated:</p>
+<ul class="simple">
+<li><p><strong>Water ice / liquid water</strong> — dominant in the outer HZ models
+(0.35–0.7 S<sub>⊕</sub>)</p></li>
+<li><p><strong>Sulphur haze (S</strong><sub>8</sub><strong>clouds)</strong> — relevant for warmer models
+(1.0–1.5 S<sub>⊕</sub>)</p></li>
+<li><p><strong>Ammonium hydrosulfide (NH</strong><sub>4</sub><strong>SH)</strong> — for cooler, high-metallicity
+models</p></li>
+</ul>
+<p>As in Cahoy et al. (2010), whether a condensate species forms clouds depends
+on whether its condensation curve crosses below the model P–T profile in the
+observable atmosphere.</p>
+</section>
+<section id="effect-of-c-o-ratio">
+<h3>Effect of C/O Ratio<a class="headerlink" href="#effect-of-c-o-ratio" title="Link to this heading"></a></h3>
+<p>The C/O ratio controls the relative mixing ratios of water, methane, and
+carbon monoxide.  At C/O &lt; 1 (oxygen-rich), water is the dominant absorber;
+at C/O &gt; 1 (carbon-rich), methane and CO dominate.  For sub-Neptunes near the
+radius valley:</p>
+<ul class="simple">
+<li><p>The P–T profile is relatively insensitive to C/O ratio because irradiation
+(not internal heat) drives the upper-atmosphere thermal structure.</p></li>
+<li><p>Molecular absorption band depths and the NIR spectral shape are strongly
+affected.</p></li>
+<li><p>C/O = 0.5, 1.0, 2.0 (× solar) span the range from oxygen-rich to
+carbon-rich envelopes.</p></li>
+</ul>
+</section>
+</section>
+<section id="phase-sampling">
+<h2>Phase Sampling<a class="headerlink" href="#phase-sampling" title="Link to this heading"></a></h2>
+<p>Aurora samples six viewing phases for each sub-Neptune orbit:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Phase (deg)</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>Superior conjunction — fully illuminated hemisphere, minimum angular separation</p></td>
+</tr>
+<tr class="row-odd"><td><p>30</p></td>
+<td><p>Nearly full phase, moderate separation</p></td>
+</tr>
+<tr class="row-even"><td><p>60</p></td>
+<td><p>Gibbous — typical observability window for inner HZ</p></td>
+</tr>
+<tr class="row-odd"><td><p>90</p></td>
+<td><p>Quadrature — maximum angular separation for circular orbits</p></td>
+</tr>
+<tr class="row-even"><td><p>120</p></td>
+<td><p>Half-illuminated crescent</p></td>
+</tr>
+<tr class="row-odd"><td><p>150</p></td>
+<td><p>Deep crescent — high phase, small illuminated fraction</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Phase does not affect the P–T profile or cloud structure.  All six phases
+share a single cached climate solution per (planet, star, cloud, chemistry)
+combination — this is the key efficiency gain of the two-stage workflow.</p>
+</div>
+<section id="insolation-grid">
+<h3>Insolation Grid<a class="headerlink" href="#insolation-grid" title="Link to this heading"></a></h3>
+<p>Four insolation values bracket the range from the outer edge of the habitable
+zone to slightly super-Earth-equivalent:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>S (S<sub>⊕</sub>)</p></th>
+<th class="head"><p>Context</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0.35</p></td>
+<td><p>Outer HZ — analogue of Mars-orbit irradiation around a solar-type host</p></td>
+</tr>
+<tr class="row-odd"><td><p>0.70</p></td>
+<td><p>Outer-mid HZ — analogue of Venus inside the outer HZ boundary</p></td>
+</tr>
+<tr class="row-even"><td><p>1.00</p></td>
+<td><p>Earth-equivalent insolation (1 AU, solar-type host)</p></td>
+</tr>
+<tr class="row-odd"><td><p>1.50</p></td>
+<td><p>Inner HZ — warm, near the inner edge of the conservative HZ</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="expected-spectral-features">
+<h2>Expected Spectral Features<a class="headerlink" href="#expected-spectral-features" title="Link to this heading"></a></h2>
+<p>The planet–star contrast spectrum encodes:</p>
+<dl class="simple">
+<dt><strong>Rayleigh scattering slope (&lt; 0.5 μm)</strong></dt><dd><p>All models show a steep rise to the blue from H<sub>2</sub>/He Rayleigh
+scattering.  Cloud decks above the scattering level suppress this feature.</p>
+</dd>
+<dt><strong>Water vapour bands</strong></dt><dd><p>Strong absorption at 0.72, 0.82, 0.94, 1.14, 1.38, and 1.87 μm.  Depth
+decreases with increasing metallicity (shorter scale height) and with
+overlying cloud opacity.</p>
+</dd>
+<dt><strong>Methane bands (for C/O ≥ 1)</strong></dt><dd><p>Features at 0.89, 1.0, 1.38, 1.67, and 2.30 μm become prominent in
+carbon-rich or cold models where CH<sub>4</sub> dominates over CO.</p>
+</dd>
+<dt><strong>Continuum slope</strong></dt><dd><p>A red-sloped continuum from the H<sub>2</sub>/He CIA opacity at NIR
+wavelengths is a signature of a hydrogen-dominated atmosphere absent in
+rocky-planet models.</p>
+</dd>
+</dl>
+<figure class="align-center" id="id1" style="width: 90%">
+<img alt="Placeholder sub-Neptune contrast spectrum" src="_images/placeholder_subneptune_spectrum.png" />
+<figcaption>
+<p><span class="caption-text"><em>Expected output: Planet–star contrast spectrum for an Aurora sub-Neptune
+model at quadrature (phase = 90°) around a solar-type host (T</em><sub>eff</sub>
+<em>= 5000 K) at 1.0 S</em><sub>⊕</sub><em>, showing the effect of cloud opacity
+(f</em><sub>sed</sub>* = 0.3, 1, 6, and cloud-free) for a 2.0 R*<sub>⊕</sub>
+<em>planet with 10× solar metallicity.  Molecular absorption bands are labelled
+for the cloud-free case.  Filter curves for HWO-like optical/NIR channels
+are shown in grey.</em></span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="planet-typing-diagnostics">
+<h2>Planet-Typing Diagnostics<a class="headerlink" href="#planet-typing-diagnostics" title="Link to this heading"></a></h2>
+<p>Aurora’s primary science output is a <em>confusion map</em> in parameter space
+identifying where sub-Neptunes are spectrally indistinguishable from
+terrestrial planets at HWO-like S/N.</p>
+<p>The following broadband diagnostics are computed for each spectrum:</p>
+<ul class="simple">
+<li><p><strong>Spectral slope</strong> between optical (0.4–0.5 μm) and NIR (1.0–1.3 μm)</p></li>
+<li><p><strong>H</strong><sub>2</sub><strong>O 0.94 μm band depth</strong></p></li>
+<li><p><strong>H</strong><sub>2</sub><strong>O 1.14 μm band depth</strong></p></li>
+<li><p><strong>CH</strong><sub>4</sub> <strong>1.0 μm band depth</strong></p></li>
+<li><p><strong>CH</strong><sub>4</sub> <strong>1.67 μm band depth</strong></p></li>
+<li><p><strong>CIA continuum slope</strong> (1.3–1.7 μm vs. 0.7–0.9 μm)</p></li>
+</ul>
+<section id="colormagnitude-comparisons">
+<h3>Color–Magnitude Comparisons<a class="headerlink" href="#colormagnitude-comparisons" title="Link to this heading"></a></h3>
+<p>Photometric color–magnitude diagrams analogous to those in Logan Pearce’s
+<a class="reference external" href="https://reflectx.readthedocs.io/en/latest/GJ876bc-models.html">ReflectX GJ 876 analysis</a>
+will be produced for the HWO-like filter set once the full grid is available.
+The expected filter passbands mirror the Roman CGI / HWO coronagraph channels:</p>
+<ul class="simple">
+<li><p>Blue optical (0.45–0.55 μm)</p></li>
+<li><p>Red optical (0.60–0.70 μm)</p></li>
+<li><p>NIR-J (1.12–1.35 μm)</p></li>
+<li><p>NIR-H (1.50–1.80 μm)</p></li>
+</ul>
+</section>
+<section id="phase-curve-behaviour">
+<h3>Phase Curve Behaviour<a class="headerlink" href="#phase-curve-behaviour" title="Link to this heading"></a></h3>
+<p>Phase curves for sub-Neptunes near the radius valley are expected to differ
+qualitatively from gas-giant phase curves studied in the Cahoy grid:</p>
+<ul class="simple">
+<li><p><strong>Thick clouds</strong> (small f<sub>sed</sub>) produce relatively flat phase curves
+because isotropic scattering distributes reflected light broadly.</p></li>
+<li><p><strong>Thin or patchy clouds</strong> (large f<sub>sed</sub> or cloud fraction = 0) show
+steeper phase curves with stronger forward-scattering enhancement.</p></li>
+<li><p><strong>High metallicity</strong> compresses the scale height, reducing the effective
+scattering depth and flattening the phase curve.</p></li>
+</ul>
+<p>These signatures — or their absence — are key discriminants between genuinely
+terrestrial planets and gas-rich sub-Neptunes when observed at a small number
+of orbital phases with HWO.</p>
+</section>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Batalha, N.E. et al. 2019, <em>ApJ</em>, 878, 70.
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/ab1b51">doi:10.3847/1538-4357/ab1b51</a></p></li>
+<li><p>Cahoy, K.L., Marley, M.S. &amp; Fortney, J.J. 2010, <em>ApJ</em>, 724, 189.
+<a class="reference external" href="https://doi.org/10.1088/0004-637X/724/1/189">doi:10.1088/0004-637X/724/1/189</a></p></li>
+<li><p>Fulton, B.J. et al. 2017, <em>AJ</em>, 154, 109.
+<a class="reference external" href="https://doi.org/10.3847/1538-3881/aa80eb">doi:10.3847/1538-3881/aa80eb</a></p></li>
+<li><p>Gao, P. et al. 2018, <em>ApJ</em>, 867, 1.
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/aad1f9">doi:10.3847/1538-4357/aad1f9</a></p></li>
+<li><p>Lopez, E.D. &amp; Fortney, J.J. 2014, <em>ApJ</em>, 792, 1.
+<a class="reference external" href="https://doi.org/10.1088/0004-637X/792/1/1">doi:10.1088/0004-637X/792/1/1</a></p></li>
+<li><p>Mukherjee, S. et al. 2022, <em>ApJ</em>, 938, 107.
+<a class="reference external" href="https://doi.org/10.3847/1538-4357/ac8f41">doi:10.3847/1538-4357/ac8f41</a></p></li>
+<li><p>Robinson, T.D. et al. 2011, <em>Astrobiology</em>, 11, 393.
+<a class="reference external" href="https://doi.org/10.1089/ast.2011.0642">doi:10.1089/ast.2011.0642</a></p></li>
+<li><p>Rogers, L.A. 2015, <em>ApJ</em>, 801, 41.
+<a class="reference external" href="https://doi.org/10.1088/0004-637X/801/1/41">doi:10.1088/0004-637X/801/1/41</a></p></li>
+<li><p>Windsor, J.D. et al. 2023, <em>PSJ</em>, 4, 94.
+<a class="reference external" href="https://doi.org/10.3847/PSJ/acbf2d">doi:10.3847/PSJ/acbf2d</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cahoy2010_replication.html" class="btn btn-neutral float-left" title="Cahoy et al. 2010 Replication" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Daniel Huang. Mentor: Zarah Brown..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

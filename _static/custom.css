@@ -1,0 +1,22 @@
+/* Aurora docs custom styles */
+
+/* Slightly increase base font size for readability */
+.wy-nav-content {
+    max-width: 960px;
+}
+
+/* Style important/note boxes with Aurora defaults */
+.admonition.important > .admonition-title {
+    background: #6ab0de;
+}
+
+/* Make tables more readable */
+table.docutils {
+    width: 100%;
+}
+
+/* Code block copy button alignment */
+.copybtn {
+    top: 0.5em;
+    right: 0.5em;
+}
